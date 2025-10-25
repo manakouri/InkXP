@@ -211,7 +211,33 @@ window.addEventListener('load', () => {
   };
 
   // services/geminiService.js
-  // AI Feedback has been temporarily disabled.
+  const { GoogleGenAI } = window.genai;
+
+  const generateImageForPrompt = async (promptText) => {
+      if (!process.env.API_KEY) {
+          console.error("Gemini API key not found. Please set the API_KEY environment variable.");
+          return 'https://via.placeholder.com/1024x576.png?text=Image+Generation+Disabled';
+      }
+      try {
+          const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+          const descriptivePrompt = `A beautiful, vibrant, child-friendly storybook illustration for the following scene, cinematic style: ${promptText}`;
+          const response = await ai.models.generateImages({
+              model: 'imagen-4.0-generate-001',
+              prompt: descriptivePrompt,
+              config: {
+                  numberOfImages: 1,
+                  outputMimeType: 'image/jpeg',
+                  aspectRatio: '16:9',
+              },
+          });
+          const base64ImageBytes = response.generatedImages[0].image.imageBytes;
+          return `data:image/jpeg;base64,${base64ImageBytes}`;
+      } catch (error) {
+          console.error("Error generating image with Gemini:", error);
+          return 'https://via.placeholder.com/1024x576.png?text=Error+Generating+Image';
+      }
+  };
+
 
   // components/LoadingSpinner.js
   const LoadingSpinner = () => <div className="w-8 h-8 border-4 border-sky-200 border-t-sky-600 rounded-full animate-spin"></div>;
@@ -294,6 +320,9 @@ window.addEventListener('load', () => {
             <p className="text-slate-600 mb-6">Fantastic effort! Here are the final scores.</p>
             <div className="w-full grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-2 bg-white p-6 rounded-lg shadow-md border border-slate-200">
+                    {gameData.prompt.imageUrl && (
+                        <img src={gameData.prompt.imageUrl} alt="Prompt image" className="w-full h-48 object-cover rounded-md mb-4" />
+                    )}
                     <h3 className="text-xl font-bold mb-2 text-slate-800">{myFinalStory?.title || "Untitled Story"}</h3>
                     <p className="text-sm font-semibold text-sky-600 mb-4">{gameData.prompt.text}</p>
                     <div className="prose max-w-none text-slate-700 whitespace-pre-wrap bg-slate-50 p-4 rounded-md">{myFinalStory?.text || "You didn't write anything this time. Try again!"}</div>
@@ -400,6 +429,9 @@ window.addEventListener('load', () => {
               <div className="lg:col-span-2">
                   <div className="relative bg-white p-6 rounded-lg shadow-md border border-slate-200 mb-4">
                       <Button onClick={onGoHome} variant="secondary" size="small" className="absolute top-4 right-4">Quit Game</Button>
+                        {gameData.prompt.imageUrl && (
+                            <img src={gameData.prompt.imageUrl} alt="Prompt image" className="w-full h-48 object-cover rounded-md mb-4" />
+                        )}
                       <p className="text-sm font-semibold text-sky-600 mb-2">{gameData.prompt.category}</p>
                       <p className="text-lg text-slate-700 pr-24">{gameData.prompt.text}</p>
                   </div>
@@ -534,6 +566,9 @@ window.addEventListener('load', () => {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-h-[70vh]">
                         <div className="md:col-span-2 overflow-y-auto pr-2">
                              <h4 className="text-lg font-bold text-slate-800 mb-2">Full Story</h4>
+                            {gameData.prompt.imageUrl && (
+                                <img src={gameData.prompt.imageUrl} alt="Prompt image" className="w-full h-40 object-cover rounded-md mb-2" />
+                            )}
                              <p className="text-sm font-semibold text-sky-600 mb-2">{gameData.prompt.text}</p>
                              <div className="prose max-w-none text-slate-700 whitespace-pre-wrap bg-slate-50 p-4 rounded-md">{player.story?.text || "No text submitted."}</div>
                         </div>
@@ -691,14 +726,31 @@ window.addEventListener('load', () => {
 
   // components/SetupScreen.js
   const SetupScreen = ({ onStart, onGoHome, onBackToDashboard, isSolo = false, isTeacher = false }) => {
-      const { useState, useCallback, useMemo } = React;
-      const [currentPrompt, setCurrentPrompt] = useState(() => NARRATIVE_PROMPTS[Math.floor(Math.random() * NARRATIVE_PROMPTS.length)]);
-      const [duration, setDuration] = useState(5);
+      const { useState, useCallback, useMemo, useEffect } = React;
       
-      const generateNewPrompt = useCallback(() => {
-          const newPrompt = NARRATIVE_PROMPTS[Math.floor(Math.random() * NARRATIVE_PROMPTS.length)];
-          setCurrentPrompt(newPrompt);
+      const [currentPrompt, setCurrentPrompt] = useState(() => {
+          const randomPrompt = NARRATIVE_PROMPTS[Math.floor(Math.random() * NARRATIVE_PROMPTS.length)];
+          return { ...randomPrompt, imageUrl: null };
+      });
+      const [duration, setDuration] = useState(5);
+      const [isImageLoading, setIsImageLoading] = useState(true);
+
+      const fetchPromptImage = useCallback(async (promptText) => {
+          setIsImageLoading(true);
+          const imageUrl = await generateImageForPrompt(promptText);
+          setCurrentPrompt(prev => ({ ...prev, imageUrl }));
+          setIsImageLoading(false);
       }, []);
+
+      useEffect(() => {
+          fetchPromptImage(currentPrompt.text);
+      }, []);
+
+      const generateNewPrompt = useCallback(async () => {
+          const newPrompt = NARRATIVE_PROMPTS[Math.floor(Math.random() * NARRATIVE_PROMPTS.length)];
+          setCurrentPrompt({ ...newPrompt, imageUrl: null });
+          await fetchPromptImage(newPrompt.text);
+      }, [fetchPromptImage]);
 
       const selectedCriteria = useMemo(() => {
           const generalGoals = ALL_SCORING_CRITERIA.filter(c => c.id === 'sentence' || c.id === 'conjunctions');
@@ -717,8 +769,22 @@ window.addEventListener('load', () => {
           <div className="flex flex-col items-center">
               <h2 className="text-2xl font-bold text-slate-800 mb-2">{isSolo ? "Solo Mode" : "Create a Game"}</h2>
               <p className="text-slate-600 mb-6">Generate a story idea and choose the writing time.</p>
-              <div className="w-full max-w-3xl bg-white p-6 rounded-lg shadow-md border border-slate-200 mb-6"><p className="text-sm font-semibold text-sky-600 mb-2">{currentPrompt.category}</p><p className="text-lg text-slate-700">{currentPrompt.text}</p></div>
-              <div className="flex items-center gap-4 mb-6"><Button onClick={generateNewPrompt} variant="secondary">Generate New Prompt</Button></div>
+              <div className="w-full max-w-3xl bg-white p-6 rounded-lg shadow-md border border-slate-200 mb-6">
+                <div className="aspect-video w-full bg-slate-200 rounded-md mb-4 overflow-hidden flex items-center justify-center">
+                    {isImageLoading ? (
+                        <LoadingSpinner />
+                    ) : (
+                        <img src={currentPrompt.imageUrl} alt="AI generated image for the prompt" className="w-full h-full object-cover" />
+                    )}
+                </div>
+                <p className="text-sm font-semibold text-sky-600 mb-2">{currentPrompt.category}</p>
+                <p className="text-lg text-slate-700">{currentPrompt.text}</p>
+              </div>
+              <div className="flex items-center gap-4 mb-6">
+                <Button onClick={generateNewPrompt} variant="secondary" disabled={isImageLoading}>
+                    {isImageLoading ? 'Generating...' : 'Generate New Prompt'}
+                </Button>
+              </div>
               <div className="w-full max-w-sm mb-8">
                   <label htmlFor="duration" className="block text-center text-sm font-medium text-slate-700 mb-2">Set Timer (minutes)</label>
                   <div className="flex items-center justify-center gap-4">
@@ -728,7 +794,7 @@ window.addEventListener('load', () => {
               </div>
               <div className="flex items-center gap-4">
                 <Button onClick={isTeacher ? onBackToDashboard : onGoHome} variant="secondary" size="large">{isTeacher ? "Back to Dashboard" : "Back to Home"}</Button>
-                <Button onClick={handleStart} size="large">{isSolo ? "Start Writing!" : "Create Game Lobby"}</Button>
+                <Button onClick={handleStart} size="large" disabled={isImageLoading}>{isSolo ? "Start Writing!" : "Create Game Lobby"}</Button>
               </div>
           </div>
       );
