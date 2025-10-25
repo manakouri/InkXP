@@ -47,7 +47,7 @@ window.addEventListener('load', () => {
   var GameState;
   (function (GameState) {
       GameState[GameState["Home"] = 0] = "Home";
-      GameState[GameState["PracticeSetup"] = 1] = "PracticeSetup";
+      GameState[GameState["SoloSetup"] = 1] = "SoloSetup";
       GameState[GameState["CreateGameSetup"] = 2] = "CreateGameSetup";
       GameState[GameState["JoinGameSetup"] = 3] = "JoinGameSetup";
       GameState[GameState["Lobby"] = 4] = "Lobby";
@@ -94,13 +94,13 @@ window.addEventListener('load', () => {
 
   const generateGameCode = () => Math.random().toString(36).substring(2, 8).toUpperCase();
   
-  const createGame = async (hostId, hostNickname, prompt, criteria, duration) => {
+  const createGame = async (hostId, prompt, criteria, duration) => {
       const gameCode = generateGameCode();
       const gameRef = doc(db, 'games', gameCode);
       const gameData = {
           hostId, prompt, criteria, duration,
           status: 'waiting', // waiting, in-progress, finished
-          players: { [hostId]: { nickname: hostNickname, text: '', analysis: null } },
+          players: {}, // Host is not a player, starts with empty players
           createdAt: serverTimestamp()
       };
       await setDoc(gameRef, gameData);
@@ -112,14 +112,17 @@ window.addEventListener('load', () => {
       const gameSnap = await getDoc(gameRef);
       if (!gameSnap.exists()) throw new Error("Game not found!");
       const gameData = gameSnap.data();
-      if (gameData.status !== 'waiting') throw new Error("Game has already started or is finished.");
+      if (gameData.status === 'finished') throw new Error("This game has already finished.");
       await updateDoc(gameRef, { [`players.${playerId}`]: { nickname: playerNickname, text: '', analysis: null } });
       return gameData;
   };
   
   const getGameStream = (gameCode, callback) => onSnapshot(doc(db, 'games', gameCode), (doc) => callback(doc.data()));
   
-  const startGame = async (gameCode) => await updateDoc(doc(db, 'games', gameCode), { status: 'in-progress' });
+  const startGame = async (gameCode) => await updateDoc(doc(db, 'games', gameCode), {
+    status: 'in-progress',
+    startTime: serverTimestamp()
+  });
 
   const submitResult = async (gameCode, playerId, text, analysis) => {
     const gameRef = doc(db, 'games', gameCode);
@@ -179,19 +182,37 @@ window.addEventListener('load', () => {
   const LoadingSpinner = () => <div className="w-8 h-8 border-4 border-sky-200 border-t-sky-600 rounded-full animate-spin"></div>;
   
   // components/Timer.js
-  const Timer = ({ initialSeconds, onTimeUp }) => {
-      const { useState, useEffect } = React;
-      const [seconds, setSeconds] = useState(initialSeconds);
+  const Timer = ({ startTime, duration, onTimeUp }) => {
+      const { useState, useEffect, useRef } = React;
+      const [secondsLeft, setSecondsLeft] = useState(duration);
+      const onTimeUpRef = useRef(onTimeUp);
+      onTimeUpRef.current = onTimeUp;
+
       useEffect(() => {
-          if (seconds <= 0) {
-              onTimeUp();
+          if (!startTime) {
+              setSecondsLeft(duration);
               return;
           }
-          const intervalId = setInterval(() => { setSeconds(prevSeconds => prevSeconds - 1); }, 1000);
+
+          const intervalId = setInterval(() => {
+              const gameStartTime = startTime.toDate().getTime();
+              const elapsed = Math.floor((Date.now() - gameStartTime) / 1000);
+              const remaining = duration - elapsed;
+
+              if (remaining <= 0) {
+                  setSecondsLeft(0);
+                  onTimeUpRef.current();
+                  clearInterval(intervalId);
+              } else {
+                  setSecondsLeft(remaining);
+              }
+          }, 1000);
+
           return () => clearInterval(intervalId);
-      }, [seconds, onTimeUp]);
-      const minutes = Math.floor(seconds / 60);
-      const remainingSeconds = seconds % 60;
+      }, [startTime, duration]);
+
+      const minutes = Math.floor(secondsLeft / 60);
+      const remainingSeconds = secondsLeft % 60;
       return <div className="text-5xl font-bold tracking-tighter"><span>{minutes.toString().padStart(2, '0')}</span><span className="animate-pulse">:</span><span>{remainingSeconds.toString().padStart(2, '0')}</span></div>;
   };
   
@@ -214,7 +235,7 @@ window.addEventListener('load', () => {
                   <h2 className="text-2xl font-bold text-slate-800 mb-4">Enter Your Nickname</h2>
                   <p className="text-slate-600 mb-6">Choose a name to be seen by other players.</p>
                   <form onSubmit={handleSubmit}>
-                      <input type="text" value={nickname} onChange={(e) => setNickname(e.target.value)} className="w-full p-3 border border-slate-300 rounded-lg shadow-inner focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-shadow duration-200 text-lg text-center" placeholder="e.g. CaptainKupu" maxLength="15" required />
+                      <input type="text" value={nickname} onChange={(e) => setNickname(e.target.value)} className="w-full p-3 border border-slate-300 rounded-lg shadow-inner focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-shadow duration-200 text-lg text-center" placeholder="e.g. InkMaster" maxLength="10" required />
                       <Button type="submit" size="large" className="mt-6 w-full">Let's Go!</Button>
                   </form>
               </div>
@@ -334,7 +355,7 @@ window.addEventListener('load', () => {
               </div>
               <div className="lg:col-span-1">
                   <div className="sticky top-8 space-y-6">
-                      <div className="bg-sky-600 text-white p-4 rounded-lg shadow-lg text-center"><p className="text-lg font-semibold">Time Remaining</p><Timer initialSeconds={gameData.duration} onTimeUp={handleTimeUp} /></div>
+                      <div className="bg-sky-600 text-white p-4 rounded-lg shadow-lg text-center"><p className="text-lg font-semibold">Time Remaining</p><Timer startTime={gameData.startTime} duration={gameData.duration} onTimeUp={handleTimeUp} /></div>
                       <div className="bg-emerald-600 text-white p-4 rounded-lg shadow-lg text-center"><p className="text-lg font-semibold">Your Score</p><p className={`text-5xl font-bold tracking-tighter transition-transform duration-300 ease-out ${isScoreAnimating ? 'scale-125' : 'scale-100'}`}>{scoreAnalysis.totalScore.toLocaleString()}</p></div>
                       <div className="bg-violet-600 text-white p-4 rounded-lg shadow-lg text-center"><p className="text-lg font-semibold">Word Count</p><p className="text-5xl font-bold tracking-tighter">{wordCount}</p></div>
                       <div className="bg-white p-6 rounded-lg shadow-md border border-slate-200">
@@ -351,6 +372,49 @@ window.addEventListener('load', () => {
               </div>
           </div>
       );
+  };
+  
+  // components/HostScreen.js
+  const HostScreen = ({ gameData, onEndGame }) => {
+    const sortedPlayers = Object.entries(gameData.players)
+      .map(([id, data]) => ({ id, ...data, totalScore: data.analysis?.totalScore || 0 }))
+      .sort((a, b) => b.totalScore - a.totalScore);
+
+    return (
+        <div className="flex flex-col items-center">
+            <h2 className="text-2xl font-bold text-slate-800 mb-2">Host Dashboard</h2>
+            <p className="text-slate-600 mb-6">The game is in progress. You can see the live scores below.</p>
+            
+            <div className="w-full grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="lg:col-span-2">
+                    <div className="bg-white p-6 rounded-lg shadow-md border border-slate-200 mb-6">
+                        <h3 className="text-xl font-bold mb-4 text-slate-800">Live Leaderboard</h3>
+                        {sortedPlayers.length > 0 ? (
+                            <ol className="space-y-2">
+                                {sortedPlayers.map((player, index) => (
+                                    <li key={player.id} className="p-3 rounded-md flex justify-between items-center bg-slate-50 transition-all">
+                                        <span className="font-semibold text-slate-700">{index + 1}. {player.nickname}</span>
+                                        <span className="font-bold text-sky-600">{player.totalScore.toLocaleString()}</span>
+                                    </li>
+                                ))}
+                            </ol>
+                        ) : (
+                            <p className="text-slate-500 text-center py-4">Waiting for players to score...</p>
+                        )}
+                    </div>
+                </div>
+                <div className="lg:col-span-1 space-y-6">
+                     <div className="sticky top-8">
+                        <div className="bg-sky-600 text-white p-4 rounded-lg shadow-lg text-center mb-6">
+                            <p className="text-lg font-semibold">Time Remaining</p>
+                            <Timer startTime={gameData.startTime} duration={gameData.duration} onTimeUp={onEndGame} />
+                        </div>
+                        <Button onClick={onEndGame} size="large" className="w-full bg-red-600 hover:bg-red-700 focus:ring-red-500">End Game Now</Button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
   };
 
   // components/LobbyScreen.js
@@ -383,14 +447,15 @@ window.addEventListener('load', () => {
                     {playerList.map(([id, player]) => (
                         <li key={id} className="flex items-center gap-3 p-2 bg-slate-100 rounded-md">
                            <span className="font-bold text-slate-700">{player.nickname}</span>
-                           {gameData.hostId === id && <span className="text-xs font-bold text-sky-700 bg-sky-200 px-2 py-0.5 rounded-full">HOST</span>}
+                           {gameData.hostId === id && <span className="text-xs font-bold text-sky-700 bg-sky-200 px-2 py-0.5 rounded-full">HOST (Not Playing)</span>}
                         </li>
                     ))}
+                    {playerList.length === 0 && <p className="text-slate-500 text-center py-2">Waiting for players to join...</p>}
                 </ul>
             </div>
 
             {isHost ? (
-                <Button onClick={onStartGame} size="large">Start Game for Everyone!</Button>
+                <Button onClick={onStartGame} size="large" disabled={playerList.length === 0}>Start Game for Everyone!</Button>
             ) : (
                 <p className="text-lg text-slate-600 animate-pulse">Waiting for host to start the game...</p>
             )}
@@ -443,8 +508,8 @@ window.addEventListener('load', () => {
       );
   };
 
-  // components/PracticeSetupScreen.js - Can be used for Create Game setup too
-  const SetupScreen = ({ onStart, onGoHome, isPractice = true }) => {
+  // components/SetupScreen.js
+  const SetupScreen = ({ onStart, onGoHome, isSolo = false }) => {
       const { useState, useCallback, useMemo } = React;
       const [currentPrompt, setCurrentPrompt] = useState(() => NARRATIVE_PROMPTS[Math.floor(Math.random() * NARRATIVE_PROMPTS.length)]);
       const [duration, setDuration] = useState(5);
@@ -466,7 +531,7 @@ window.addEventListener('load', () => {
       
       return (
           <div className="flex flex-col items-center">
-              <h2 className="text-2xl font-bold text-slate-800 mb-2">{isPractice ? "Practice Mode" : "Create a Game"}</h2>
+              <h2 className="text-2xl font-bold text-slate-800 mb-2">{isSolo ? "Solo Mode" : "Create a Game"}</h2>
               <p className="text-slate-600 mb-6">Generate a story idea and choose the writing time.</p>
               <div className="w-full max-w-3xl bg-white p-6 rounded-lg shadow-md border border-slate-200 mb-6"><p className="text-sm font-semibold text-sky-600 mb-2">{currentPrompt.category}</p><p className="text-lg text-slate-700">{currentPrompt.text}</p></div>
               <div className="flex items-center gap-4 mb-6"><Button onClick={generateNewPrompt} variant="secondary">Generate New Prompt</Button></div>
@@ -479,7 +544,7 @@ window.addEventListener('load', () => {
               </div>
               <div className="flex items-center gap-4">
                 <Button onClick={onGoHome} variant="secondary" size="large">Back to Home</Button>
-                <Button onClick={handleStart} size="large">{isPractice ? "Start Writing!" : "Create Game Lobby"}</Button>
+                <Button onClick={handleStart} size="large">{isSolo ? "Start Writing!" : "Create Game Lobby"}</Button>
               </div>
           </div>
       );
@@ -496,14 +561,14 @@ window.addEventListener('load', () => {
           <Button onClick={onClick} disabled={disabled} className="mt-auto">{disabled ? 'Coming Soon' : 'Let\'s Go!'}</Button>
       </div>
   );
-  const HomeScreen = ({ onSelectCreate, onSelectJoin, onSelectPractice }) => (
+  const HomeScreen = ({ onSelectCreate, onSelectJoin, onSelectSolo }) => (
       <div className="text-center">
           <h2 className="text-3xl font-bold text-slate-800 mb-4">Welcome!</h2>
           <p className="text-lg text-slate-600 mb-8 max-w-2xl mx-auto">Choose a mode to begin your writing adventure. Sharpen your skills, join a friend's game, or create a challenge for your class!</p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
               <ModeCard title="Create a Game" description="Be the game master! Choose prompts, set timers, and challenge your friends." icon=" M12 4.5v15m7.5-7.5h-15" onClick={onSelectCreate} disabled={false} />
               <ModeCard title="Join a Game" description="Got a game code? Enter it here to join a writing quest with your classmates." icon="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" onClick={onSelectJoin} disabled={false} />
-              <ModeCard title="Practice Mode" description="Fly solo! Get a random prompt and practice your writing skills at your own pace." icon="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" onClick={onSelectPractice} disabled={false} />
+              <ModeCard title="Solo Mode" description="Fly solo! Get a random prompt and practice your writing skills at your own pace." icon="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" onClick={onSelectSolo} disabled={false} />
           </div>
       </div>
   );
@@ -516,9 +581,9 @@ window.addEventListener('load', () => {
       const [playerNickname, setPlayerNickname] = useState(null);
       const [gameId, setGameId] = useState(null);
       const [gameData, setGameData] = useState(null);
-      const [practiceData, setPracticeData] = useState(null); // For solo mode
-      const [finalText, setFinalText] = useState(''); // For solo mode results
-      const [scoreAnalysis, setScoreAnalysis] = useState(null); // For solo mode results
+      const [soloData, setSoloData] = useState(null);
+      const [finalText, setFinalText] = useState('');
+      const [scoreAnalysis, setScoreAnalysis] = useState(null);
 
       useEffect(() => {
         let storedPlayerId = localStorage.getItem('inkxp_playerId');
@@ -537,8 +602,7 @@ window.addEventListener('load', () => {
                 if (data.status === 'in-progress') setGameState(GameState.InGame);
                 if (data.status === 'finished') setGameState(GameState.Results);
             } else {
-                // Game deleted or not found
-                alert("Game session not found.");
+                alert("Game session not found or has been deleted.");
                 handleGoHome();
             }
         });
@@ -550,7 +614,7 @@ window.addEventListener('load', () => {
       }, []);
 
       const handleCreateLobby = async (prompt, criteria, duration) => {
-        const newGameId = await createGame(playerId, playerNickname, prompt, criteria, duration);
+        const newGameId = await createGame(playerId, prompt, criteria, duration);
         setGameId(newGameId);
         setGameState(GameState.Lobby);
       };
@@ -562,13 +626,19 @@ window.addEventListener('load', () => {
       };
 
       const handleStartGame = async () => await startGame(gameId);
+      
+      const handleForceEndGame = useCallback(async () => {
+        if (gameId) {
+            await finishGame(gameId);
+        }
+      }, [gameId]);
 
-      const handleStartPractice = useCallback((prompt, criteria, duration) => {
-          setPracticeData({ prompt, criteria, duration });
+      const handleStartSolo = useCallback((prompt, criteria, duration) => {
+          setSoloData({ prompt, criteria, duration });
           setGameState(GameState.InGame);
       }, []);
 
-      const handleEndPractice = useCallback((text, analysis) => {
+      const handleEndSolo = useCallback((text, analysis) => {
           setFinalText(text);
           setScoreAnalysis(analysis);
           setGameState(GameState.Results);
@@ -576,15 +646,17 @@ window.addEventListener('load', () => {
 
       const handleEndMultiplayerGame = useCallback(async (text, analysis) => {
         await submitResult(gameId, playerId, text, analysis);
-        // Host will check if everyone finished and then change game state
       }, [gameId, playerId]);
       
-      // Host check to finish the game
+      // Host check to finish the game when all players are done (optional auto-finish)
       useEffect(() => {
         if (gameData && gameData.hostId === playerId && gameData.status === 'in-progress') {
-            const allPlayersFinished = Object.values(gameData.players).every(p => p.analysis !== null);
-            if (allPlayersFinished) {
-                finishGame(gameId);
+            const playersCount = Object.keys(gameData.players).length;
+            if (playersCount > 0) {
+              const finishedPlayers = Object.values(gameData.players).filter(p => p.analysis !== null).length;
+              if (playersCount === finishedPlayers) {
+                  finishGame(gameId);
+              }
             }
         }
       }, [gameData, playerId, gameId]);
@@ -592,7 +664,7 @@ window.addEventListener('load', () => {
       const resetGame = useCallback(() => {
           setGameId(null);
           setGameData(null);
-          setPracticeData(null);
+          setSoloData(null);
           setFinalText('');
           setScoreAnalysis(null);
       }, []);
@@ -608,7 +680,10 @@ window.addEventListener('load', () => {
       }, [resetGame]);
       
       const renderContent = () => {
-          if (playerId && !playerNickname && gameState !== GameState.Home) {
+          const shouldPromptForNickname = playerId && !playerNickname && 
+            (gameState === GameState.JoinGameSetup || (gameState === GameState.Lobby && gameData && !gameData.players[playerId] && gameData.hostId !== playerId));
+
+          if (shouldPromptForNickname) {
             return <NicknamePrompt onNicknameSubmit={handleSetNickname} />;
           }
 
@@ -617,26 +692,31 @@ window.addEventListener('load', () => {
                 return <HomeScreen 
                     onSelectCreate={() => setGameState(GameState.CreateGameSetup)}
                     onSelectJoin={() => setGameState(GameState.JoinGameSetup)}
-                    onSelectPractice={() => setGameState(GameState.PracticeSetup)} />;
-              case GameState.PracticeSetup: 
-                return <SetupScreen onStart={handleStartPractice} onGoHome={handleGoHome} isPractice={true} />;
+                    onSelectSolo={() => setGameState(GameState.SoloSetup)} />;
+              case GameState.SoloSetup: 
+                return <SetupScreen onStart={handleStartSolo} onGoHome={handleGoHome} isSolo={true} />;
               case GameState.CreateGameSetup:
-                return <SetupScreen onStart={handleCreateLobby} onGoHome={handleGoHome} isPractice={false} />;
+                return <SetupScreen onStart={handleCreateLobby} onGoHome={handleGoHome} isSolo={false} />;
               case GameState.JoinGameSetup:
                 return <JoinGameScreen onJoin={handleJoinGame} onGoHome={handleGoHome} />;
               case GameState.Lobby:
                 return gameData && <LobbyScreen gameId={gameId} gameData={gameData} playerId={playerId} onStartGame={handleStartGame} />;
               case GameState.InGame:
-                if (practiceData) { // Solo mode
-                    return <GameScreen gameData={practiceData} playerId={playerId} onTimeUp={handleEndPractice} onGoHome={handleGoHome} />;
+                if (soloData) { // Solo mode
+                    const soloGameWithStartTime = { ...soloData, startTime: new Date() }; // Mock start time for solo
+                    return <GameScreen gameData={soloGameWithStartTime} playerId={playerId} onTimeUp={handleEndSolo} onGoHome={handleGoHome} />;
                 }
                 if (gameData) { // Multiplayer mode
+                    const isHost = playerId === gameData.hostId;
+                    if (isHost) {
+                        return <HostScreen gameData={gameData} onEndGame={handleForceEndGame} />;
+                    }
                     return <GameScreen gameData={gameData} playerId={playerId} onTimeUp={handleEndMultiplayerGame} onGoHome={handleGoHome} />;
                 }
                 return null;
               case GameState.Results: 
                 if (scoreAnalysis) { // Solo results
-                    const soloGameData = { prompt: practiceData.prompt, players: { [playerId]: { nickname: 'You', text: finalText, analysis: scoreAnalysis } } };
+                    const soloGameData = { prompt: soloData.prompt, players: { [playerId]: { nickname: 'You', text: finalText, analysis: scoreAnalysis } } };
                     return <ResultsScreen gameData={soloGameData} playerId={playerId} onPlayAgain={handlePlayAgain} onGoHome={handleGoHome} />;
                 }
                 if (gameData) { // Multiplayer results
@@ -644,7 +724,7 @@ window.addEventListener('load', () => {
                 }
                 return null;
               default: 
-                return <HomeScreen onSelectPractice={() => setGameState(GameState.PracticeSetup)} />;
+                return <HomeScreen onSelectSolo={() => setGameState(GameState.SoloSetup)} />;
           }
       };
 
