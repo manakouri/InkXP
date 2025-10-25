@@ -206,6 +206,43 @@ const analyzeScore = (text, criteria) => {
     return { totalScore, breakdown, highestScoring, lowestScoring };
 };
 
+// utils/pdf.js
+const downloadPDF = (nickname, story, prompt) => {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    
+    const title = story?.title || 'Untitled Story';
+    const text = story?.text || 'No text submitted.';
+
+    // Title
+    doc.setFontSize(22);
+    doc.setFont('helvetica', 'bold');
+    doc.text(title, 105, 20, { align: 'center' });
+
+    // Author
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`By: ${nickname}`, 105, 30, { align: 'center' });
+    
+    // Prompt
+    doc.setFontSize(10);
+    doc.setTextColor(150);
+    doc.text(`Prompt: ${prompt.text}`, 10, 45, { maxWidth: 190 });
+
+    // Divider
+    doc.setLineWidth(0.5);
+    doc.line(10, 55, 200, 55);
+
+    // Story Text
+    doc.setFontSize(12);
+    doc.setTextColor(0);
+    const storyLines = doc.splitTextToSize(text, 190);
+    doc.text(storyLines, 10, 65);
+
+    // Save file
+    doc.save(`InkXP_Story_${nickname.replace(/\s/g, '_')}.pdf`);
+};
+
 // components/LoadingSpinner.js
 const LoadingSpinner = () => <div className="w-8 h-8 border-4 border-sky-200 border-t-sky-600 rounded-full animate-spin"></div>;
 
@@ -466,6 +503,44 @@ const HostScreen = ({ gameData, onEndGame }) => {
   );
 };
 
+// components/PlayerDetailModal.js
+const PlayerDetailModal = ({ player, gamePrompt, onClose }) => {
+    if (!player) return null;
+    const analysis = player.analysis || { breakdown: [], totalScore: 0 };
+    return (
+        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={onClose}>
+            <div className="bg-white p-6 rounded-xl shadow-2xl w-full max-w-3xl text-left relative" onClick={(e) => e.stopPropagation()}>
+                <button onClick={onClose} className="absolute top-3 right-4 text-slate-500 hover:text-slate-800 text-3xl font-bold">&times;</button>
+                <h3 className="text-2xl font-bold text-slate-800 mb-4">{player.story?.title || 'Untitled Story'}</h3>
+                <p className="text-slate-600 mb-4 -mt-2">by: {player.nickname}</p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-h-[70vh]">
+                    <div className="md:col-span-2 overflow-y-auto pr-2">
+                         <h4 className="text-lg font-bold text-slate-800 mb-2">Full Story</h4>
+                         <p className="text-sm font-semibold text-sky-600 mb-2">{gamePrompt.text}</p>
+                         <div className="prose max-w-none text-slate-700 whitespace-pre-wrap bg-slate-50 p-4 rounded-md">{player.story?.text || "No text submitted."}</div>
+                    </div>
+                    <div className="overflow-y-auto">
+                        <h4 className="text-lg font-bold text-slate-800 mb-2">Score Breakdown</h4>
+                        <ul className="space-y-2">
+                           {analysis.breakdown.map((item) => (
+                               <li key={item.id} className="flex justify-between items-center text-sm p-2 bg-slate-50 rounded-md">
+                                   <span className="text-slate-700">{item.name} ({item.count})</span>
+                                   <span className="font-semibold text-emerald-600">+{item.score.toLocaleString()}</span>
+                               </li>
+                           ))}
+                            <li className="flex justify-between items-center text-base font-bold p-2 bg-sky-100 rounded-md mt-4">
+                                   <span className="text-sky-800">Total Score</span>
+                                   <span className="text-sky-800">{analysis.totalScore.toLocaleString()}</span>
+                               </li>
+                       </ul>
+                       <Button onClick={() => downloadPDF(player.nickname, player.story, gamePrompt)} size="medium" className="mt-6 w-full">Download as PDF</Button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 // components/HostResultsScreen.js
 const HostResultsScreen = ({ gameData, onNewGame, onGoHome, isHistoryView = false, onBackToDashboard }) => {
   const [selectedPlayer, setSelectedPlayer] = useState(null);
@@ -473,79 +548,6 @@ const HostResultsScreen = ({ gameData, onNewGame, onGoHome, isHistoryView = fals
   const sortedPlayers = Object.entries(gameData.players)
     .map(([id, data]) => ({ id, ...data, totalScore: data.analysis?.totalScore || 0 }))
     .sort((a, b) => b.totalScore - a.totalScore);
-
-  const downloadPDF = (nickname, story) => {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    
-    const title = story?.title || 'Untitled Story';
-    const text = story?.text || 'No text submitted.';
-
-    // Title
-    doc.setFontSize(22);
-    doc.setFont('helvetica', 'bold');
-    doc.text(title, 105, 20, { align: 'center' });
-
-    // Author
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`By: ${nickname}`, 105, 30, { align: 'center' });
-    
-    // Prompt
-    doc.setFontSize(10);
-    doc.setTextColor(150);
-    doc.text(`Prompt: ${gameData.prompt.text}`, 10, 45, { maxWidth: 190 });
-
-    // Divider
-    doc.setLineWidth(0.5);
-    doc.line(10, 55, 200, 55);
-
-    // Story Text
-    doc.setFontSize(12);
-    doc.setTextColor(0);
-    const storyLines = doc.splitTextToSize(text, 190);
-    doc.text(storyLines, 10, 65);
-
-    // Save file
-    doc.save(`InkXP_Story_${nickname.replace(/\s/g, '_')}.pdf`);
-  };
-
-  const PlayerDetailModal = ({ player, onClose }) => {
-      if (!player) return null;
-      const analysis = player.analysis || { breakdown: [], totalScore: 0 };
-      return (
-          <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={onClose}>
-              <div className="bg-white p-6 rounded-xl shadow-2xl w-full max-w-3xl text-left relative" onClick={(e) => e.stopPropagation()}>
-                  <button onClick={onClose} className="absolute top-3 right-4 text-slate-500 hover:text-slate-800 text-3xl font-bold">&times;</button>
-                  <h3 className="text-2xl font-bold text-slate-800 mb-4">{player.story?.title || 'Untitled Story'}</h3>
-                  <p className="text-slate-600 mb-4 -mt-2">by: {player.nickname}</p>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-h-[70vh]">
-                      <div className="md:col-span-2 overflow-y-auto pr-2">
-                           <h4 className="text-lg font-bold text-slate-800 mb-2">Full Story</h4>
-                           <p className="text-sm font-semibold text-sky-600 mb-2">{gameData.prompt.text}</p>
-                           <div className="prose max-w-none text-slate-700 whitespace-pre-wrap bg-slate-50 p-4 rounded-md">{player.story?.text || "No text submitted."}</div>
-                      </div>
-                      <div className="overflow-y-auto">
-                          <h4 className="text-lg font-bold text-slate-800 mb-2">Score Breakdown</h4>
-                          <ul className="space-y-2">
-                             {analysis.breakdown.map((item) => (
-                                 <li key={item.id} className="flex justify-between items-center text-sm p-2 bg-slate-50 rounded-md">
-                                     <span className="text-slate-700">{item.name} ({item.count})</span>
-                                     <span className="font-semibold text-emerald-600">+{item.score.toLocaleString()}</span>
-                                 </li>
-                             ))}
-                              <li className="flex justify-between items-center text-base font-bold p-2 bg-sky-100 rounded-md mt-4">
-                                     <span className="text-sky-800">Total Score</span>
-                                     <span className="text-sky-800">{analysis.totalScore.toLocaleString()}</span>
-                                 </li>
-                         </ul>
-                         <Button onClick={() => downloadPDF(player.nickname, player.story)} size="medium" className="mt-6 w-full">Download as PDF</Button>
-                      </div>
-                  </div>
-              </div>
-          </div>
-      );
-  };
 
   return (
       <div className="flex flex-col items-center">
@@ -580,7 +582,7 @@ const HostResultsScreen = ({ gameData, onNewGame, onGoHome, isHistoryView = fals
                   </>
               )}
           </div>
-          <PlayerDetailModal player={selectedPlayer} onClose={() => setSelectedPlayer(null)} />
+          {selectedPlayer && <PlayerDetailModal player={selectedPlayer} gamePrompt={gameData.prompt} onClose={() => setSelectedPlayer(null)} />}
       </div>
   );
 };
@@ -761,19 +763,96 @@ const SetupScreen = ({ onStart, onGoHome, onBackToDashboard, isSolo = false, isT
     );
 };
 
+// components/PlayerHistoryModal.js
+const PlayerHistoryModal = ({ player, onClose }) => {
+    const [viewingWriting, setViewingWriting] = useState(null);
+    if (!player) return null;
+
+    const formatDate = (timestamp) => {
+        if (!timestamp) return 'N/A';
+        return timestamp.toDate().toLocaleDateString('en-US', {
+            month: 'short', day: 'numeric', year: 'numeric'
+        });
+    }
+
+    return (
+        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={onClose}>
+            <div className="bg-white p-6 rounded-xl shadow-2xl w-full max-w-3xl text-left relative" onClick={(e) => e.stopPropagation()}>
+                <button onClick={onClose} className="absolute top-3 right-4 text-slate-500 hover:text-slate-800 text-3xl font-bold">&times;</button>
+                <h3 className="text-2xl font-bold text-slate-800 mb-4">Writing History for <span className="text-sky-600">{player.nickname}</span></h3>
+                <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-2">
+                    {player.writings.length > 0 ? player.writings.map((writing, index) => (
+                        <div key={`${player.id}-${index}`} className="bg-slate-50 p-3 rounded-lg border border-slate-200 flex justify-between items-center">
+                            <div>
+                                <p className="font-semibold text-slate-700 truncate" title={writing.prompt.text}>{writing.story.title || 'Untitled Story'}</p>
+                                <p className="text-sm text-slate-500">{formatDate(writing.createdAt)} &bull; Score: <span className="font-bold">{writing.analysis.totalScore.toLocaleString()}</span></p>
+                            </div>
+                            <Button onClick={() => setViewingWriting(writing)} size="small" variant="secondary">View Writing</Button>
+                        </div>
+                    )) : <p className="text-slate-500 text-center py-4">This player has not submitted any writing yet.</p>}
+                </div>
+            </div>
+            {viewingWriting && (
+                <PlayerDetailModal 
+                    player={{ nickname: player.nickname, story: viewingWriting.story, analysis: viewingWriting.analysis }}
+                    gamePrompt={viewingWriting.prompt}
+                    onClose={() => setViewingWriting(null)}
+                />
+            )}
+        </div>
+    );
+};
+
 // components/TeacherDashboard.js
 const TeacherDashboard = ({ currentUser, onCreateNewGame, onViewGame, onSignOut }) => {
   const [games, setGames] = useState([]);
+  const [playersData, setPlayersData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('games'); // 'games' or 'players'
+  const [viewingPlayer, setViewingPlayer] = useState(null);
 
   useEffect(() => {
       if (!currentUser) return;
       const unsubscribe = getGamesForTeacher(currentUser.uid, (fetchedGames) => {
           setGames(fetchedGames);
+          
+          const aggregatedPlayers = {};
+          fetchedGames.forEach(game => {
+              Object.entries(game.players).forEach(([playerId, playerData]) => {
+                  if (playerData.analysis) {
+                      if (!aggregatedPlayers[playerId]) {
+                          aggregatedPlayers[playerId] = {
+                              id: playerId,
+                              nickname: playerData.nickname,
+                              writings: []
+                          };
+                      }
+                      aggregatedPlayers[playerId].nickname = playerData.nickname;
+                      aggregatedPlayers[playerId].writings.push({
+                          gameId: game.id,
+                          prompt: game.prompt,
+                          createdAt: game.createdAt,
+                          story: playerData.story,
+                          analysis: playerData.analysis
+                      });
+                  }
+              });
+          });
+          
+          Object.values(aggregatedPlayers).forEach(p => {
+              p.writings.sort((a, b) => (b.createdAt?.toDate() || 0) - (a.createdAt?.toDate() || 0));
+          });
+
+          setPlayersData(aggregatedPlayers);
           setLoading(false);
       });
       return () => unsubscribe();
   }, [currentUser]);
+
+  const sortedPlayers = useMemo(() => {
+      if (!playersData) return [];
+      return Object.values(playersData).sort((a, b) => a.nickname.localeCompare(b.nickname));
+  }, [playersData]);
 
   const formatDate = (timestamp) => {
       if (!timestamp) return 'Just now';
@@ -782,9 +861,18 @@ const TeacherDashboard = ({ currentUser, onCreateNewGame, onViewGame, onSignOut 
       });
   }
 
+  const TabButton = ({ isActive, onClick, children }) => (
+      <button 
+        onClick={onClick}
+        className={`px-4 py-2 text-sm font-semibold rounded-md transition-colors ${isActive ? 'bg-sky-600 text-white' : 'text-slate-600 hover:bg-slate-200'}`}
+      >
+        {children}
+      </button>
+  );
+
   return (
       <div>
-          <div className="flex justify-between items-center mb-6">
+          <div className="flex justify-between items-start mb-6">
               <div>
                   <h2 className="text-2xl font-bold text-slate-800">Teacher Dashboard</h2>
                   <p className="text-slate-600">Welcome, {currentUser.displayName || 'Teacher'}!</p>
@@ -799,29 +887,56 @@ const TeacherDashboard = ({ currentUser, onCreateNewGame, onViewGame, onSignOut 
                   </span>
               </Button>
           </div>
+          
+          <div className="mb-4 flex items-center gap-2 p-1 bg-slate-100 rounded-lg max-w-sm mx-auto">
+              <TabButton isActive={activeTab === 'games'} onClick={() => setActiveTab('games')}>Game History</TabButton>
+              <TabButton isActive={activeTab === 'players'} onClick={() => setActiveTab('players')}>Player History</TabButton>
+          </div>
+
           <div>
-              <h3 className="text-xl font-bold text-slate-500 uppercase tracking-wider mb-3">Game History</h3>
               {loading ? (
                   <div className="flex justify-center p-8"><LoadingSpinner /></div>
-              ) : games.length > 0 ? (
-                  <div className="space-y-4">
-                      {games.map(game => (
-                          <div key={game.id} className="bg-white p-4 rounded-lg shadow-md border border-slate-200 flex justify-between items-center">
-                              <div>
-                                  <p className="font-semibold text-sky-700">{game.prompt.text}</p>
-                                  <p className="text-sm text-slate-500">{formatDate(game.createdAt)} &bull; {Object.keys(game.players).length} players</p>
+              ) : activeTab === 'games' ? (
+                  games.length > 0 ? (
+                      <div className="space-y-4">
+                          {games.map(game => (
+                              <div key={game.id} className="bg-white p-4 rounded-lg shadow-md border border-slate-200 flex justify-between items-center">
+                                  <div>
+                                      <p className="font-semibold text-sky-700">{game.prompt.text}</p>
+                                      <p className="text-sm text-slate-500">{formatDate(game.createdAt)} &bull; {Object.keys(game.players).length} players</p>
+                                  </div>
+                                  <Button onClick={() => onViewGame(game)} size="small" variant="secondary">View Results</Button>
                               </div>
-                              <Button onClick={() => onViewGame(game)} size="small" variant="secondary">View Results</Button>
-                          </div>
-                      ))}
-                  </div>
-              ) : (
-                  <div className="text-center bg-slate-100 p-8 rounded-lg">
-                      <p className="text-slate-600">You haven't hosted any games yet.</p>
-                      <p className="text-slate-500 text-sm mt-1">Click "Create New Game" to get started!</p>
-                  </div>
+                          ))}
+                      </div>
+                  ) : (
+                      <div className="text-center bg-slate-100 p-8 rounded-lg">
+                          <p className="text-slate-600">You haven't hosted any games yet.</p>
+                          <p className="text-slate-500 text-sm mt-1">Click "Create New Game" to get started!</p>
+                      </div>
+                  )
+              ) : ( // Player History Tab
+                  sortedPlayers.length > 0 ? (
+                      <div className="space-y-4">
+                          {sortedPlayers.map(player => (
+                              <div key={player.id} className="bg-white p-4 rounded-lg shadow-md border border-slate-200 flex justify-between items-center">
+                                  <div>
+                                      <p className="font-semibold text-sky-700">{player.nickname}</p>
+                                      <p className="text-sm text-slate-500">{player.writings.length} stories written</p>
+                                  </div>
+                                  <Button onClick={() => setViewingPlayer(player)} size="small" variant="secondary">View History</Button>
+                              </div>
+                          ))}
+                      </div>
+                  ) : (
+                      <div className="text-center bg-slate-100 p-8 rounded-lg">
+                          <p className="text-slate-600">No player data found yet.</p>
+                          <p className="text-slate-500 text-sm mt-1">Player history will appear here after they complete a game.</p>
+                      </div>
+                  )
               )}
           </div>
+          {viewingPlayer && <PlayerHistoryModal player={viewingPlayer} onClose={() => setViewingPlayer(null)} />}
       </div>
   );
 };
