@@ -14,6 +14,14 @@
       }
     </style>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script>
+    Babel.registerPreset("app-preset", {
+      presets: [
+        [Babel.availablePresets["typescript"], { allExtensions: true, isTSX: true }],
+        [Babel.availablePresets["react"], { runtime: "automatic" }]
+      ],
+    });
+  </script>
   <script type="importmap">
 {
   "imports": {
@@ -27,6 +35,6 @@
 </head>
   <body class="bg-slate-50 text-slate-800">
     <div id="root"></div>
-    <script type="text/babel" data-type="module" data-presets="react,typescript" src="./index.js"></script>
+    <script type="text/babel" data-type="module" data-presets="app-preset" src="./index.js"></script>
   </body>
 </html>
