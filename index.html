@@ -132,6 +132,13 @@ window.addEventListener('load', () => {
     });
   };
 
+  const updatePlayerAnalysis = async (gameCode, playerId, analysis) => {
+    const gameRef = doc(db, 'games', gameCode);
+    await updateDoc(gameRef, {
+        [`players.${playerId}.analysis`]: analysis,
+    });
+  };
+
   const finishGame = async (gameCode) => {
     await updateDoc(doc(db, 'games', gameCode), { status: 'finished' });
   }
@@ -303,7 +310,7 @@ window.addEventListener('load', () => {
   };
   
   // components/GameScreen.js
-  const GameScreen = ({ gameData, playerId, onTimeUp, onGoHome }) => {
+  const GameScreen = ({ gameData, playerId, onTimeUp, onGoHome, onScoreUpdate }) => {
       const { useState, useEffect, useRef, useCallback, useMemo } = React;
 
       const fullCriteria = useMemo(() => {
@@ -321,10 +328,16 @@ window.addEventListener('load', () => {
       const prevScoreRef = useRef(0);
       const wordCount = useMemo(() => { if (!text.trim()) return 0; return text.trim().split(/\s+/).length; }, [text]);
       
+      const onScoreUpdateRef = useRef(onScoreUpdate);
+      onScoreUpdateRef.current = onScoreUpdate;
+
       useEffect(() => {
           const handler = setTimeout(() => {
               const analysis = analyzeScore(text, fullCriteria);
               setScoreAnalysis(analysis);
+              if (onScoreUpdateRef.current) {
+                  onScoreUpdateRef.current(analysis);
+              }
               if (analysis.totalScore > prevScoreRef.current) {
                   setIsScoreAnimating(true);
                   setTimeout(() => setIsScoreAnimating(false), 300);
@@ -344,6 +357,12 @@ window.addEventListener('load', () => {
               onTimeUpRef.current(text, finalAnalysis);
           }
       }, [text, fullCriteria]);
+
+      useEffect(() => {
+        if (gameData && gameData.status === 'finished' && !hasFired.current) {
+            handleTimeUp();
+        }
+      }, [gameData, handleTimeUp]);
   
       const planningPlaceholder = "Jot down your ideas...\n- Beginning: \n- Middle (The Problem): \n- End (The Solution): \n- Senses to include: ";
   
@@ -424,6 +443,96 @@ window.addEventListener('load', () => {
         </div>
     );
   };
+
+  // components/HostResultsScreen.js
+  const HostResultsScreen = ({ gameData, onNewGame, onGoHome }) => {
+    const { useState } = React;
+    const [selectedPlayer, setSelectedPlayer] = useState(null);
+
+    const sortedPlayers = Object.entries(gameData.players)
+      .map(([id, data]) => ({ id, ...data, totalScore: data.analysis?.totalScore || 0 }))
+      .sort((a, b) => b.totalScore - a.totalScore);
+
+    const downloadTextFile = (nickname, text) => {
+        const filename = `InkXP_Story_${nickname.replace(/\s/g, '_')}.txt`;
+        const fileContent = `Story by: ${nickname}\nPrompt: ${gameData.prompt.text}\n\n---\n\n${text}`;
+        const element = document.createElement('a');
+        element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(fileContent));
+        element.setAttribute('download', filename);
+        element.style.display = 'none';
+        document.body.appendChild(element);
+        element.click();
+        document.body.removeChild(element);
+    };
+
+    const PlayerDetailModal = ({ player, onClose }) => {
+        if (!player) return null;
+        const analysis = player.analysis || { breakdown: [], totalScore: 0 };
+        return (
+            <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={onClose}>
+                <div className="bg-white p-6 rounded-xl shadow-2xl w-full max-w-3xl text-left relative" onClick={(e) => e.stopPropagation()}>
+                    <button onClick={onClose} className="absolute top-3 right-4 text-slate-500 hover:text-slate-800 text-3xl font-bold">&times;</button>
+                    <h3 className="text-2xl font-bold text-slate-800 mb-4">Writing by: {player.nickname}</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-h-[70vh]">
+                        <div className="md:col-span-2 overflow-y-auto pr-2">
+                             <h4 className="text-lg font-bold text-slate-800 mb-2">Full Story</h4>
+                             <p className="text-sm font-semibold text-sky-600 mb-2">{gameData.prompt.text}</p>
+                             <div className="prose max-w-none text-slate-700 whitespace-pre-wrap bg-slate-50 p-4 rounded-md">{player.text || "No text submitted."}</div>
+                        </div>
+                        <div className="overflow-y-auto">
+                            <h4 className="text-lg font-bold text-slate-800 mb-2">Score Breakdown</h4>
+                            <ul className="space-y-2">
+                               {analysis.breakdown.map((item) => (
+                                   <li key={item.id} className="flex justify-between items-center text-sm p-2 bg-slate-50 rounded-md">
+                                       <span className="text-slate-700">{item.name} ({item.count})</span>
+                                       <span className="font-semibold text-emerald-600">+{item.score.toLocaleString()}</span>
+                                   </li>
+                               ))}
+                                <li className="flex justify-between items-center text-base font-bold p-2 bg-sky-100 rounded-md mt-4">
+                                       <span className="text-sky-800">Total Score</span>
+                                       <span className="text-sky-800">{analysis.totalScore.toLocaleString()}</span>
+                                   </li>
+                           </ul>
+                           <Button onClick={() => downloadTextFile(player.nickname, player.text)} size="medium" className="mt-6 w-full">Download Story</Button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    return (
+        <div className="flex flex-col items-center">
+            <h2 className="text-3xl font-bold text-emerald-600 mb-2">Game Over!</h2>
+            <p className="text-slate-600 mb-6">Here are the final results and all the amazing stories written.</p>
+            <div className="w-full max-w-2xl bg-white p-6 rounded-lg shadow-md border border-slate-200">
+                 <h3 className="text-xl font-bold text-slate-500 uppercase tracking-wider mb-3">Final Leaderboard</h3>
+                 {sortedPlayers.length > 0 ? (
+                    <ol className="space-y-2">
+                     {sortedPlayers.map((player, index) => (
+                        <li key={player.id} className="p-3 rounded-md flex justify-between items-center bg-slate-50">
+                          <div className="flex items-center gap-4">
+                           <span className="font-bold text-slate-600 text-lg w-6">{index + 1}.</span>
+                           <span className="font-semibold text-slate-800 text-lg">{player.nickname}</span>
+                           <span className="font-bold text-sky-600">{player.totalScore.toLocaleString()}</span>
+                          </div>
+                          <Button onClick={() => setSelectedPlayer(player)} size="small">View Writing</Button>
+                        </li>
+                     ))}
+                    </ol>
+                 ) : (
+                    <p className="text-slate-500 text-center py-4">No players submitted a score.</p>
+                 )}
+            </div>
+             <div className="flex items-center gap-4 mt-8">
+                <Button onClick={onNewGame} size="large">Create New Game</Button>
+                <Button onClick={onGoHome} variant="secondary" size="large">Back to Home</Button>
+            </div>
+            <PlayerDetailModal player={selectedPlayer} onClose={() => setSelectedPlayer(null)} />
+        </div>
+    );
+  };
+
 
   // components/LobbyScreen.js
   const LobbyScreen = ({ gameId, gameData, playerId, onStartGame }) => {
@@ -659,6 +768,12 @@ window.addEventListener('load', () => {
         await submitResult(gameId, playerId, text, analysis);
       }, [gameId, playerId]);
       
+      const handleScoreUpdate = useCallback(async (analysis) => {
+          if (gameId && playerId) {
+              await updatePlayerAnalysis(gameId, playerId, analysis);
+          }
+      }, [gameId, playerId]);
+
       // Host check to finish the game when all players are done (optional auto-finish)
       useEffect(() => {
         if (gameData && gameData.hostId === playerId && gameData.status === 'in-progress') {
@@ -683,6 +798,11 @@ window.addEventListener('load', () => {
       const handlePlayAgain = useCallback(() => {
           resetGame();
           setGameState(GameState.Home);
+      }, [resetGame]);
+
+      const handleNewGame = useCallback(() => {
+          resetGame();
+          setGameState(GameState.CreateGameSetup);
       }, [resetGame]);
 
       const handleGoHome = useCallback(() => {
@@ -722,7 +842,7 @@ window.addEventListener('load', () => {
                     if (isHost) {
                         return <HostScreen gameData={gameData} onEndGame={handleForceEndGame} />;
                     }
-                    return <GameScreen gameData={gameData} playerId={playerId} onTimeUp={handleEndMultiplayerGame} onGoHome={handleGoHome} />;
+                    return <GameScreen gameData={gameData} playerId={playerId} onTimeUp={handleEndMultiplayerGame} onGoHome={handleGoHome} onScoreUpdate={handleScoreUpdate} />;
                 }
                 return null;
               case GameState.Results: 
@@ -731,6 +851,10 @@ window.addEventListener('load', () => {
                     return <ResultsScreen gameData={soloGameData} playerId={playerId} onPlayAgain={handlePlayAgain} onGoHome={handleGoHome} />;
                 }
                 if (gameData) { // Multiplayer results
+                    const isHost = playerId === gameData.hostId;
+                    if (isHost) {
+                      return <HostResultsScreen gameData={gameData} onNewGame={handleNewGame} onGoHome={handleGoHome} />;
+                    }
                     return <ResultsScreen gameData={gameData} playerId={playerId} onPlayAgain={handlePlayAgain} onGoHome={handleGoHome} />;
                 }
                 return null;
