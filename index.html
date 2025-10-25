@@ -784,8 +784,8 @@ const PlayerHistoryModal = ({ player, onClose }) => {
                     {player.writings.length > 0 ? player.writings.map((writing, index) => (
                         <div key={`${player.id}-${index}`} className="bg-slate-50 p-3 rounded-lg border border-slate-200 flex justify-between items-center">
                             <div>
-                                <p className="font-semibold text-slate-700 truncate" title={writing.prompt.text}>{writing.story.title || 'Untitled Story'}</p>
-                                <p className="text-sm text-slate-500">{formatDate(writing.createdAt)} &bull; Score: <span className="font-bold">{writing.analysis.totalScore.toLocaleString()}</span></p>
+                                <p className="font-semibold text-slate-700 truncate" title={writing.prompt?.text}>{writing.story?.title || 'Untitled Story'}</p>
+                                <p className="text-sm text-slate-500">{formatDate(writing.createdAt)} &bull; Score: <span className="font-bold">{(writing.analysis?.totalScore || 0).toLocaleString()}</span></p>
                             </div>
                             <Button onClick={() => setViewingWriting(writing)} size="small" variant="secondary">View Writing</Button>
                         </div>
@@ -832,7 +832,7 @@ const TeacherDashboard = ({ currentUser, onCreateNewGame, onViewGame, onSignOut 
                           gameId: game.id,
                           prompt: game.prompt,
                           createdAt: game.createdAt,
-                          story: playerData.story,
+                          story: playerData.story || { title: '', text: '' },
                           analysis: playerData.analysis
                       });
                   }
