@@ -29,14 +29,16 @@
       import ReactDOM from "https://aistudiocdn.com/react-dom@^19.2.0/client";
       import * as genai from "https://aistudiocdn.com/@google/genai@^1.27.0";
       import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-      import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+      import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+      import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, serverTimestamp, collection, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
       window.React = React;
       window.ReactDOM = ReactDOM;
       window.genai = genai;
       window.firebase = {
         app: { initializeApp },
-        firestore: { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, serverTimestamp }
+        firestore: { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, serverTimestamp, collection, query, where, orderBy },
+        auth: { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut }
       };
     </script>
 
@@ -53,6 +55,7 @@ window.addEventListener('load', () => {
       GameState[GameState["Lobby"] = 4] = "Lobby";
       GameState[GameState["InGame"] = 5] = "InGame";
       GameState[GameState["Results"] = 6] = "Results";
+      GameState[GameState["TeacherDashboard"] = 7] = "TeacherDashboard";
   })(GameState || (GameState = {}));
 
   var WritingCategory;
@@ -80,7 +83,9 @@ window.addEventListener('load', () => {
 
   // services/firebaseService.js
   const { initializeApp } = window.firebase.app;
-  const { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, serverTimestamp } = window.firebase.firestore;
+  const { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, serverTimestamp, collection, query, where, orderBy } = window.firebase.firestore;
+  const { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } = window.firebase.auth;
+
   const firebaseConfig = {
     apiKey: "AIzaSyAVUseBH0axB3fVUOg7rgALJBvq4N4N-1M",
     authDomain: "inkxp-569a6.firebaseapp.com",
@@ -91,14 +96,20 @@ window.addEventListener('load', () => {
   };
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
+  const auth = getAuth(app);
+  const googleProvider = new GoogleAuthProvider();
+
+  const onAuthChange = (callback) => onAuthStateChanged(auth, callback);
+  const signInWithGoogle = () => signInWithPopup(auth, googleProvider);
+  const signOutUser = () => signOut(auth);
 
   const generateGameCode = () => Math.random().toString(36).substring(2, 8).toUpperCase();
   
-  const createGame = async (hostId, prompt, criteria, duration) => {
+  const createGame = async (hostId, prompt, criteria, duration, teacherId) => {
       const gameCode = generateGameCode();
       const gameRef = doc(db, 'games', gameCode);
       const gameData = {
-          hostId, prompt, criteria, duration,
+          hostId, prompt, criteria, duration, teacherId,
           status: 'waiting', // waiting, in-progress, finished
           players: {}, // Host is not a player, starts with empty players
           createdAt: serverTimestamp()
@@ -119,6 +130,21 @@ window.addEventListener('load', () => {
   
   const getGameStream = (gameCode, callback) => onSnapshot(doc(db, 'games', gameCode), (doc) => callback(doc.data()));
   
+  const getGamesForTeacher = (teacherId, callback) => {
+    const q = query(
+        collection(db, "games"), 
+        where("teacherId", "==", teacherId), 
+        orderBy("createdAt", "desc")
+    );
+    return onSnapshot(q, (querySnapshot) => {
+        const games = [];
+        querySnapshot.forEach((doc) => {
+            games.push({ id: doc.id, ...doc.data() });
+        });
+        callback(games);
+    });
+  };
+
   const startGame = async (gameCode) => await updateDoc(doc(db, 'games', gameCode), {
     status: 'in-progress',
     startTime: serverTimestamp()
@@ -445,7 +471,7 @@ window.addEventListener('load', () => {
   };
 
   // components/HostResultsScreen.js
-  const HostResultsScreen = ({ gameData, onNewGame, onGoHome }) => {
+  const HostResultsScreen = ({ gameData, onNewGame, onGoHome, isHistoryView = false, onBackToDashboard }) => {
     const { useState } = React;
     const [selectedPlayer, setSelectedPlayer] = useState(null);
 
@@ -503,8 +529,8 @@ window.addEventListener('load', () => {
 
     return (
         <div className="flex flex-col items-center">
-            <h2 className="text-3xl font-bold text-emerald-600 mb-2">Game Over!</h2>
-            <p className="text-slate-600 mb-6">Here are the final results and all the amazing stories written.</p>
+            <h2 className="text-3xl font-bold text-emerald-600 mb-2">{isHistoryView ? "Game Results" : "Game Over!"}</h2>
+            <p className="text-slate-600 mb-6">{isHistoryView ? "Here are the results for this game session." : "Here are the final results and all the amazing stories written."}</p>
             <div className="w-full max-w-2xl bg-white p-6 rounded-lg shadow-md border border-slate-200">
                  <h3 className="text-xl font-bold text-slate-500 uppercase tracking-wider mb-3">Final Leaderboard</h3>
                  {sortedPlayers.length > 0 ? (
@@ -525,8 +551,14 @@ window.addEventListener('load', () => {
                  )}
             </div>
              <div className="flex items-center gap-4 mt-8">
-                <Button onClick={onNewGame} size="large">Create New Game</Button>
-                <Button onClick={onGoHome} variant="secondary" size="large">Back to Home</Button>
+                {isHistoryView ? (
+                    <Button onClick={onBackToDashboard} variant="secondary" size="large">Back to Dashboard</Button>
+                ) : (
+                    <>
+                        <Button onClick={onNewGame} size="large">Create New Game</Button>
+                        <Button onClick={onGoHome} variant="secondary" size="large">Back to Home</Button>
+                    </>
+                )}
             </div>
             <PlayerDetailModal player={selectedPlayer} onClose={() => setSelectedPlayer(null)} />
         </div>
@@ -626,7 +658,7 @@ window.addEventListener('load', () => {
   };
 
   // components/SetupScreen.js
-  const SetupScreen = ({ onStart, onGoHome, isSolo = false }) => {
+  const SetupScreen = ({ onStart, onGoHome, onBackToDashboard, isSolo = false, isTeacher = false }) => {
       const { useState, useCallback, useMemo } = React;
       const [currentPrompt, setCurrentPrompt] = useState(() => NARRATIVE_PROMPTS[Math.floor(Math.random() * NARRATIVE_PROMPTS.length)]);
       const [duration, setDuration] = useState(5);
@@ -663,32 +695,105 @@ window.addEventListener('load', () => {
                   </div>
               </div>
               <div className="flex items-center gap-4">
-                <Button onClick={onGoHome} variant="secondary" size="large">Back to Home</Button>
+                <Button onClick={isTeacher ? onBackToDashboard : onGoHome} variant="secondary" size="large">{isTeacher ? "Back to Dashboard" : "Back to Home"}</Button>
                 <Button onClick={handleStart} size="large">{isSolo ? "Start Writing!" : "Create Game Lobby"}</Button>
               </div>
           </div>
       );
   };
+  
+  // components/TeacherDashboard.js
+  const TeacherDashboard = ({ currentUser, onCreateNewGame, onViewGame, onSignOut }) => {
+    const { useState, useEffect } = React;
+    const [games, setGames] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        if (!currentUser) return;
+        const unsubscribe = getGamesForTeacher(currentUser.uid, (fetchedGames) => {
+            setGames(fetchedGames);
+            setLoading(false);
+        });
+        return () => unsubscribe();
+    }, [currentUser]);
+
+    const formatDate = (timestamp) => {
+        if (!timestamp) return 'Just now';
+        return timestamp.toDate().toLocaleDateString('en-US', {
+            year: 'numeric', month: 'long', day: 'numeric'
+        });
+    }
+
+    return (
+        <div>
+            <div className="flex justify-between items-center mb-6">
+                <div>
+                    <h2 className="text-2xl font-bold text-slate-800">Teacher Dashboard</h2>
+                    <p className="text-slate-600">Welcome, {currentUser.displayName || 'Teacher'}!</p>
+                </div>
+                <Button onClick={onSignOut} variant="secondary">Sign Out</Button>
+            </div>
+            <div className="text-center mb-8">
+                <Button onClick={onCreateNewGame} size="large">
+                    <span className="flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+                        Create New Game
+                    </span>
+                </Button>
+            </div>
+            <div>
+                <h3 className="text-xl font-bold text-slate-500 uppercase tracking-wider mb-3">Game History</h3>
+                {loading ? (
+                    <div className="flex justify-center p-8"><LoadingSpinner /></div>
+                ) : games.length > 0 ? (
+                    <div className="space-y-4">
+                        {games.map(game => (
+                            <div key={game.id} className="bg-white p-4 rounded-lg shadow-md border border-slate-200 flex justify-between items-center">
+                                <div>
+                                    <p className="font-semibold text-sky-700">{game.prompt.text}</p>
+                                    <p className="text-sm text-slate-500">{formatDate(game.createdAt)} &bull; {Object.keys(game.players).length} players</p>
+                                </div>
+                                <Button onClick={() => onViewGame(game)} size="small" variant="secondary">View Results</Button>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="text-center bg-slate-100 p-8 rounded-lg">
+                        <p className="text-slate-600">You haven't hosted any games yet.</p>
+                        <p className="text-slate-500 text-sm mt-1">Click "Create New Game" to get started!</p>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+  };
+
 
   // components/HomeScreen.js
-  const ModeCard = ({ title, description, icon, onClick, disabled }) => (
+  const ModeCard = ({ title, description, icon, onClick, disabled, buttonText }) => (
       <div className={`p-6 rounded-xl shadow-md flex flex-col items-center text-center transition-all duration-300 ${disabled ? 'bg-slate-200 text-slate-500' : 'bg-white hover:shadow-xl hover:-translate-y-1'}`}>
           <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${disabled ? 'bg-slate-300' : 'bg-sky-100 text-sky-600'}`}>
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8"><path strokeLinecap="round" strokeLinejoin="round" d={icon} /></svg>
           </div>
           <h3 className="text-xl font-bold mb-2">{title}</h3>
           <p className="text-sm mb-4 flex-grow">{description}</p>
-          <Button onClick={onClick} disabled={disabled} className="mt-auto">{disabled ? 'Coming Soon' : 'Let\'s Go!'}</Button>
+          <Button onClick={onClick} disabled={disabled} className="mt-auto">{buttonText}</Button>
       </div>
   );
-  const HomeScreen = ({ onSelectCreate, onSelectJoin, onSelectSolo }) => (
+  const HomeScreen = ({ onSelectTeacherLogin, onSelectDashboard, onSelectJoin, onSelectSolo, currentUser }) => (
       <div className="text-center">
           <h2 className="text-3xl font-bold text-slate-800 mb-4">Welcome!</h2>
           <p className="text-lg text-slate-600 mb-8 max-w-2xl mx-auto">Choose a mode to begin your writing adventure. Sharpen your skills, join a friend's game, or create a challenge for your class!</p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-              <ModeCard title="Create a Game" description="Be the game master! Choose prompts, set timers, and challenge your friends." icon=" M12 4.5v15m7.5-7.5h-15" onClick={onSelectCreate} disabled={false} />
-              <ModeCard title="Join a Game" description="Got a game code? Enter it here to join a writing quest with your classmates." icon="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" onClick={onSelectJoin} disabled={false} />
-              <ModeCard title="Solo Mode" description="Fly solo! Get a random prompt and practice your writing skills at your own pace." icon="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" onClick={onSelectSolo} disabled={false} />
+              <ModeCard 
+                title={currentUser ? "Teacher Dashboard" : "Create a Game"}
+                description={currentUser ? "View your game history and create new challenges for your students." : "Sign in to be the game master! Choose prompts and set timers."}
+                icon={currentUser ? "M3.75 3v11.25A2.25 2.25 0 006 16.5h12A2.25 2.25 0 0020.25 14.25V3.75A2.25 2.25 0 0018 1.5H6A2.25 2.25 0 003.75 3zM12 18.75a.75.75 0 01.75.75v.008a.75.75 0 01-.75.75h-.008a.75.75 0 01-.75-.75v-.008a.75.75 0 01.75-.75h.008z" : "M12 4.5v15m7.5-7.5h-15" }
+                onClick={currentUser ? onSelectDashboard : onSelectTeacherLogin} 
+                buttonText={currentUser ? "Go to Dashboard" : "Teacher Login"}
+              />
+              <ModeCard title="Join a Game" description="Got a game code? Enter it here to join a writing quest with your classmates." icon="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" onClick={onSelectJoin} disabled={false} buttonText="Let's Go!" />
+              <ModeCard title="Solo Mode" description="Fly solo! Get a random prompt and practice your writing skills at your own pace." icon="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" onClick={onSelectSolo} disabled={false} buttonText="Let's Go!" />
           </div>
       </div>
   );
@@ -704,6 +809,9 @@ window.addEventListener('load', () => {
       const [soloData, setSoloData] = useState(null);
       const [finalText, setFinalText] = useState('');
       const [scoreAnalysis, setScoreAnalysis] = useState(null);
+      const [currentUser, setCurrentUser] = useState(null);
+      const [viewingGameData, setViewingGameData] = useState(null);
+      const [authLoading, setAuthLoading] = useState(true);
 
       useEffect(() => {
         let storedPlayerId = localStorage.getItem('inkxp_playerId');
@@ -712,6 +820,12 @@ window.addEventListener('load', () => {
             localStorage.setItem('inkxp_playerId', storedPlayerId);
         }
         setPlayerId(storedPlayerId);
+        
+        const unsubscribe = onAuthChange(user => {
+            setCurrentUser(user);
+            setAuthLoading(false);
+        });
+        return () => unsubscribe();
       }, []);
 
       useEffect(() => {
@@ -733,8 +847,27 @@ window.addEventListener('load', () => {
         setPlayerNickname(nickname);
       }, []);
 
+      const handleTeacherLogin = async () => {
+        try {
+            await signInWithGoogle();
+            setGameState(GameState.TeacherDashboard);
+        } catch (error) {
+            console.error("Error signing in: ", error);
+            alert("Could not sign in with Google. Please try again.");
+        }
+      };
+      
+      const handleSignOut = async () => {
+          await signOutUser();
+          setGameState(GameState.Home);
+      };
+
       const handleCreateLobby = async (prompt, criteriaIds, duration) => {
-        const newGameId = await createGame(playerId, prompt, criteriaIds, duration);
+        if (!currentUser) {
+            alert("You must be signed in to create a game.");
+            return;
+        }
+        const newGameId = await createGame(playerId, prompt, criteriaIds, duration, currentUser.uid);
         setGameId(newGameId);
         setGameState(GameState.Lobby);
       };
@@ -773,19 +906,11 @@ window.addEventListener('load', () => {
               await updatePlayerAnalysis(gameId, playerId, analysis);
           }
       }, [gameId, playerId]);
-
-      // Host check to finish the game when all players are done (optional auto-finish)
-      useEffect(() => {
-        if (gameData && gameData.hostId === playerId && gameData.status === 'in-progress') {
-            const playersCount = Object.keys(gameData.players).length;
-            if (playersCount > 0) {
-              const finishedPlayers = Object.values(gameData.players).filter(p => p.analysis !== null).length;
-              if (playersCount === finishedPlayers) {
-                  finishGame(gameId);
-              }
-            }
-        }
-      }, [gameData, playerId, gameId]);
+      
+      const handleViewGameHistory = (game) => {
+        setViewingGameData(game);
+        setGameState(GameState.Results);
+      };
 
       const resetGame = useCallback(() => {
           setGameId(null);
@@ -793,16 +918,12 @@ window.addEventListener('load', () => {
           setSoloData(null);
           setFinalText('');
           setScoreAnalysis(null);
+          setViewingGameData(null);
       }, []);
 
-      const handlePlayAgain = useCallback(() => {
+      const handleGoToDashboard = useCallback(() => {
           resetGame();
-          setGameState(GameState.Home);
-      }, [resetGame]);
-
-      const handleNewGame = useCallback(() => {
-          resetGame();
-          setGameState(GameState.CreateGameSetup);
+          setGameState(GameState.TeacherDashboard);
       }, [resetGame]);
 
       const handleGoHome = useCallback(() => {
@@ -811,6 +932,10 @@ window.addEventListener('load', () => {
       }, [resetGame]);
       
       const renderContent = () => {
+          if (authLoading) {
+            return <div className="flex justify-center p-8"><LoadingSpinner /></div>;
+          }
+
           const shouldPromptForNickname = playerId && !playerNickname && 
             (gameState === GameState.JoinGameSetup || (gameState === GameState.Lobby && gameData && !gameData.players[playerId] && gameData.hostId !== playerId));
 
@@ -821,13 +946,22 @@ window.addEventListener('load', () => {
           switch (gameState) {
               case GameState.Home:
                 return <HomeScreen 
-                    onSelectCreate={() => setGameState(GameState.CreateGameSetup)}
+                    currentUser={currentUser}
+                    onSelectTeacherLogin={handleTeacherLogin}
+                    onSelectDashboard={() => setGameState(GameState.TeacherDashboard)}
                     onSelectJoin={() => setGameState(GameState.JoinGameSetup)}
                     onSelectSolo={() => setGameState(GameState.SoloSetup)} />;
               case GameState.SoloSetup: 
                 return <SetupScreen onStart={handleStartSolo} onGoHome={handleGoHome} isSolo={true} />;
+              case GameState.TeacherDashboard:
+                return currentUser ? <TeacherDashboard 
+                    currentUser={currentUser}
+                    onCreateNewGame={() => setGameState(GameState.CreateGameSetup)}
+                    onViewGame={handleViewGameHistory}
+                    onSignOut={handleSignOut}
+                /> : <HomeScreen />; // Redirect to home if not logged in
               case GameState.CreateGameSetup:
-                return <SetupScreen onStart={handleCreateLobby} onGoHome={handleGoHome} isSolo={false} />;
+                return <SetupScreen onStart={handleCreateLobby} onBackToDashboard={handleGoToDashboard} isSolo={false} isTeacher={!!currentUser} />;
               case GameState.JoinGameSetup:
                 return <JoinGameScreen onJoin={handleJoinGame} onGoHome={handleGoHome} />;
               case GameState.Lobby:
@@ -846,20 +980,23 @@ window.addEventListener('load', () => {
                 }
                 return null;
               case GameState.Results: 
+                if (viewingGameData) { // Viewing history
+                    return <HostResultsScreen gameData={viewingGameData} isHistoryView={true} onBackToDashboard={handleGoToDashboard} />;
+                }
                 if (scoreAnalysis) { // Solo results
                     const soloGameData = { prompt: soloData.prompt, players: { [playerId]: { nickname: 'You', text: finalText, analysis: scoreAnalysis } } };
-                    return <ResultsScreen gameData={soloGameData} playerId={playerId} onPlayAgain={handlePlayAgain} onGoHome={handleGoHome} />;
+                    return <ResultsScreen gameData={soloGameData} playerId={playerId} onPlayAgain={handleGoHome} onGoHome={handleGoHome} />;
                 }
                 if (gameData) { // Multiplayer results
                     const isHost = playerId === gameData.hostId;
                     if (isHost) {
-                      return <HostResultsScreen gameData={gameData} onNewGame={handleNewGame} onGoHome={handleGoHome} />;
+                      return <HostResultsScreen gameData={gameData} onNewGame={() => setGameState(GameState.CreateGameSetup)} onGoHome={handleGoHome} />;
                     }
-                    return <ResultsScreen gameData={gameData} playerId={playerId} onPlayAgain={handlePlayAgain} onGoHome={handleGoHome} />;
+                    return <ResultsScreen gameData={gameData} playerId={playerId} onPlayAgain={handleGoHome} onGoHome={handleGoHome} />;
                 }
                 return null;
               default: 
-                return <HomeScreen onSelectSolo={() => setGameState(GameState.SoloSetup)} />;
+                return <HomeScreen />;
           }
       };
 
