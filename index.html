@@ -78,11 +78,11 @@ const NARRATIVE_PROMPTS = [
     { category: "Humour", text: "I tried to bake a cake for my mum's birthday, but I accidentally used salt instead of sugar. Her face when she took the first bite was priceless." },
     { category: "Humour", text: "Our class pet, a hamster named Nibbles, escaped from his cage. We found him in the library, sleeping on a tiny book he'd made into a bed." }
 ];
-const ADJECTIVES = ['able', 'bad', 'best', 'better', 'big', 'black', 'blue', 'bright', 'busy', 'certain', 'clear', 'clean', 'cold', 'common', 'complete', 'cool', 'dark', 'dead', 'different', 'difficult', 'early', 'easy', 'empty', 'entire', 'fair', 'far', 'fast', 'few', 'final', 'fine', 'free', 'fresh', 'full', 'good', 'great', 'green', 'happy', 'hard', 'high', 'hot', 'huge', 'human', 'important', 'interesting', 'kind', 'large', 'last', 'late', 'light', 'little', 'long', 'low', 'main', 'major', 'many', 'mean', 'mental', 'modern', 'national', 'natural', 'near', 'new', 'next', 'nice', 'old', 'orange', 'only', 'open', 'other', 'past', 'personal', 'poor', 'possible', 'powerful', 'private', 'public', 'quick', 'quiet', 'real', 'recent', 'red', 'right', 'round', 'same', 'serious', 'short', 'similar', 'simple', 'single', 'small', 'soft', 'special', 'strong', 'sure', 'tall', 'true', 'warm', 'white', 'whole', 'wonderful', 'young', 'yellow'];
-const SENSORY_WORDS = { sight: ['bleak', 'blurred', 'bright', 'clear', 'colourful', 'crooked', 'dark', 'dazzling', 'dim', 'drab', 'dusky', 'faded', 'fiery', 'glistening', 'gloomy', 'glowing', 'hazy', 'murky', 'shimmering', 'sparkling'], sound: ['banging', 'blaring', 'buzzing', 'chiming', 'clanging', 'crashing', 'creaking', 'deafening', 'echoing', 'fizzing', 'grinding', 'gurgling', 'hissing', 'howling', 'humming', 'hushed', 'piercing', 'rasping', 'rattling', 'ringing', 'roaring', 'rumbling', 'rustling', 'screeching', 'sizzling', 'slamming', 'snapping', 'splashing', 'thudding', 'thumping', 'tinkling', 'wailing', 'whimpering', 'whirring', 'whispering'], smell: ['acrid', 'aromatic', 'burnt', 'damp', 'earthy', 'fishy', 'floral', 'fragrant', 'fresh', 'meaty', 'mouldy', 'musky', 'musty', 'perfumed', 'pungent', 'putrid', 'rancid', 'reeking', 'rotten', 'salty', 'smoky', 'sour', 'spicy', 'stale', 'sweet', 'tangy', 'woody'], touch: ['blistering', 'bristly', 'bubbling', 'chilled', 'clammy', 'coarse', 'cool', 'damp', 'freezing', 'frigid', 'frosty', 'fuzzy', 'gooey', 'gritty', 'hairy', 'icy', 'jagged', 'lukewarm', 'numb', 'prickly', 'pulsing', 'rough', 'scalding', 'silky', 'slimy', 'slippery', 'smooth', 'soaked', 'sodden', 'spiky', 'spongy', 'steaming', 'sticky', 'stinging', 'tepid', 'thorny', 'throbbing', 'velvety', 'warm', 'waxy', 'wet', 'woolly'], taste: ['acidic', 'bitter', 'bland', 'briny', 'chalky', 'cheesy', 'citrusy', 'creamy', 'crisp', 'crumbly', 'fiery', 'flavourful', 'fruity', 'gingery', 'hearty', 'honeyed', 'hot', 'juicy', 'meaty', 'minty', 'overripe', 'peppery', 'pickled', 'rich', 'ripe', 'roasted', 'salty', 'savoury', 'sharp', 'smoky', 'sour', 'spicy', 'stale', 'sugary', 'sweet', 'tangy', 'tart', 'watery', 'zesty'] };
+const ADJECTIVES = ['able', 'bad', 'best', 'better', 'big', 'black', 'blue', 'bright', 'busy', 'certain', 'clear', 'clean', 'cold', 'common', 'complete', 'cool', 'dark', 'dead', 'different', 'difficult', 'early', 'easy', 'empty', 'entire', 'fair', 'far', 'fast', 'few', 'final', 'fine', 'free', 'fresh', 'full', 'good', 'great', 'green', 'happy', 'hard', 'high', 'hot', 'huge', 'human', 'important', 'interesting', 'kind', 'large', 'last', 'late', 'light', 'little', 'long', 'low', 'main', 'major', 'many', 'mean', 'mental', 'modern', 'national', 'natural', 'near', 'new', 'next', 'nice', 'old', 'orange', 'only', 'open', 'other', 'past', 'personal', 'poor', 'possible', 'powerful', 'private', 'public', 'quick', 'quiet', 'real', 'recent', 'red', 'right', 'round', 'same', 'serious', 'short', 'similar', 'simple', 'single', 'small', 'soft', 'special', 'strong', 'sure', 'tall', 'true', 'warm', 'white', 'whole', 'wonderful', 'young', 'yellow', 'ancient', 'beautiful', 'brave', 'calm', 'charming', 'clever', 'crazy', 'creepy', 'cruel', 'curious', 'cute', 'dangerous', 'deep', 'delicious', 'delightful', 'dirty', 'dry', 'dull', 'eager', 'elegant', 'enormous', 'evil', 'expensive', 'famous', 'fancy', 'fantastic', 'fierce', 'filthy', 'fluffy', 'foolish', 'fragile', 'friendly', 'funny', 'gentle', 'giant', 'gorgeous', 'graceful', 'grumpy', 'handsome', 'healthy', 'helpful', 'horrible', 'innocent', 'jolly', 'juicy', 'lazy', 'lively', 'lonely', 'loud', 'lovely', 'lucky', 'magnificent', 'massive', 'mild', 'mysterious', 'nasty', 'naughty', 'nervous', 'noisy', 'perfect', 'plain', 'pleasant', 'precious', 'proud', 'purple', 'silly', 'sleepy', 'slimy', 'slow', 'sparkling', 'strange', 'sweet', 'tasty', 'terrible', 'thankful', 'thirsty', 'tiny', 'ugly', 'unusual', 'violet', 'wandering', 'weak', 'weary', 'wicked', 'wise', 'witty', 'worried', 'zany'];
+const SENSORY_WORDS = { sight: ['bleak', 'blurred', 'bright', 'clear', 'colourful', 'crooked', 'dark', 'dazzling', 'dim', 'drab', 'dusky', 'faded', 'fiery', 'glistening', 'gloomy', 'glowing', 'hazy', 'murky', 'shimmering', 'sparkling', 'shadowy', 'vibrant', 'golden', 'silvery', 'transparent', 'glossy', 'matte', 'streaked', 'checkered', 'dotted', 'striped'], sound: ['banging', 'blaring', 'buzzing', 'chiming', 'clanging', 'crashing', 'creaking', 'deafening', 'echoing', 'fizzing', 'grinding', 'gurgling', 'hissing', 'howling', 'humming', 'hushed', 'piercing', 'rasping', 'rattling', 'ringing', 'roaring', 'rumbling', 'rustling', 'screeching', 'sizzling', 'slamming', 'snapping', 'splashing', 'thudding', 'thumping', 'tinkling', 'wailing', 'whimpering', 'whirring', 'whispering', 'melodious', 'shrill', 'silent', 'thundering'], smell: ['acrid', 'aromatic', 'burnt', 'damp', 'earthy', 'fishy', 'floral', 'fragrant', 'fresh', 'meaty', 'mouldy', 'musky', 'musty', 'perfumed', 'pungent', 'putrid', 'rancid', 'reeking', 'rotten', 'salty', 'smoky', 'sour', 'spicy', 'stale', 'sweet', 'tangy', 'woody', 'pine', 'scented', 'odourless'], touch: ['blistering', 'bristly', 'bubbling', 'chilled', 'clammy', 'coarse', 'cool', 'damp', 'freezing', 'frigid', 'frosty', 'fuzzy', 'gooey', 'gritty', 'hairy', 'icy', 'jagged', 'lukewarm', 'numb', 'prickly', 'pulsing', 'rough', 'scalding', 'silky', 'slimy', 'slippery', 'smooth', 'soaked', 'sodden', 'spiky', 'spongy', 'steaming', 'sticky', 'stinging', 'tepid', 'thorny', 'throbbing', 'velvety', 'warm', 'waxy', 'wet', 'woolly', 'sharp', 'blunt', 'feathery'], taste: ['acidic', 'bitter', 'bland', 'briny', 'chalky', 'cheesy', 'citrusy', 'creamy', 'crisp', 'crumbly', 'fiery', 'flavourful', 'fruity', 'gingery', 'hearty', 'honeyed', 'hot', 'juicy', 'meaty', 'minty', 'overripe', 'peppery', 'pickled', 'rich', 'ripe', 'roasted', 'salty', 'savoury', 'sharp', 'smoky', 'sour', 'spicy', 'stale', 'sugary', 'sweet', 'tangy', 'tart', 'watery', 'zesty', 'delicious', 'disgusting'] };
 const ALL_SENSORY_WORDS = Object.values(SENSORY_WORDS).flat();
-const CONJUNCTIONS = ['for', 'and', 'nor', 'but', 'or', 'yet', 'so', 'after', 'although', 'as', 'because', 'before', 'if', 'since', 'though', 'unless', 'until', 'when', 'while'];
-const TRANSITIONAL_WORDS = ['after', 'afterward', 'all of a sudden', 'as soon as', 'at first', 'at last', 'at that moment', 'before', 'by the time', 'concurrently', 'earlier', 'eventually', 'finally', 'first', 'following', 'from that point on', 'immediately', 'in the beginning', 'in the meantime', 'instantly', 'just then', 'later', 'later on', 'meanwhile', 'next', 'not long after', 'now', 'once', 'presently', 'second', 'shortly after', 'simultaneously', 'since', 'soon', 'suddenly', 'then', 'third', 'until', 'when', 'while', 'above all', 'additionally', 'also', 'and', 'another', 'as well', 'besides', 'especially', 'furthermore', 'in addition', 'in fact', 'indeed', 'more importantly', 'moreover', 'not only... but also', 'of course', 'specifically', 'then again', 'too', 'truly', 'although', 'but', 'despite', 'even so', 'even though', 'however', 'in contrast', 'instead', 'nevertheless', 'nonetheless', 'on the contrary', 'on the other hand', 'otherwise', 'still', 'though', 'unlike', 'whereas', 'yet', 'accordingly', 'as a result', 'because', 'consequently', 'due to', 'for this reason', 'hence', 'so', 'therefore', 'thus', 'above', 'across', 'around', 'behind', 'below', 'beside', 'beyond', 'here', 'nearby', 'opposite', 'over', 'under'];
+const CONJUNCTIONS = ['for', 'and', 'nor', 'but', 'or', 'yet', 'so', 'after', 'although', 'as', 'as if', 'as long as', 'as much as', 'as soon as', 'as though', 'because', 'before', 'by the time', 'even if', 'even though', 'if', 'in case', 'in order that', 'lest', 'now that', 'once', 'only if', 'provided that', 'since', 'so that', 'than', 'that', 'though', 'till', 'unless', 'until', 'when', 'whenever', 'where', 'whereas', 'wherever', 'whether', 'while', 'both...and', 'either...or', 'neither...nor', 'not only...but also', 'whether...or'];
+const TRANSITIONAL_WORDS = ['after', 'afterward', 'all of a sudden', 'as soon as', 'at first', 'at last', 'at that moment', 'before', 'by the time', 'concurrently', 'earlier', 'eventually', 'finally', 'first', 'following', 'from that point on', 'immediately', 'in the beginning', 'in the meantime', 'instantly', 'just then', 'later', 'later on', 'meanwhile', 'next', 'not long after', 'now', 'once', 'presently', 'second', 'shortly after', 'simultaneously', 'since', 'soon', 'suddenly', 'then', 'third', 'until', 'when', 'while', 'above all', 'additionally', 'also', 'and', 'another', 'as well', 'besides', 'especially', 'furthermore', 'in addition', 'in fact', 'indeed', 'more importantly', 'moreover', 'not only... but also', 'of course', 'specifically', 'then again', 'too', 'truly', 'although', 'but', 'despite', 'even so', 'even though', 'however', 'in contrast', 'instead', 'nevertheless', 'nonetheless', 'on the contrary', 'on the other hand', 'otherwise', 'still', 'though', 'unlike', 'whereas', 'yet', 'accordingly', 'as a result', 'because', 'consequently', 'due to', 'for this reason', 'hence', 'so', 'therefore', 'thus', 'above', 'across', 'around', 'behind', 'below', 'beside', 'beyond', 'here', 'nearby', 'opposite', 'over', 'under', 'for example', 'for instance', 'in other words', 'that is', 'to illustrate', 'in conclusion', 'in summary', 'to sum up'];
 
 // services/firebaseService.js
 const firebaseConfig = {
@@ -180,15 +180,74 @@ const countWords = (text, words) => {
     }
     return count;
 };
+
 const ALL_SCORING_CRITERIA = [
-    { id: 'dialogue', name: 'Dialogue', description: 'Using speech with correct punctuation', points: 1000, check: (text) => (text.match(/"[^"]*"/g) || []).length },
-    { id: 'adjectives', name: 'Adjectives', description: `Using varied adjectives`, points: 500, check: (text) => countWords(text, ADJECTIVES) },
-    { id: 'sensory', name: 'Sensory Detail', description: 'Using sensory details (sight, sound, smell, touch, taste)', points: 1000, check: (text) => countWords(text, ALL_SENSORY_WORDS) },
-    { id: 'sentence', name: 'Sentence Structure', description: 'Correctly punctuated sentence (. ! ?)', points: 50, check: (text) => { const sentences = text.split(/[.!?]/).filter(s => s.trim().length > 0); return sentences.filter(s => s.trim().match(/^[A-Z]/)).length; } },
-    { id: 'conjunctions', name: 'Complex Sentences', description: 'Using conjunctions to create compound/complex sentences', points: 50, check: (text) => countWords(text, CONJUNCTIONS) },
-    { id: 'simile', name: 'Similes', description: 'Using similes (comparing with "like" or "as")', points: 100, check: (text) => (text.match(/\b\w+\s+(like|as)\s+\w+\b/gi) || []).length },
-    { id: 'transitional', name: 'Transitional Words', description: 'Using transitional words or phrases', points: 100, check: (text) => countWords(text, TRANSITIONAL_WORDS) }
+    // Always included goals
+    {
+        id: 'dialogue', name: 'Dialogue', type: 'always',
+        description: 'Using dialogue with correct punctuation (e.g., "Hello," she said.)', points: 1500,
+        check: (text) => {
+             if (!text) return 0;
+            const dialoguePatterns = [
+                /"[^"]*," \w+ (said|asked|yelled|whispered|exclaimed|snapped|replied|muttered)\./i, // "...," she said.
+                /\w+ (said|asked|yelled|whispered|exclaimed|snapped|replied|muttered), "[^"]*[\.?!]"/i, // He asked, "..."?
+                /"[^"]*," \w+ (said|asked|yelled|whispered|exclaimed|snapped|replied|muttered), "[^"]*[\.?!]"/i, // "...," he said, "..."
+                /"[^"]+[\.?!]"/ // "Are you coming?"
+            ];
+            return dialoguePatterns.some(pattern => pattern.test(text)) ? 1 : 0;
+        }
+    },
+    {
+        id: 'paragraphs', name: 'Paragraphs', type: 'always',
+        description: 'Leaving a blank line to start a new paragraph', points: 1500,
+        check: (text) => {
+            if (!text) return 0;
+            return (/(?:\r\n|\n){2,}/.test(text.trim())) ? 1 : 0;
+        }
+    },
+    {
+        id: 'sentence', name: 'Punctuated Sentences', type: 'always',
+        description: 'For each correctly punctuated sentence (. ! ?) with a capital letter', points: 100,
+        check: (text) => {
+            if (!text) return 0;
+            const sentences = text.split(/[.!?]/).filter(s => s.trim().length > 0);
+            return sentences.filter(s => s.trim().match(/^[A-Z]/)).length;
+        }
+    },
+
+    // Random pool goals
+    {
+        id: 'complexSentence', name: 'Complex Sentences', type: 'random',
+        description: 'For each complex sentence using a joining word', points: 100,
+        check: (text) => countWords(text, CONJUNCTIONS)
+    },
+    {
+        id: 'simile', name: 'Similes', type: 'random',
+        description: 'For each simile used (e.g., "like a lion" or "as fast as a cheetah")', points: 100,
+        check: (text) => {
+             if (!text) return 0;
+            const likeCount = (text.match(/\b\w+\s+like\s+\w+\b/gi) || []).length;
+            const asAsCount = (text.match(/\bas\s+\w+\s+as\s+(a|an)\s+\w+\b/gi) || []).length;
+            return likeCount + asAsCount;
+        }
+    },
+    {
+        id: 'transitional', name: 'Transitional Words', type: 'random',
+        description: 'For each transitional word or phrase used to link ideas', points: 100,
+        check: (text) => countWords(text, TRANSITIONAL_WORDS)
+    },
+    {
+        id: 'sensory', name: 'Sensory Detail', type: 'random',
+        description: 'For each sensory detail used (sight, sound, smell, touch, taste)', points: 100,
+        check: (text) => countWords(text, ALL_SENSORY_WORDS)
+    },
+    {
+        id: 'adjectives', name: 'Adjectives', type: 'random',
+        description: `For each adjective used`, points: 100,
+        check: (text) => countWords(text, ADJECTIVES)
+    }
 ];
+
 const analyzeScore = (text, criteria) => {
     let totalScore = 0;
     const breakdown = criteria.map(criterion => {
@@ -691,11 +750,11 @@ const SetupScreen = ({ onStart, onGoHome, onBackToDashboard, isSolo = false, isT
     }, []);
 
     const selectedCriteria = useMemo(() => {
-        const generalGoals = ALL_SCORING_CRITERIA.filter(c => c.id === 'sentence' || c.id === 'conjunctions');
-        const mainGoalsPool = ALL_SCORING_CRITERIA.filter(c => c.id !== 'sentence' && c.id !== 'conjunctions');
-        const shuffled = [...mainGoalsPool].sort(() => 0.5 - Math.random());
-        const selectedMainGoals = shuffled.slice(0, 3);
-        return [...generalGoals, ...selectedMainGoals];
+        const alwaysGoals = ALL_SCORING_CRITERIA.filter(c => c.type === 'always');
+        const randomGoalsPool = ALL_SCORING_CRITERIA.filter(c => c.type === 'random');
+        const shuffled = [...randomGoalsPool].sort(() => 0.5 - Math.random());
+        const selectedRandomGoals = shuffled.slice(0, 3);
+        return [...alwaysGoals, ...selectedRandomGoals];
     }, [currentPrompt]);
 
     const handleStart = () => {
