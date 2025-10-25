@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Prompt, ScoringCriterion, ScoreAnalysis } from '../types';
 import Timer from './Timer';
 import { analyzeScore } from '../services/scoringService';
@@ -16,6 +16,11 @@ const GameScreen: React.FC<GameScreenProps> = ({ prompt, criteria, duration, onT
     const [isScoreAnimating, setIsScoreAnimating] = useState(false);
     const hasFired = useRef(false);
     const prevScoreRef = useRef(0);
+
+    const wordCount = useMemo(() => {
+        if (!text.trim()) return 0;
+        return text.trim().split(/\s+/).length;
+    }, [text]);
 
     // Debounced score analysis
     useEffect(() => {
@@ -81,6 +86,13 @@ const GameScreen: React.FC<GameScreenProps> = ({ prompt, criteria, duration, onT
                         <p className="text-lg font-semibold">Your Score</p>
                         <p className={`text-5xl font-bold tracking-tighter transition-transform duration-300 ease-out ${isScoreAnimating ? 'scale-125' : 'scale-100'}`}>
                             {scoreAnalysis.totalScore.toLocaleString()}
+                        </p>
+                    </div>
+
+                    <div className="bg-violet-600 text-white p-4 rounded-lg shadow-lg text-center">
+                        <p className="text-lg font-semibold">Word Count</p>
+                        <p className="text-5xl font-bold tracking-tighter">
+                            {wordCount}
                         </p>
                     </div>
 

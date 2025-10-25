@@ -14,7 +14,7 @@ export const generateFeedback = async (
     const breakdownText = analysis.breakdown.map(item => `- ${item.name}: You scored ${item.score} points from ${item.count} use(s).`).join('\n');
 
     const prompt = `
-        You are an experienced, friendly, and encouraging Year 5 and 6 primary teacher in New Zealand, specializing in literacy.
+        You are an experienced, friendly, and encouraging primary school teacher specializing in literacy.
         A student has just finished a creative writing practice game. Your task is to provide clear, constructive, and positive feedback on their writing.
 
         Here is the student's story:
