@@ -1,9 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
-import { Prompt, ScoreAnalysis } from '../types';
-import { generateFeedback } from '../services/geminiService';
-import Button from './Button';
-import LoadingSpinner from './LoadingSpinner';
+import { Prompt, ScoreAnalysis } from '../types.ts';
+import { generateFeedback } from '../services/geminiService.ts';
+import Button from './Button.tsx';
+import LoadingSpinner from './LoadingSpinner.tsx';
 
 interface ResultsScreenProps {
     prompt: Prompt;

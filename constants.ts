@@ -1,5 +1,5 @@
 
-import { Prompt } from './types';
+import { Prompt } from './types.ts';
 
 export const NARRATIVE_PROMPTS: Prompt[] = [
     // Mystery & Discovery
@@ -11,7 +11,7 @@ export const NARRATIVE_PROMPTS: Prompt[] = [
     { category: "Mystery & Discovery", text: "A message in a bottle washed up at Lyall Bay. I unrolled the damp paper, expecting a call for help. Instead, it was a map of my school, with a big red 'X' marked right under the principal's office." },
     { category: "Mystery & Discovery", text: "My cat, Buster, brought in a 'bird', but it wasn't a sparrow or a fantail. It was tiny, bright blue, and had three wings. It wasn't dead, either—it chirped weakly, and the air around it started to shimmer." },
     { category: "Mystery & Discovery", text: "I found an old, brick-like mobile phone in the attic. I pressed the power button for a laugh, and it actually turned on. A second later, it vibrated with a new text message: 'We saw you. Stay hidden.'" },
-    { category: "Mystery & Discovery", text: "The new kid, Sam, never spoke to anyone. When he dropped his notebook running for the bus, I picked it up. I opened it to the first page and saw a perfect, detailed drawing of... me, sleeping in my bed last night." },
+    { category: "Mystery & Discovery", text: "The new kid, Sam, never spoke to anyone. When he dropped his notebook running for the bus, Ipicked it up. I opened it to the first page and saw a perfect, detailed drawing of... me, sleeping in my bed last night." },
     { category: "Mystery & Discovery", text: "We were exploring the glow-worm caves with our torches. I turned mine off for just a second to see the 'stars' on the ceiling. When I clicked it back on, my family was gone, and a new tunnel, one I'd never seen before, had opened in the rock wall." },
     
     // Adventure & Action

@@ -1,9 +1,9 @@
 import React, { useState, useCallback } from 'react';
-import { GameState, Prompt, ScoringCriterion, ScoreAnalysis } from './types';
-import HomeScreen from './components/HomeScreen';
-import PracticeSetupScreen from './components/PracticeSetupScreen';
-import GameScreen from './components/GameScreen';
-import ResultsScreen from './components/ResultsScreen';
+import { GameState, Prompt, ScoringCriterion, ScoreAnalysis } from './types.ts';
+import HomeScreen from './components/HomeScreen.tsx';
+import PracticeSetupScreen from './components/PracticeSetupScreen.tsx';
+import GameScreen from './components/GameScreen.tsx';
+import ResultsScreen from './components/ResultsScreen.tsx';
 
 const App: React.FC = () => {
     const [gameState, setGameState] = useState<GameState>(GameState.Home);

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { Prompt, ScoringCriterion, ScoreAnalysis } from '../types';
-import Timer from './Timer';
-import { analyzeScore } from '../services/scoringService';
+import { Prompt, ScoringCriterion, ScoreAnalysis } from '../types.ts';
+import Timer from './Timer.tsx';
+import { analyzeScore } from '../services/scoringService.ts';
 
 interface GameScreenProps {
     prompt: Prompt;
