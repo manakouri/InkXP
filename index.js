@@ -1,1 +1,15 @@
-// This script is intentionally left blank. The application entry point has been moved to an inline script in index.html.
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App.js';
+
+const rootElement = document.getElementById('root');
+if (!rootElement) {
+  throw new Error("Could not find root element to mount to");
+}
+
+const root = ReactDOM.createRoot(rootElement);
+root.render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
