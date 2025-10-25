@@ -13,18 +13,29 @@
         font-family: 'Poppins', sans-serif;
       }
     </style>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script>
-    Babel.registerPreset("app-preset", {
-      presets: [
-        [Babel.availablePresets["typescript"], { allExtensions: true, isTSX: true }],
-        [Babel.availablePresets["react"], { runtime: "classic" }]
-      ],
-    });
-  </script>
-</head>
+  </head>
   <body class="bg-slate-50 text-slate-800">
     <div id="root"></div>
-    <script type="text/babel" data-type="module" data-presets="app-preset" src="./index.tsx"></script>
+
+    <!-- External Libraries -->
+    <script src="https://aistudiocdn.com/react@^19.2.0"></script>
+    <script src="https://aistudiocdn.com/react-dom@^19.2.0/client"></script>
+    <script src="https://aistudiocdn.com/@google/genai@^1.27.0"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- App Scripts (Babel will transpile them in order) -->
+    <script type="text/babel" src="./types.js"></script>
+    <script type="text/babel" src="./constants.js"></script>
+    <script type="text/babel" src="./services/scoringService.js"></script>
+    <script type="text/babel" src="./services/geminiService.js"></script>
+    <script type="text/babel" src="./components/LoadingSpinner.js"></script>
+    <script type="text/babel" src="./components/Timer.js"></script>
+    <script type="text/babel" src="./components/Button.js"></script>
+    <script type="text/babel" src="./components/ResultsScreen.js"></script>
+    <script type="text/babel" src="./components/GameScreen.js"></script>
+    <script type="text/babel" src="./components/PracticeSetupScreen.js"></script>
+    <script type="text/babel" src="./components/HomeScreen.js"></script>
+    <script type="text/babel" src="./App.js"></script>
+    <script type="text/babel" src="./index.js"></script>
   </body>
 </html>
