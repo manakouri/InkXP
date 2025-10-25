@@ -1,8 +1,8 @@
 
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { Prompt, ScoringCriterion, ScoreAnalysis } from '../types.js';
-import Timer from './Timer.js';
-import { analyzeScore } from '../services/scoringService.js';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'https://aistudiocdn.com/react@^19.2.0';
+import { Prompt, ScoringCriterion, ScoreAnalysis } from '../types.ts';
+import Timer from './Timer.tsx';
+import { analyzeScore } from '../services/scoringService.ts';
 
 interface GameScreenProps {
     prompt: Prompt;

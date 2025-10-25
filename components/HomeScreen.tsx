@@ -1,6 +1,6 @@
 
-import React from 'react';
-import Button from './Button.js';
+import React from 'https://aistudiocdn.com/react@^19.2.0';
+import Button from './Button.tsx';
 
 interface HomeScreenProps {
     onSelectPractice: () => void;

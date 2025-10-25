@@ -1,9 +1,9 @@
 
-import React, { useState, useEffect } from 'react';
-import { Prompt, ScoreAnalysis } from '../types.js';
-import { generateFeedback } from '../services/geminiService.js';
-import Button from './Button.js';
-import LoadingSpinner from './LoadingSpinner.js';
+import React, { useState, useEffect } from 'https://aistudiocdn.com/react@^19.2.0';
+import { Prompt, ScoreAnalysis } from '../types.ts';
+import { generateFeedback } from '../services/geminiService.ts';
+import Button from './Button.tsx';
+import LoadingSpinner from './LoadingSpinner.tsx';
 
 interface ResultsScreenProps {
     prompt: Prompt;

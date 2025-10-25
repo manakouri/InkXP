@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React from 'https://aistudiocdn.com/react@^19.2.0';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
     variant?: 'primary' | 'secondary';

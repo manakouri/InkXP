@@ -1,5 +1,5 @@
 
-import { Prompt } from './types.js';
+import { Prompt } from './types.ts';
 
 export const NARRATIVE_PROMPTS: Prompt[] = [
     // Mystery & Discovery

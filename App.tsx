@@ -1,10 +1,10 @@
 
-import React, { useState, useCallback } from 'react';
-import { GameState, Prompt, ScoringCriterion, ScoreAnalysis } from './types.js';
-import HomeScreen from './components/HomeScreen.js';
-import PracticeSetupScreen from './components/PracticeSetupScreen.js';
-import GameScreen from './components/GameScreen.js';
-import ResultsScreen from './components/ResultsScreen.js';
+import React, { useState, useCallback } from 'https://aistudiocdn.com/react@^19.2.0';
+import { GameState, Prompt, ScoringCriterion, ScoreAnalysis } from './types.ts';
+import HomeScreen from './components/HomeScreen.tsx';
+import PracticeSetupScreen from './components/PracticeSetupScreen.tsx';
+import GameScreen from './components/GameScreen.tsx';
+import ResultsScreen from './components/ResultsScreen.tsx';
 
 const App: React.FC = () => {
     const [gameState, setGameState] = useState<GameState>(GameState.Home);
