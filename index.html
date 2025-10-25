@@ -18,1048 +18,1079 @@
   <body class="bg-slate-50 text-slate-800">
     <div id="root"></div>
 
-    <!-- Babel for in-browser transpilation -->
+    <!-- Load React and ReactDOM -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    
+    <!-- Load Firebase v9 Compat libraries -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+    <!-- Load Babel to transpile JSX in the browser -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-
-    <!-- 
-      Bridge Script: Load modern ESM libraries and attach them to the window object 
-      for the classic babel script to use. This solves all module-related errors.
-    -->
-    <script type="module">
-      import React from "https://aistudiocdn.com/react@^19.2.0";
-      import ReactDOM from "https://aistudiocdn.com/react-dom@^19.2.0/client";
-      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-      import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-      import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, serverTimestamp, collection, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-      window.React = React;
-      window.ReactDOM = ReactDOM;
-      window.firebase = {
-        app: { initializeApp },
-        firestore: { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, serverTimestamp, collection, query, where, orderBy },
-        auth: { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut }
-      };
-    </script>
-
-    <!-- Consolidated Application Script -->
+    
+    <!-- Set script type to "text/babel" for Babel to transpile -->
     <script type="text/babel">
-window.addEventListener('load', () => {
-  // types.js
-  var GameState;
-  (function (GameState) {
-      GameState[GameState["Home"] = 0] = "Home";
-      GameState[GameState["SoloSetup"] = 1] = "SoloSetup";
-      GameState[GameState["CreateGameSetup"] = 2] = "CreateGameSetup";
-      GameState[GameState["JoinGameSetup"] = 3] = "JoinGameSetup";
-      GameState[GameState["Lobby"] = 4] = "Lobby";
-      GameState[GameState["InGame"] = 5] = "InGame";
-      GameState[GameState["Results"] = 6] = "Results";
-      GameState[GameState["TeacherDashboard"] = 7] = "TeacherDashboard";
-  })(GameState || (GameState = {}));
+const { useState, useEffect, useCallback, useMemo, useRef } = React;
 
-  var WritingCategory;
-  (function (WritingCategory) {
-      WritingCategory["Narrative"] = "Narrative";
-      WritingCategory["Persuasive"] = "Persuasive";
-      WritingCategory["Informative"] = "Informative";
-      WritingCategory["Editing"] = "Editing";
-  })(WritingCategory || (WritingCategory = {}));
+// types.js
+const GameState = Object.freeze({
+    Home: 0,
+    SoloSetup: 1,
+    CreateGameSetup: 2,
+    JoinGameSetup: 3,
+    Lobby: 4,
+    InGame: 5,
+    Results: 6,
+    TeacherDashboard: 7,
+});
 
-  // constants.js
-  const NARRATIVE_PROMPTS = [
-      { category: "Mystery & Discovery", text: "My fingers closed around a smooth, cool stone in the riverbed. It wasn't just any rock; it was pounamu, carved in a perfect spiral. As I lifted it out of the water, the stone grew strangely warm in my hand, and a deep, pulsing hum vibrated up my arm." },
-      { category: "Mystery & Discovery", text: "The old bach at the end of the beach had been empty for years. But one night during a storm, I saw a light flickering in the window. I crept closer, wiped the salty spray from the glass, and peered inside. The room was empty, but sitting on the table was a single, steaming cup of tea." },
-      { category: "Mystery & Discovery", text: "No one ever went into the old sports shed; Mr. Henderson kept it locked. But as I chased a stray netball, I saw the padlock was broken, lying on the grass. I nudged the door open with my foot, revealing a set of dusty stairs leading down into pure darkness." },
-      { category: "Adventure & Action", text: "'Stay on the track!' our teacher yelled. I just stepped off the path for a second to see a cool fungus. When I looked up, the rest of my school camp group had vanished. I called out, but the only reply was the call of a distant morepork, even though it was the middle of the day." },
-      { category: "Fantasy & Sci-Fi", text: "My koro always told stories about the taniwha in the river. I thought he was just joking. But when I dropped my jandal in the water, a huge, scaly head with glowing red eyes rose from the rapids. It wasn't looking at my jandal; it was looking right at me." },
-      { category: "Real-Life & Emotional", text: "The moving van was packed. This was my last look at my old house. I waved goodbye to the pōhutukawa tree I used to climb and got in the car. As we drove past the dairy for the last time, I saw my best friend, Hemi, sprinting after the car, yelling and waving a small box I had never seen before." }
-  ];
-  const ADJECTIVES = ['able', 'bad', 'best', 'better', 'big', 'black', 'blue', 'bright', 'busy', 'certain', 'clear', 'clean', 'cold', 'common', 'complete', 'cool', 'dark', 'dead', 'different', 'difficult', 'early', 'easy', 'empty', 'entire', 'fair', 'far', 'fast', 'few', 'final', 'fine', 'free', 'fresh', 'full', 'good', 'great', 'green', 'happy', 'hard', 'high', 'hot', 'huge', 'human', 'important', 'interesting', 'kind', 'large', 'last', 'late', 'light', 'little', 'long', 'low', 'main', 'major', 'many', 'mean', 'mental', 'modern', 'national', 'natural', 'near', 'new', 'next', 'nice', 'old', 'orange', 'only', 'open', 'other', 'past', 'personal', 'poor', 'possible', 'powerful', 'private', 'public', 'quick', 'quiet', 'real', 'recent', 'red', 'right', 'round', 'same', 'serious', 'short', 'similar', 'simple', 'single', 'small', 'soft', 'special', 'strong', 'sure', 'tall', 'true', 'warm', 'white', 'whole', 'wonderful', 'young', 'yellow'];
-  const SENSORY_WORDS = { sight: ['bleak', 'blurred', 'bright', 'clear', 'colourful', 'crooked', 'dark', 'dazzling', 'dim', 'drab', 'dusky', 'faded', 'fiery', 'glistening', 'gloomy', 'glowing', 'hazy', 'murky', 'shimmering', 'sparkling'], sound: ['banging', 'blaring', 'buzzing', 'chiming', 'clanging', 'crashing', 'creaking', 'deafening', 'echoing', 'fizzing', 'grinding', 'gurgling', 'hissing', 'howling', 'humming', 'hushed', 'piercing', 'rasping', 'rattling', 'ringing', 'roaring', 'rumbling', 'rustling', 'screeching', 'sizzling', 'slamming', 'snapping', 'splashing', 'thudding', 'thumping', 'tinkling', 'wailing', 'whimpering', 'whirring', 'whispering'], smell: ['acrid', 'aromatic', 'burnt', 'damp', 'earthy', 'fishy', 'floral', 'fragrant', 'fresh', 'meaty', 'mouldy', 'musky', 'musty', 'perfumed', 'pungent', 'putrid', 'rancid', 'reeking', 'rotten', 'salty', 'smoky', 'sour', 'spicy', 'stale', 'sweet', 'tangy', 'woody'], touch: ['blistering', 'bristly', 'bubbling', 'chilled', 'clammy', 'coarse', 'cool', 'damp', 'freezing', 'frigid', 'frosty', 'fuzzy', 'gooey', 'gritty', 'hairy', 'icy', 'jagged', 'lukewarm', 'numb', 'prickly', 'pulsing', 'rough', 'scalding', 'silky', 'slimy', 'slippery', 'smooth', 'soaked', 'sodden', 'spiky', 'spongy', 'steaming', 'sticky', 'stinging', 'tepid', 'thorny', 'throbbing', 'velvety', 'warm', 'waxy', 'wet', 'woolly'], taste: ['acidic', 'bitter', 'bland', 'briny', 'chalky', 'cheesy', 'citrusy', 'creamy', 'crisp', 'crumbly', 'fiery', 'flavourful', 'fruity', 'gingery', 'hearty', 'honeyed', 'hot', 'juicy', 'meaty', 'minty', 'overripe', 'peppery', 'pickled', 'rich', 'ripe', 'roasted', 'salty', 'savoury', 'sharp', 'smoky', 'sour', 'spicy', 'stale', 'sugary', 'sweet', 'tangy', 'tart', 'watery', 'zesty'] };
-  const ALL_SENSORY_WORDS = Object.values(SENSORY_WORDS).flat();
-  const CONJUNCTIONS = ['for', 'and', 'nor', 'but', 'or', 'yet', 'so', 'after', 'although', 'as', 'because', 'before', 'if', 'since', 'though', 'unless', 'until', 'when', 'while'];
-  const TRANSITIONAL_WORDS = ['after', 'afterward', 'all of a sudden', 'as soon as', 'at first', 'at last', 'at that moment', 'before', 'by the time', 'concurrently', 'earlier', 'eventually', 'finally', 'first', 'following', 'from that point on', 'immediately', 'in the beginning', 'in the meantime', 'instantly', 'just then', 'later', 'later on', 'meanwhile', 'next', 'not long after', 'now', 'once', 'presently', 'second', 'shortly after', 'simultaneously', 'since', 'soon', 'suddenly', 'then', 'third', 'until', 'when', 'while', 'above all', 'additionally', 'also', 'and', 'another', 'as well', 'besides', 'especially', 'furthermore', 'in addition', 'in fact', 'indeed', 'more importantly', 'moreover', 'not only... but also', 'of course', 'specifically', 'then again', 'too', 'truly', 'although', 'but', 'despite', 'even so', 'even though', 'however', 'in contrast', 'instead', 'nevertheless', 'nonetheless', 'on the contrary', 'on the other hand', 'otherwise', 'still', 'though', 'unlike', 'whereas', 'yet', 'accordingly', 'as a result', 'because', 'consequently', 'due to', 'for this reason', 'hence', 'so', 'therefore', 'thus', 'above', 'across', 'around', 'behind', 'below', 'beside', 'beyond', 'here', 'nearby', 'opposite', 'over', 'under'];
+const WritingCategory = Object.freeze({
+    Narrative: "Narrative",
+    Persuasive: "Persuasive",
+    Informative: "Informative",
+    Editing: "Editing",
+});
 
-  // services/firebaseService.js
-  const { initializeApp } = window.firebase.app;
-  const { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, serverTimestamp, collection, query, where, orderBy } = window.firebase.firestore;
-  const { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } = window.firebase.auth;
+// constants.js
+const NARRATIVE_PROMPTS = [
+    { category: "Mystery & Discovery", text: "My fingers closed around a smooth, cool stone in the riverbed. It wasn't just any rock; it was pounamu, carved in a perfect spiral. As I lifted it out of the water, the stone grew strangely warm in my hand, and a deep, pulsing hum vibrated up my arm." },
+    { category: "Mystery & Discovery", text: "The old bach at the end of the beach had been empty for years. But one night during a storm, I saw a light flickering in the window. I crept closer, wiped the salty spray from the glass, and peered inside. The room was empty, but sitting on the table was a single, steaming cup of tea." },
+    { category: "Mystery & Discovery", text: "No one ever went into the old sports shed; Mr. Henderson kept it locked. But as I chased a stray netball, I saw the padlock was broken, lying on the grass. I nudged the door open with my foot, revealing a set of dusty stairs leading down into pure darkness." },
+    { category: "Mystery & Discovery", text: "While helping Dad in the garden, my spade hit something hard. It wasn't a rock. I dug around it and pulled out a rusty metal box. It was locked, but there was a strange symbol carved on the lid, the same symbol I'd seen on the old statue in the park." },
+    { category: "Mystery & Discovery", text: "I found an old key in the pocket of a second-hand coat. It didn't look like a normal house key. It was ornate and heavy. I wonder what it unlocks..." },
+    { category: "Mystery & Discovery", text: "A message in a bottle washed up on the shore. The paper was old and the writing was faded, but I could just make out the words: 'Help me, I'm trapped on...'" },
+    { category: "Adventure & Action", text: "'Stay on the track!' our teacher yelled. I just stepped off the path for a second to see a cool fungus. When I looked up, the rest of my school camp group had vanished. I called out, but the only reply was the call of a distant morepork, even though it was the middle of the day." },
+    { category: "Adventure & Action", text: "The rugby ball soared high into the air. I leaped, my fingers stretching, ready for the winning catch. But just as I was about to grab it, a cheeky pīwakawaka swooped down and pecked the ball, sending it spinning in a completely different direction." },
+    { category: "Adventure & Action", text: "The ground started to shake violently. I grabbed onto the nearest tree as a huge crack appeared in the earth, revealing a glowing cave below." },
+    { category: "Adventure & Action", text: "I was kayaking down a calm river when the current suddenly picked up speed. I was being pulled towards a waterfall I didn't know existed!" },
+    { category: "Fantasy & Sci-Fi", text: "My koro always told stories about the taniwha in the river. I thought he was just joking. But when I dropped my jandal in the water, a huge, scaly head with glowing red eyes rose from the rapids. It wasn't looking at my jandal; it was looking right at me." },
+    { category: "Fantasy & Sci-Fi", text: "I was drawing in my notebook when my pencil started to move on its own. It wasn't just scribbling; it was drawing a map. A map that showed a secret door hidden somewhere inside my own school." },
+    { category: "Fantasy & Sci-Fi", text: "One morning, I woke up and found that everything in my room was floating. My bed, my toys, even my cat was gently bumping against the ceiling, looking very confused. I tried to stand up, and my feet lifted right off the floor." },
+    { category: "Fantasy & Sci-Fi", text: "I planted a strange seed I found in the forest. Overnight, it grew into a towering beanstalk that disappeared into the clouds." },
+    { category: "Fantasy & Sci-Fi", text: "A small, friendly robot appeared at my door. It held up a sign that read: 'I am lost. Can you help me find my way back to the year 2099?'" },
+    { category: "Real-Life & Emotional", text: "The moving van was packed. This was my last look at my old house. I waved goodbye to the pōhutukawa tree I used to climb and got in the car. As we drove past the dairy for the last time, I saw my best friend, Hemi, sprinting after the car, yelling and waving a small box I had never seen before." },
+    { category: "Real-Life & Emotional", text: "It was my turn to speak in front of the whole school assembly. My knees were knocking together and my palms were sweaty. I took a deep breath, looked at my best friend in the crowd, and opened my mouth to..." },
+    { category: "Real-Life & Emotional", text: "My first day at a new school. I didn't know anyone. As I walked into the playground, a ball rolled towards my feet..." },
+    { category: "Real-Life & Emotional", text: "I worked for weeks to save up for a new bike. The day I finally bought it, I saw a kid from my class looking at it with sad eyes. Their old bike was broken and rusty." },
+    { category: "Humour", text: "My lunchbox was missing. I looked everywhere. Finally, I heard a strange munching sound coming from the lost property bin. I peered inside and saw the school's pet goat, Gus, wearing my hat and happily eating my sandwiches." },
+    { category: "Humour", text: "I tried to bake a cake for my mum's birthday, but I accidentally used salt instead of sugar. Her face when she took the first bite was priceless." },
+    { category: "Humour", text: "Our class pet, a hamster named Nibbles, escaped from his cage. We found him in the library, sleeping on a tiny book he'd made into a bed." }
+];
+const ADJECTIVES = ['able', 'bad', 'best', 'better', 'big', 'black', 'blue', 'bright', 'busy', 'certain', 'clear', 'clean', 'cold', 'common', 'complete', 'cool', 'dark', 'dead', 'different', 'difficult', 'early', 'easy', 'empty', 'entire', 'fair', 'far', 'fast', 'few', 'final', 'fine', 'free', 'fresh', 'full', 'good', 'great', 'green', 'happy', 'hard', 'high', 'hot', 'huge', 'human', 'important', 'interesting', 'kind', 'large', 'last', 'late', 'light', 'little', 'long', 'low', 'main', 'major', 'many', 'mean', 'mental', 'modern', 'national', 'natural', 'near', 'new', 'next', 'nice', 'old', 'orange', 'only', 'open', 'other', 'past', 'personal', 'poor', 'possible', 'powerful', 'private', 'public', 'quick', 'quiet', 'real', 'recent', 'red', 'right', 'round', 'same', 'serious', 'short', 'similar', 'simple', 'single', 'small', 'soft', 'special', 'strong', 'sure', 'tall', 'true', 'warm', 'white', 'whole', 'wonderful', 'young', 'yellow'];
+const SENSORY_WORDS = { sight: ['bleak', 'blurred', 'bright', 'clear', 'colourful', 'crooked', 'dark', 'dazzling', 'dim', 'drab', 'dusky', 'faded', 'fiery', 'glistening', 'gloomy', 'glowing', 'hazy', 'murky', 'shimmering', 'sparkling'], sound: ['banging', 'blaring', 'buzzing', 'chiming', 'clanging', 'crashing', 'creaking', 'deafening', 'echoing', 'fizzing', 'grinding', 'gurgling', 'hissing', 'howling', 'humming', 'hushed', 'piercing', 'rasping', 'rattling', 'ringing', 'roaring', 'rumbling', 'rustling', 'screeching', 'sizzling', 'slamming', 'snapping', 'splashing', 'thudding', 'thumping', 'tinkling', 'wailing', 'whimpering', 'whirring', 'whispering'], smell: ['acrid', 'aromatic', 'burnt', 'damp', 'earthy', 'fishy', 'floral', 'fragrant', 'fresh', 'meaty', 'mouldy', 'musky', 'musty', 'perfumed', 'pungent', 'putrid', 'rancid', 'reeking', 'rotten', 'salty', 'smoky', 'sour', 'spicy', 'stale', 'sweet', 'tangy', 'woody'], touch: ['blistering', 'bristly', 'bubbling', 'chilled', 'clammy', 'coarse', 'cool', 'damp', 'freezing', 'frigid', 'frosty', 'fuzzy', 'gooey', 'gritty', 'hairy', 'icy', 'jagged', 'lukewarm', 'numb', 'prickly', 'pulsing', 'rough', 'scalding', 'silky', 'slimy', 'slippery', 'smooth', 'soaked', 'sodden', 'spiky', 'spongy', 'steaming', 'sticky', 'stinging', 'tepid', 'thorny', 'throbbing', 'velvety', 'warm', 'waxy', 'wet', 'woolly'], taste: ['acidic', 'bitter', 'bland', 'briny', 'chalky', 'cheesy', 'citrusy', 'creamy', 'crisp', 'crumbly', 'fiery', 'flavourful', 'fruity', 'gingery', 'hearty', 'honeyed', 'hot', 'juicy', 'meaty', 'minty', 'overripe', 'peppery', 'pickled', 'rich', 'ripe', 'roasted', 'salty', 'savoury', 'sharp', 'smoky', 'sour', 'spicy', 'stale', 'sugary', 'sweet', 'tangy', 'tart', 'watery', 'zesty'] };
+const ALL_SENSORY_WORDS = Object.values(SENSORY_WORDS).flat();
+const CONJUNCTIONS = ['for', 'and', 'nor', 'but', 'or', 'yet', 'so', 'after', 'although', 'as', 'because', 'before', 'if', 'since', 'though', 'unless', 'until', 'when', 'while'];
+const TRANSITIONAL_WORDS = ['after', 'afterward', 'all of a sudden', 'as soon as', 'at first', 'at last', 'at that moment', 'before', 'by the time', 'concurrently', 'earlier', 'eventually', 'finally', 'first', 'following', 'from that point on', 'immediately', 'in the beginning', 'in the meantime', 'instantly', 'just then', 'later', 'later on', 'meanwhile', 'next', 'not long after', 'now', 'once', 'presently', 'second', 'shortly after', 'simultaneously', 'since', 'soon', 'suddenly', 'then', 'third', 'until', 'when', 'while', 'above all', 'additionally', 'also', 'and', 'another', 'as well', 'besides', 'especially', 'furthermore', 'in addition', 'in fact', 'indeed', 'more importantly', 'moreover', 'not only... but also', 'of course', 'specifically', 'then again', 'too', 'truly', 'although', 'but', 'despite', 'even so', 'even though', 'however', 'in contrast', 'instead', 'nevertheless', 'nonetheless', 'on the contrary', 'on the other hand', 'otherwise', 'still', 'though', 'unlike', 'whereas', 'yet', 'accordingly', 'as a result', 'because', 'consequently', 'due to', 'for this reason', 'hence', 'so', 'therefore', 'thus', 'above', 'across', 'around', 'behind', 'below', 'beside', 'beyond', 'here', 'nearby', 'opposite', 'over', 'under'];
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyAVUseBH0axB3fVUOg7rgALJBvq4N4N-1M",
-    authDomain: "inkxp-569a6.firebaseapp.com",
-    projectId: "inkxp-569a6",
-    storageBucket: "inkxp-569a6.firebasestorage.app",
-    messagingSenderId: "578474339685",
-    appId: "1:578474339685:web:9f7b26c637beea31c0458c"
-  };
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-  const auth = getAuth(app);
-  const googleProvider = new GoogleAuthProvider();
+// services/firebaseService.js
+const firebaseConfig = {
+  apiKey: "AIzaSyAVUseBH0axB3fVUOg7rgALJBvq4N4N-1M",
+  authDomain: "inkxp-569a6.firebaseapp.com",
+  projectId: "inkxp-569a6",
+  storageBucket: "inkxp-569a6.firebasestorage.app",
+  messagingSenderId: "578474339685",
+  appId: "1:578474339685:web:9f7b26c637beea31c0458c"
+};
+const app = firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore(app);
+const auth = firebase.auth(app);
+const googleProvider = new firebase.auth.GoogleAuthProvider();
 
-  const onAuthChange = (callback) => onAuthStateChanged(auth, callback);
-  const signInWithGoogle = () => signInWithPopup(auth, googleProvider);
-  const signOutUser = () => signOut(auth);
+const onAuthChange = (callback) => auth.onAuthStateChanged(callback);
+const signInWithGoogle = () => auth.signInWithPopup(googleProvider);
+const signOutUser = () => auth.signOut();
 
-  const generateGameCode = () => Math.random().toString(36).substring(2, 8).toUpperCase();
-  
-  const createGame = async (hostId, prompt, criteria, duration, teacherId) => {
-      const gameCode = generateGameCode();
-      const gameRef = doc(db, 'games', gameCode);
-      const gameData = {
-          hostId, prompt, criteria, duration, teacherId,
-          status: 'waiting', // waiting, in-progress, finished
-          players: {}, // Host is not a player, starts with empty players
-          createdAt: serverTimestamp()
-      };
-      await setDoc(gameRef, gameData);
-      return gameCode;
-  };
-  
-  const joinGame = async (gameCode, playerId, playerNickname) => {
-      const gameRef = doc(db, 'games', gameCode);
-      const gameSnap = await getDoc(gameRef);
-      if (!gameSnap.exists()) throw new Error("Game not found!");
-      const gameData = gameSnap.data();
-      if (gameData.status === 'finished') throw new Error("This game has already finished.");
-      await updateDoc(gameRef, { [`players.${playerId}`]: { nickname: playerNickname, story: { title: '', text: '' }, analysis: null } });
-      return gameData;
-  };
-  
-  const getGameStream = (gameCode, callback) => onSnapshot(doc(db, 'games', gameCode), (doc) => callback(doc.data()));
-  
-  const getGamesForTeacher = (teacherId, callback) => {
-    const q = query(
-        collection(db, "games"), 
-        where("teacherId", "==", teacherId), 
-        orderBy("createdAt", "desc")
-    );
-    return onSnapshot(q, (querySnapshot) => {
-        const games = [];
-        querySnapshot.forEach((doc) => {
-            games.push({ id: doc.id, ...doc.data() });
-        });
-        callback(games);
-    });
-  };
+const generateGameCode = () => Math.random().toString(36).substring(2, 8).toUpperCase();
 
-  const startGame = async (gameCode) => await updateDoc(doc(db, 'games', gameCode), {
-    status: 'in-progress',
-    startTime: serverTimestamp()
-  });
+const createGame = async (hostId, prompt, criteria, duration, teacherId) => {
+    const gameCode = generateGameCode();
+    const gameRef = db.collection('games').doc(gameCode);
+    const gameData = {
+        hostId, prompt, criteria, duration, teacherId,
+        status: 'waiting', // waiting, in-progress, finished
+        players: {}, // Host is not a player, starts with empty players
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+    await gameRef.set(gameData);
+    return gameCode;
+};
 
-  const submitResult = async (gameCode, playerId, story, analysis) => {
-    const gameRef = doc(db, 'games', gameCode);
-    await updateDoc(gameRef, {
-        [`players.${playerId}.story`]: story,
-        [`players.${playerId}.analysis`]: analysis,
-    });
-  };
+const joinGame = async (gameCode, playerId, playerNickname) => {
+    const gameRef = db.collection('games').doc(gameCode);
+    const gameSnap = await gameRef.get();
+    if (!gameSnap.exists) throw new Error("Game not found!");
+    const gameData = gameSnap.data();
+    if (gameData.status === 'finished') throw new Error("This game has already finished.");
+    await gameRef.update({ [`players.${playerId}`]: { nickname: playerNickname, story: { title: '', text: '' }, analysis: null } });
+    return gameData;
+};
 
-  const updatePlayerAnalysis = async (gameCode, playerId, analysis) => {
-    const gameRef = doc(db, 'games', gameCode);
-    await updateDoc(gameRef, {
-        [`players.${playerId}.analysis`]: analysis,
-    });
-  };
+const getGameStream = (gameCode, callback) => db.collection('games').doc(gameCode).onSnapshot((doc) => callback(doc.data()));
 
-  const finishGame = async (gameCode) => {
-    await updateDoc(doc(db, 'games', gameCode), { status: 'finished' });
-  }
-
-  // services/scoringService.js
-  const countWords = (text, words) => {
-      if (!text) return 0;
-      const lowerText = text.toLowerCase();
-      let count = 0;
-      for (const word of words) {
-          const regex = new RegExp(`\\b${word.toLowerCase().replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}\\b`, 'g');
-          const matches = lowerText.match(regex);
-          if (matches) {
-              count += matches.length;
-          }
-      }
-      return count;
-  };
-  const ALL_SCORING_CRITERIA = [
-      { id: 'dialogue', name: 'Dialogue', description: 'Using speech with correct punctuation', points: 1000, check: (text) => (text.match(/"[^"]*"/g) || []).length },
-      { id: 'adjectives', name: 'Adjectives', description: `Using varied adjectives`, points: 500, check: (text) => countWords(text, ADJECTIVES) },
-      { id: 'sensory', name: 'Sensory Detail', description: 'Using sensory details (sight, sound, smell, touch, taste)', points: 1000, check: (text) => countWords(text, ALL_SENSORY_WORDS) },
-      { id: 'sentence', name: 'Sentence Structure', description: 'Correctly punctuated sentence (. ! ?)', points: 50, check: (text) => { const sentences = text.split(/[.!?]/).filter(s => s.trim().length > 0); return sentences.filter(s => s.trim().match(/^[A-Z]/)).length; } },
-      { id: 'conjunctions', name: 'Complex Sentences', description: 'Using conjunctions to create compound/complex sentences', points: 50, check: (text) => countWords(text, CONJUNCTIONS) },
-      { id: 'simile', name: 'Similes', description: 'Using similes (comparing with "like" or "as")', points: 100, check: (text) => (text.match(/\b\w+\s+(like|as)\s+\w+\b/gi) || []).length },
-      { id: 'transitional', name: 'Transitional Words', description: 'Using transitional words or phrases', points: 100, check: (text) => countWords(text, TRANSITIONAL_WORDS) }
-  ];
-  const analyzeScore = (text, criteria) => {
-      let totalScore = 0;
-      const breakdown = criteria.map(criterion => {
-          const count = criterion.check(text);
-          const score = count * criterion.points;
-          totalScore += score;
-          return { id: criterion.id, name: criterion.name, count, score };
+const getGamesForTeacher = (teacherId, callback) => {
+  const q = db.collection("games")
+      .where("teacherId", "==", teacherId)
+      .orderBy("createdAt", "desc");
+  return q.onSnapshot((querySnapshot) => {
+      const games = [];
+      querySnapshot.forEach((doc) => {
+          games.push({ id: doc.id, ...doc.data() });
       });
-      if (breakdown.length === 0) {
-          return { totalScore: 0, breakdown: [], highestScoring: { name: 'N/A', score: 0}, lowestScoring: { name: 'N/A', score: 0}};
-      }
-      const sortedByScore = [...breakdown].sort((a, b) => b.score - a.score);
-      const highestScoring = { name: sortedByScore[0].name, score: sortedByScore[0].score };
-      const lowestScoring = { name: sortedByScore[sortedByScore.length - 1].name, score: sortedByScore[sortedByScore.length - 1].score };
-      return { totalScore, breakdown, highestScoring, lowestScoring };
-  };
+      callback(games);
+  });
+};
 
-  // components/LoadingSpinner.js
-  const LoadingSpinner = () => <div className="w-8 h-8 border-4 border-sky-200 border-t-sky-600 rounded-full animate-spin"></div>;
-  
-  // components/Timer.js
-  const Timer = ({ startTime, duration, onTimeUp }) => {
-      const { useState, useEffect, useRef } = React;
-      const [secondsLeft, setSecondsLeft] = useState(duration);
-      const onTimeUpRef = useRef(onTimeUp);
-      onTimeUpRef.current = onTimeUp;
+const startGame = async (gameCode) => await db.collection('games').doc(gameCode).update({
+  status: 'in-progress',
+  startTime: firebase.firestore.FieldValue.serverTimestamp()
+});
 
-      useEffect(() => {
-          if (!startTime) {
-              setSecondsLeft(duration);
-              return;
-          }
+const submitResult = async (gameCode, playerId, story, analysis) => {
+  const gameRef = db.collection('games').doc(gameCode);
+  await gameRef.update({
+      [`players.${playerId}.story`]: story,
+      [`players.${playerId}.analysis`]: analysis,
+  });
+};
 
-          const intervalId = setInterval(() => {
-              const gameStartTime = startTime.toDate().getTime();
-              const elapsed = Math.floor((Date.now() - gameStartTime) / 1000);
-              const remaining = duration - elapsed;
+const updatePlayerAnalysis = async (gameCode, playerId, analysis) => {
+  const gameRef = db.collection('games').doc(gameCode);
+  await gameRef.update({
+      [`players.${playerId}.analysis`]: analysis,
+  });
+};
 
-              if (remaining <= 0) {
-                  setSecondsLeft(0);
-                  onTimeUpRef.current();
-                  clearInterval(intervalId);
-              } else {
-                  setSecondsLeft(remaining);
-              }
-          }, 1000);
+const finishGame = async (gameCode) => {
+  await db.collection('games').doc(gameCode).update({ status: 'finished' });
+}
 
-          return () => clearInterval(intervalId);
-      }, [startTime, duration]);
-
-      const minutes = Math.floor(secondsLeft / 60);
-      const remainingSeconds = secondsLeft % 60;
-      return <div className="text-5xl font-bold tracking-tighter"><span>{minutes.toString().padStart(2, '0')}</span><span className="animate-pulse">:</span><span>{remainingSeconds.toString().padStart(2, '0')}</span></div>;
-  };
-  
-  // components/Button.js
-  const Button = ({ children, className = '', variant = 'primary', size = 'medium', ...props }) => {
-      const baseStyles = 'font-bold rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition-transform duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed transform active:scale-95';
-      const variantStyles = { primary: 'bg-sky-600 text-white hover:bg-sky-700 focus:ring-sky-500 disabled:hover:bg-sky-600', secondary: 'bg-slate-200 text-slate-800 hover:bg-slate-300 focus:ring-slate-400 disabled:hover:bg-slate-200' };
-      const sizeStyles = { small: 'py-1.5 px-3 text-sm', medium: 'py-2 px-5 text-base', large: 'py-3 px-8 text-lg' };
-      return <button className={`${baseStyles} ${variantStyles[variant]} ${sizeStyles[size]} ${className}`} {...props}>{children}</button>;
-  };
-
-  // components/NicknamePrompt.js
-  const NicknamePrompt = ({ onNicknameSubmit }) => {
-      const { useState } = React;
-      const [nickname, setNickname] = useState('');
-      const handleSubmit = (e) => { e.preventDefault(); if (nickname.trim()) { onNicknameSubmit(nickname.trim()); } };
-      return (
-          <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-50">
-              <div className="bg-white p-8 rounded-xl shadow-2xl w-full max-w-sm text-center">
-                  <h2 className="text-2xl font-bold text-slate-800 mb-4">Enter Player Name</h2>
-                  <p className="text-slate-600 mb-6">Use a consistent name so your teacher can see your progress.</p>
-                  <form onSubmit={handleSubmit}>
-                      <input type="text" value={nickname} onChange={(e) => setNickname(e.target.value)} className="w-full p-3 border border-slate-300 rounded-lg shadow-inner focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-shadow duration-200 text-lg text-center" placeholder="e.g. Rachel F" maxLength="10" required />
-                      <Button type="submit" size="large" className="mt-6 w-full">Let's Go!</Button>
-                  </form>
-              </div>
-          </div>
-      );
-  };
-
-  // components/ResultsScreen.js
-  const ResultsScreen = ({ gameData, playerId, onPlayAgain, onGoHome }) => {
-    const myPlayer = gameData.players[playerId];
-    const myAnalysis = myPlayer?.analysis;
-    const myFinalStory = myPlayer?.story;
-
-    const sortedPlayers = Object.entries(gameData.players)
-      .map(([id, data]) => ({ id, ...data, totalScore: data.analysis?.totalScore || 0 }))
-      .sort((a, b) => b.totalScore - a.totalScore);
-
-    return (
-        <div className="flex flex-col items-center">
-            <h2 className="text-3xl font-bold text-emerald-600 mb-2">Time's Up!</h2>
-            <p className="text-slate-600 mb-6">Fantastic effort! Here are the final scores.</p>
-            <div className="w-full grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-2 bg-white p-6 rounded-lg shadow-md border border-slate-200">
-                    <h3 className="text-xl font-bold mb-2 text-slate-800">{myFinalStory?.title || "Untitled Story"}</h3>
-                    <p className="text-sm font-semibold text-sky-600 mb-4">{gameData.prompt.text}</p>
-                    <div className="prose max-w-none text-slate-700 whitespace-pre-wrap bg-slate-50 p-4 rounded-md">{myFinalStory?.text || "You didn't write anything this time. Try again!"}</div>
-                </div>
-                <div className="lg:col-span-1 space-y-6">
-                    <div className="bg-white p-6 rounded-lg shadow-md border border-slate-200">
-                         <h3 className="text-lg font-bold text-slate-500 uppercase tracking-wider mb-3">Leaderboard</h3>
-                         <ol className="space-y-2">
-                          {sortedPlayers.map((player, index) => (
-                             <li key={player.id} className={`p-2 rounded-md flex justify-between items-center ${player.id === playerId ? 'bg-sky-100' : 'bg-slate-50'}`}>
-                               <span className="font-semibold text-slate-700">{index + 1}. {player.nickname}</span>
-                               <span className="font-bold text-sky-600">{player.totalScore.toLocaleString()}</span>
-                             </li>
-                          ))}
-                         </ol>
-                    </div>
-                    {myAnalysis && (
-                        <div className="bg-white p-6 rounded-lg shadow-md border border-slate-200">
-                            <h3 className="text-xl font-bold mb-4 text-slate-800">Your Score Breakdown</h3>
-                             <ul className="space-y-2">
-                                {myAnalysis.breakdown.map((item) => (
-                                    <li key={item.id} className="flex justify-between items-center text-sm p-2 bg-slate-50 rounded-md">
-                                        <span className="text-slate-700">{item.name} ({item.count})</span>
-                                        <span className="font-semibold text-emerald-600">+{item.score.toLocaleString()}</span>
-                                    </li>
-                                ))}
-                                 <li className="flex justify-between items-center text-base font-bold p-2 bg-sky-100 rounded-md mt-4">
-                                        <span className="text-sky-800">Total Score</span>
-                                        <span className="text-sky-800">{myAnalysis.totalScore.toLocaleString()}</span>
-                                    </li>
-                            </ul>
-                        </div>
-                    )}
-                </div>
-            </div>
-            <div className="flex items-center gap-4 mt-8">
-                <Button onClick={onPlayAgain} size="large">Play Again</Button>
-                <Button onClick={onGoHome} variant="secondary" size="large">Back to Home</Button>
-            </div>
-        </div>
-    );
-  };
-  
-  // components/GameScreen.js
-  const GameScreen = ({ gameData, playerId, onTimeUp, onGoHome, onScoreUpdate }) => {
-      const { useState, useEffect, useRef, useCallback, useMemo } = React;
-
-      const fullCriteria = useMemo(() => {
-        if (!gameData || !gameData.criteria) return [];
-        return gameData.criteria
-            .map(id => ALL_SCORING_CRITERIA.find(c => c.id === id))
-            .filter(Boolean);
-      }, [gameData]);
-
-      const [title, setTitle] = useState('');
-      const [text, setText] = useState('');
-      const [planningText, setPlanningText] = useState('');
-      const [scoreAnalysis, setScoreAnalysis] = useState(() => analyzeScore('', fullCriteria));
-      const [isScoreAnimating, setIsScoreAnimating] = useState(false);
-      const hasFired = useRef(false);
-      const prevScoreRef = useRef(0);
-      const wordCount = useMemo(() => { if (!text.trim()) return 0; return text.trim().split(/\s+/).length; }, [text]);
-      
-      const onScoreUpdateRef = useRef(onScoreUpdate);
-      onScoreUpdateRef.current = onScoreUpdate;
-
-      useEffect(() => {
-          const handler = setTimeout(() => {
-              const analysis = analyzeScore(text, fullCriteria);
-              setScoreAnalysis(analysis);
-              if (onScoreUpdateRef.current) {
-                  onScoreUpdateRef.current(analysis);
-              }
-              if (analysis.totalScore > prevScoreRef.current) {
-                  setIsScoreAnimating(true);
-                  setTimeout(() => setIsScoreAnimating(false), 300);
-              }
-              prevScoreRef.current = analysis.totalScore;
-          }, 500);
-          return () => clearTimeout(handler);
-      }, [text, fullCriteria]);
-
-      const onTimeUpRef = useRef(onTimeUp);
-      onTimeUpRef.current = onTimeUp;
-  
-      const handleTimeUp = useCallback(() => {
-          if (!hasFired.current) {
-              hasFired.current = true;
-              const finalAnalysis = analyzeScore(text, fullCriteria);
-              onTimeUpRef.current({ title, text }, finalAnalysis);
-          }
-      }, [title, text, fullCriteria]);
-
-      useEffect(() => {
-        if (gameData && gameData.status === 'finished' && !hasFired.current) {
-            handleTimeUp();
+// services/scoringService.js
+const countWords = (text, words) => {
+    if (!text) return 0;
+    const lowerText = text.toLowerCase();
+    let count = 0;
+    for (const word of words) {
+        const regex = new RegExp(`\\b${word.toLowerCase().replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}\\b`, 'g');
+        const matches = lowerText.match(regex);
+        if (matches) {
+            count += matches.length;
         }
-      }, [gameData, handleTimeUp]);
-  
-      const planningPlaceholder = "Jot down your ideas...\n- Beginning: \n- Middle (The Problem): \n- End (The Solution): \n- Senses to include: ";
-  
-      return (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <div className="lg:col-span-2">
-                  <div className="relative bg-white p-6 rounded-lg shadow-md border border-slate-200 mb-4">
-                      <Button onClick={onGoHome} variant="secondary" size="small" className="absolute top-4 right-4">Quit Game</Button>
-                      <p className="text-sm font-semibold text-sky-600 mb-2">{gameData.prompt.category}</p>
-                      <p className="text-lg text-slate-700 pr-24">{gameData.prompt.text}</p>
-                  </div>
-                   <div className="mb-4">
-                      <label htmlFor="planning-area" className="block text-sm font-bold text-slate-700 mb-1">Planning</label>
-                      <textarea id="planning-area" value={planningText} onChange={(e) => setPlanningText(e.target.value)} className="w-full h-28 p-2 border border-slate-300 rounded-lg shadow-inner focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-shadow duration-200 text-sm" placeholder={planningPlaceholder} aria-label="Planning area" />
-                  </div>
-                  <div className="mb-4">
-                      <label htmlFor="story-title" className="block text-sm font-bold text-slate-700 mb-1">Story Title</label>
-                      <input id="story-title" type="text" value={title} onChange={(e) => setTitle(e.target.value)} className="w-full p-3 border border-slate-300 rounded-lg shadow-inner focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-shadow duration-200 text-lg" placeholder="Enter your title here" />
-                  </div>
-                  <textarea value={text} onChange={(e) => setText(e.target.value)} className="w-full min-h-[400px] p-4 border border-slate-300 rounded-lg shadow-inner focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-shadow duration-200" placeholder="Start writing your story here..." aria-label="Story writing area" spellCheck="false" autoComplete="off" autoCorrect="off" autoCapitalize="off" />
-              </div>
-              <div className="lg:col-span-1">
-                  <div className="sticky top-8 space-y-6">
-                      <div className="bg-sky-600 text-white p-4 rounded-lg shadow-lg text-center"><p className="text-lg font-semibold">Time Remaining</p><Timer startTime={gameData.startTime} duration={gameData.duration} onTimeUp={handleTimeUp} /></div>
-                      <div className="bg-emerald-600 text-white p-4 rounded-lg shadow-lg text-center"><p className="text-lg font-semibold">Your Score</p><p className={`text-5xl font-bold tracking-tighter transition-transform duration-300 ease-out ${isScoreAnimating ? 'scale-125' : 'scale-100'}`}>{scoreAnalysis.totalScore.toLocaleString()}</p></div>
-                      <div className="bg-violet-600 text-white p-4 rounded-lg shadow-lg text-center"><p className="text-lg font-semibold">Word Count</p><p className="text-5xl font-bold tracking-tighter">{wordCount}</p></div>
-                      <div className="bg-white p-6 rounded-lg shadow-md border border-slate-200">
-                          <h3 className="text-xl font-bold mb-4 text-slate-800 border-b pb-2">Scoring Goals</h3>
-                          <ul className="space-y-1">
-                              {fullCriteria.map((criterion) => {
-                                  const item = scoreAnalysis.breakdown.find(b => b.id === criterion.id) || { count: 0 };
-                                  const hasAchieved = item.count > 0;
-                                  return <li key={criterion.id} className={`p-2 rounded-md transition-all duration-300 flex justify-between items-center ${hasAchieved ? 'bg-emerald-50' : 'bg-transparent'}`} aria-live="polite"><span className="text-sm text-slate-600 pr-2"><span className={`font-bold ${hasAchieved ? 'text-emerald-700' : 'text-slate-500'}`}>+{criterion.points.toLocaleString()} pts:</span> {criterion.description}</span><span className={`font-bold text-xs px-2 py-0.5 rounded-full transition-all duration-300 flex-shrink-0 ${hasAchieved ? 'bg-emerald-200 text-emerald-800 scale-110' : 'bg-slate-100 text-slate-500'}`}>{item.count}</span></li>;
-                              })}
-                          </ul>
-                      </div>
-                  </div>
-              </div>
-          </div>
-      );
-  };
-  
-  // components/HostScreen.js
-  const HostScreen = ({ gameData, onEndGame }) => {
-    const sortedPlayers = Object.entries(gameData.players)
-      .map(([id, data]) => ({ id, ...data, totalScore: data.analysis?.totalScore || 0 }))
-      .sort((a, b) => b.totalScore - a.totalScore);
+    }
+    return count;
+};
+const ALL_SCORING_CRITERIA = [
+    { id: 'dialogue', name: 'Dialogue', description: 'Using speech with correct punctuation', points: 1000, check: (text) => (text.match(/"[^"]*"/g) || []).length },
+    { id: 'adjectives', name: 'Adjectives', description: `Using varied adjectives`, points: 500, check: (text) => countWords(text, ADJECTIVES) },
+    { id: 'sensory', name: 'Sensory Detail', description: 'Using sensory details (sight, sound, smell, touch, taste)', points: 1000, check: (text) => countWords(text, ALL_SENSORY_WORDS) },
+    { id: 'sentence', name: 'Sentence Structure', description: 'Correctly punctuated sentence (. ! ?)', points: 50, check: (text) => { const sentences = text.split(/[.!?]/).filter(s => s.trim().length > 0); return sentences.filter(s => s.trim().match(/^[A-Z]/)).length; } },
+    { id: 'conjunctions', name: 'Complex Sentences', description: 'Using conjunctions to create compound/complex sentences', points: 50, check: (text) => countWords(text, CONJUNCTIONS) },
+    { id: 'simile', name: 'Similes', description: 'Using similes (comparing with "like" or "as")', points: 100, check: (text) => (text.match(/\b\w+\s+(like|as)\s+\w+\b/gi) || []).length },
+    { id: 'transitional', name: 'Transitional Words', description: 'Using transitional words or phrases', points: 100, check: (text) => countWords(text, TRANSITIONAL_WORDS) }
+];
+const analyzeScore = (text, criteria) => {
+    let totalScore = 0;
+    const breakdown = criteria.map(criterion => {
+        const count = criterion.check(text);
+        const score = count * criterion.points;
+        totalScore += score;
+        return { id: criterion.id, name: criterion.name, count, score };
+    });
+    if (breakdown.length === 0) {
+        return { totalScore: 0, breakdown: [], highestScoring: { name: 'N/A', score: 0}, lowestScoring: { name: 'N/A', score: 0}};
+    }
+    const sortedByScore = [...breakdown].sort((a, b) => b.score - a.score);
+    const highestScoring = { name: sortedByScore[0].name, score: sortedByScore[0].score };
+    const lowestScoring = { name: sortedByScore[sortedByScore.length - 1].name, score: sortedByScore[sortedByScore.length - 1].score };
+    return { totalScore, breakdown, highestScoring, lowestScoring };
+};
 
-    return (
-        <div className="flex flex-col items-center">
-            <h2 className="text-2xl font-bold text-slate-800 mb-2">Host Dashboard</h2>
-            <p className="text-slate-600 mb-6">The game is in progress. You can see the live scores below.</p>
-            
-            <div className="w-full grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-2">
-                    <div className="bg-white p-6 rounded-lg shadow-md border border-slate-200 mb-6">
-                        <h3 className="text-xl font-bold mb-4 text-slate-800">Live Leaderboard</h3>
-                        {sortedPlayers.length > 0 ? (
-                            <ol className="space-y-2">
-                                {sortedPlayers.map((player, index) => (
-                                    <li key={player.id} className="p-3 rounded-md flex justify-between items-center bg-slate-50 transition-all">
-                                        <span className="font-semibold text-slate-700">{index + 1}. {player.nickname}</span>
-                                        <span className="font-bold text-sky-600">{player.totalScore.toLocaleString()}</span>
-                                    </li>
-                                ))}
-                            </ol>
-                        ) : (
-                            <p className="text-slate-500 text-center py-4">Waiting for players to score...</p>
-                        )}
-                    </div>
-                </div>
-                <div className="lg:col-span-1 space-y-6">
-                     <div className="sticky top-8">
-                        <div className="bg-sky-600 text-white p-4 rounded-lg shadow-lg text-center mb-6">
-                            <p className="text-lg font-semibold">Time Remaining</p>
-                            <Timer startTime={gameData.startTime} duration={gameData.duration} onTimeUp={onEndGame} />
-                        </div>
-                        <Button onClick={onEndGame} size="large" className="w-full bg-red-600 hover:bg-red-700 focus:ring-red-500">End Game Now</Button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-  };
+// components/LoadingSpinner.js
+const LoadingSpinner = () => <div className="w-8 h-8 border-4 border-sky-200 border-t-sky-600 rounded-full animate-spin"></div>;
 
-  // components/HostResultsScreen.js
-  const HostResultsScreen = ({ gameData, onNewGame, onGoHome, isHistoryView = false, onBackToDashboard }) => {
-    const { useState } = React;
-    const [selectedPlayer, setSelectedPlayer] = useState(null);
-
-    const sortedPlayers = Object.entries(gameData.players)
-      .map(([id, data]) => ({ id, ...data, totalScore: data.analysis?.totalScore || 0 }))
-      .sort((a, b) => b.totalScore - a.totalScore);
-
-    const downloadPDF = (nickname, story) => {
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
-      
-      const title = story?.title || 'Untitled Story';
-      const text = story?.text || 'No text submitted.';
-
-      // Title
-      doc.setFontSize(22);
-      doc.setFont('helvetica', 'bold');
-      doc.text(title, 105, 20, { align: 'center' });
-
-      // Author
-      doc.setFontSize(14);
-      doc.setFont('helvetica', 'normal');
-      doc.text(`By: ${nickname}`, 105, 30, { align: 'center' });
-      
-      // Prompt
-      doc.setFontSize(10);
-      doc.setTextColor(150);
-      doc.text(`Prompt: ${gameData.prompt.text}`, 10, 45, { maxWidth: 190 });
-
-      // Divider
-      doc.setLineWidth(0.5);
-      doc.line(10, 55, 200, 55);
-
-      // Story Text
-      doc.setFontSize(12);
-      doc.setTextColor(0);
-      const storyLines = doc.splitTextToSize(text, 190);
-      doc.text(storyLines, 10, 65);
-
-      // Save file
-      doc.save(`InkXP_Story_${nickname.replace(/\s/g, '_')}.pdf`);
-    };
-
-    const PlayerDetailModal = ({ player, onClose }) => {
-        if (!player) return null;
-        const analysis = player.analysis || { breakdown: [], totalScore: 0 };
-        return (
-            <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={onClose}>
-                <div className="bg-white p-6 rounded-xl shadow-2xl w-full max-w-3xl text-left relative" onClick={(e) => e.stopPropagation()}>
-                    <button onClick={onClose} className="absolute top-3 right-4 text-slate-500 hover:text-slate-800 text-3xl font-bold">&times;</button>
-                    <h3 className="text-2xl font-bold text-slate-800 mb-4">{player.story?.title || 'Untitled Story'}</h3>
-                    <p className="text-slate-600 mb-4 -mt-2">by: {player.nickname}</p>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-h-[70vh]">
-                        <div className="md:col-span-2 overflow-y-auto pr-2">
-                             <h4 className="text-lg font-bold text-slate-800 mb-2">Full Story</h4>
-                             <p className="text-sm font-semibold text-sky-600 mb-2">{gameData.prompt.text}</p>
-                             <div className="prose max-w-none text-slate-700 whitespace-pre-wrap bg-slate-50 p-4 rounded-md">{player.story?.text || "No text submitted."}</div>
-                        </div>
-                        <div className="overflow-y-auto">
-                            <h4 className="text-lg font-bold text-slate-800 mb-2">Score Breakdown</h4>
-                            <ul className="space-y-2">
-                               {analysis.breakdown.map((item) => (
-                                   <li key={item.id} className="flex justify-between items-center text-sm p-2 bg-slate-50 rounded-md">
-                                       <span className="text-slate-700">{item.name} ({item.count})</span>
-                                       <span className="font-semibold text-emerald-600">+{item.score.toLocaleString()}</span>
-                                   </li>
-                               ))}
-                                <li className="flex justify-between items-center text-base font-bold p-2 bg-sky-100 rounded-md mt-4">
-                                       <span className="text-sky-800">Total Score</span>
-                                       <span className="text-sky-800">{analysis.totalScore.toLocaleString()}</span>
-                                   </li>
-                           </ul>
-                           <Button onClick={() => downloadPDF(player.nickname, player.story)} size="medium" className="mt-6 w-full">Download as PDF</Button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        );
-    };
-
-    return (
-        <div className="flex flex-col items-center">
-            <h2 className="text-3xl font-bold text-emerald-600 mb-2">{isHistoryView ? "Game Results" : "Game Over!"}</h2>
-            <p className="text-slate-600 mb-6">{isHistoryView ? "Here are the results for this game session." : "Here are the final results and all the amazing stories written."}</p>
-            <div className="w-full max-w-2xl bg-white p-6 rounded-lg shadow-md border border-slate-200">
-                 <h3 className="text-xl font-bold text-slate-500 uppercase tracking-wider mb-3">Final Leaderboard</h3>
-                 {sortedPlayers.length > 0 ? (
-                    <ol className="space-y-2">
-                     {sortedPlayers.map((player, index) => (
-                        <li key={player.id} className="p-3 rounded-md flex justify-between items-center bg-slate-50">
-                          <div className="flex items-center gap-4">
-                           <span className="font-bold text-slate-600 text-lg w-6">{index + 1}.</span>
-                           <span className="font-semibold text-slate-800 text-lg">{player.nickname}</span>
-                           <span className="font-bold text-sky-600">{player.totalScore.toLocaleString()}</span>
-                          </div>
-                          <Button onClick={() => setSelectedPlayer(player)} size="small">View Writing</Button>
-                        </li>
-                     ))}
-                    </ol>
-                 ) : (
-                    <p className="text-slate-500 text-center py-4">No players submitted a score.</p>
-                 )}
-            </div>
-             <div className="flex items-center gap-4 mt-8">
-                {isHistoryView ? (
-                    <Button onClick={onBackToDashboard} variant="secondary" size="large">Back to Dashboard</Button>
-                ) : (
-                    <>
-                        <Button onClick={onNewGame} size="large">Create New Game</Button>
-                        <Button onClick={onGoHome} variant="secondary" size="large">Back to Home</Button>
-                    </>
-                )}
-            </div>
-            <PlayerDetailModal player={selectedPlayer} onClose={() => setSelectedPlayer(null)} />
-        </div>
-    );
-  };
-
-
-  // components/LobbyScreen.js
-  const LobbyScreen = ({ gameId, gameData, playerId, onStartGame }) => {
-    const isHost = gameData.hostId === playerId;
-    const playerList = Object.entries(gameData.players);
-
-    const handleCopyCode = () => {
-        navigator.clipboard.writeText(gameId);
-        // Maybe show a small "Copied!" message
-    };
-
-    return (
-        <div className="flex flex-col items-center">
-            <h2 className="text-2xl font-bold text-slate-800 mb-2">Game Lobby</h2>
-            <p className="text-slate-600 mb-6">Share the code with your friends! The game will begin when the host starts.</p>
-            <div className="mb-6">
-                <p className="text-sm text-slate-500">GAME CODE</p>
-                <div className="flex items-center gap-2 mt-1">
-                    <p className="text-4xl font-bold tracking-widest text-sky-600 bg-sky-100 p-3 rounded-lg">{gameId}</p>
-                    <Button onClick={handleCopyCode} variant="secondary" title="Copy Code">
-                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 011.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 00-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 01-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5a3.375 3.375 0 00-3.375-3.375H9.75" /></svg>
-                    </Button>
-                </div>
-            </div>
-
-            <div className="w-full max-w-md bg-white p-6 rounded-lg shadow-md border border-slate-200 mb-8">
-                <h3 className="text-xl font-bold mb-4 text-slate-800">Players ({playerList.length})</h3>
-                <ul className="space-y-2">
-                    {playerList.map(([id, player]) => (
-                        <li key={id} className="flex items-center gap-3 p-2 bg-slate-100 rounded-md">
-                           <span className="font-bold text-slate-700">{player.nickname}</span>
-                           {gameData.hostId === id && <span className="text-xs font-bold text-sky-700 bg-sky-200 px-2 py-0.5 rounded-full">HOST (Not Playing)</span>}
-                        </li>
-                    ))}
-                    {playerList.length === 0 && <p className="text-slate-500 text-center py-2">Waiting for players to join...</p>}
-                </ul>
-            </div>
-
-            {isHost ? (
-                <Button onClick={onStartGame} size="large" disabled={playerList.length === 0}>Start Game for Everyone!</Button>
-            ) : (
-                <p className="text-lg text-slate-600 animate-pulse">Waiting for host to start the game...</p>
-            )}
-        </div>
-    );
-  };
-  
-  // components/JoinGameScreen.js
-  const JoinGameScreen = ({ onJoin, onGoHome }) => {
-      const { useState } = React;
-      const [gameCode, setGameCode] = useState('');
-      const [error, setError] = useState('');
-      const [isLoading, setIsLoading] = useState(false);
-
-      const handleJoin = async (e) => {
-        e.preventDefault();
-        if (!gameCode.trim()) return;
-        setError('');
-        setIsLoading(true);
-        try {
-            await onJoin(gameCode.trim().toUpperCase());
-        } catch (err) {
-            setError(err.message);
-        } finally {
-            setIsLoading(false);
-        }
-      };
-
-      return (
-          <div className="flex flex-col items-center">
-              <h2 className="text-2xl font-bold text-slate-800 mb-2">Join a Game</h2>
-              <p className="text-slate-600 mb-6">Enter the 6-character code from your game host.</p>
-              <form onSubmit={handleJoin} className="w-full max-w-sm flex flex-col items-center">
-                  <input
-                    type="text"
-                    value={gameCode}
-                    onChange={(e) => setGameCode(e.target.value)}
-                    className="w-full p-3 border border-slate-300 rounded-lg shadow-inner focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-shadow duration-200 text-2xl text-center tracking-[0.5em] uppercase"
-                    placeholder="ABCXYZ"
-                    maxLength="6"
-                    required
-                  />
-                  {error && <p className="text-red-500 mt-2">{error}</p>}
-                  <div className="flex items-center gap-4 mt-8">
-                    <Button onClick={onGoHome} variant="secondary" size="large" type="button">Back to Home</Button>
-                    <Button type="submit" size="large" disabled={isLoading}>{isLoading ? 'Joining...' : 'Join Game'}</Button>
-                  </div>
-              </form>
-          </div>
-      );
-  };
-
-  // components/SetupScreen.js
-  const SetupScreen = ({ onStart, onGoHome, onBackToDashboard, isSolo = false, isTeacher = false }) => {
-      const { useState, useCallback, useMemo } = React;
-      
-      const [currentPrompt, setCurrentPrompt] = useState(() => NARRATIVE_PROMPTS[Math.floor(Math.random() * NARRATIVE_PROMPTS.length)]);
-      const [duration, setDuration] = useState(5);
-
-      const generateNewPrompt = useCallback(() => {
-          const newPrompt = NARRATIVE_PROMPTS[Math.floor(Math.random() * NARRATIVE_PROMPTS.length)];
-          setCurrentPrompt(newPrompt);
-      }, []);
-
-      const selectedCriteria = useMemo(() => {
-          const generalGoals = ALL_SCORING_CRITERIA.filter(c => c.id === 'sentence' || c.id === 'conjunctions');
-          const mainGoalsPool = ALL_SCORING_CRITERIA.filter(c => c.id !== 'sentence' && c.id !== 'conjunctions');
-          const shuffled = [...mainGoalsPool].sort(() => 0.5 - Math.random());
-          const selectedMainGoals = shuffled.slice(0, 3);
-          return [...generalGoals, ...selectedMainGoals];
-      }, [currentPrompt]);
-
-      const handleStart = () => {
-          const criteriaIds = selectedCriteria.map(c => c.id);
-          onStart(currentPrompt, criteriaIds, duration * 60);
-      };
-      
-      return (
-          <div className="flex flex-col items-center">
-              <h2 className="text-2xl font-bold text-slate-800 mb-2">{isSolo ? "Solo Mode" : "Create a Game"}</h2>
-              <p className="text-slate-600 mb-6">Generate a story idea and choose the writing time.</p>
-              <div className="w-full max-w-3xl bg-white p-6 rounded-lg shadow-md border border-slate-200 mb-6">
-                <p className="text-sm font-semibold text-sky-600 mb-2">{currentPrompt.category}</p>
-                <p className="text-lg text-slate-700">{currentPrompt.text}</p>
-              </div>
-              <div className="flex items-center gap-4 mb-6">
-                <Button onClick={generateNewPrompt} variant="secondary">
-                    Generate New Prompt
-                </Button>
-              </div>
-              <div className="w-full max-w-sm mb-8">
-                  <label htmlFor="duration" className="block text-center text-sm font-medium text-slate-700 mb-2">Set Timer (minutes)</label>
-                  <div className="flex items-center justify-center gap-4">
-                      <input type="range" id="duration" min="5" max="45" step="5" value={duration} onChange={(e) => setDuration(parseInt(e.target.value))} className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer dark:bg-slate-700" />
-                      <span className="font-bold text-sky-600 text-lg w-12 text-center">{duration}</span>
-                  </div>
-              </div>
-              <div className="flex items-center gap-4">
-                <Button onClick={isTeacher ? onBackToDashboard : onGoHome} variant="secondary" size="large">{isTeacher ? "Back to Dashboard" : "Back to Home"}</Button>
-                <Button onClick={handleStart} size="large">{isSolo ? "Start Writing!" : "Create Game Lobby"}</Button>
-              </div>
-          </div>
-      );
-  };
-  
-  // components/TeacherDashboard.js
-  const TeacherDashboard = ({ currentUser, onCreateNewGame, onViewGame, onSignOut }) => {
-    const { useState, useEffect } = React;
-    const [games, setGames] = useState([]);
-    const [loading, setLoading] = useState(true);
+// components/Timer.js
+const Timer = ({ startTime, duration, onTimeUp }) => {
+    const [secondsLeft, setSecondsLeft] = useState(duration);
+    const onTimeUpRef = useRef(onTimeUp);
+    onTimeUpRef.current = onTimeUp;
 
     useEffect(() => {
-        if (!currentUser) return;
-        const unsubscribe = getGamesForTeacher(currentUser.uid, (fetchedGames) => {
-            setGames(fetchedGames);
-            setLoading(false);
-        });
-        return () => unsubscribe();
-    }, [currentUser]);
+        if (!startTime) {
+            setSecondsLeft(duration);
+            return;
+        }
 
-    const formatDate = (timestamp) => {
-        if (!timestamp) return 'Just now';
-        return timestamp.toDate().toLocaleDateString('en-US', {
-            year: 'numeric', month: 'long', day: 'numeric'
-        });
-    }
+        const intervalId = setInterval(() => {
+            const gameStartTime = (startTime.toDate ? startTime.toDate() : startTime).getTime();
+            const elapsed = Math.floor((Date.now() - gameStartTime) / 1000);
+            const remaining = duration - elapsed;
 
+            if (remaining <= 0) {
+                setSecondsLeft(0);
+                onTimeUpRef.current();
+                clearInterval(intervalId);
+            } else {
+                setSecondsLeft(remaining);
+            }
+        }, 1000);
+
+        return () => clearInterval(intervalId);
+    }, [startTime, duration]);
+
+    const minutes = Math.floor(secondsLeft / 60);
+    const remainingSeconds = secondsLeft % 60;
+    return <div className="text-5xl font-bold tracking-tighter"><span>{minutes.toString().padStart(2, '0')}</span><span className="animate-pulse">:</span><span>{remainingSeconds.toString().padStart(2, '0')}</span></div>;
+};
+
+// components/Button.js
+const Button = ({ children, className = '', variant = 'primary', size = 'medium', ...props }) => {
+    const baseStyles = 'font-bold rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition-transform duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed transform active:scale-95';
+    const variantStyles = { primary: 'bg-sky-600 text-white hover:bg-sky-700 focus:ring-sky-500 disabled:hover:bg-sky-600', secondary: 'bg-slate-200 text-slate-800 hover:bg-slate-300 focus:ring-slate-400 disabled:hover:bg-slate-200' };
+    const sizeStyles = { small: 'py-1.5 px-3 text-sm', medium: 'py-2 px-5 text-base', large: 'py-3 px-8 text-lg' };
+    return <button className={`${baseStyles} ${variantStyles[variant]} ${sizeStyles[size]} ${className}`} {...props}>{children}</button>;
+};
+
+// components/NicknamePrompt.js
+const NicknamePrompt = ({ onNicknameSubmit }) => {
+    const [nickname, setNickname] = useState('');
+    const handleSubmit = (e) => { e.preventDefault(); if (nickname.trim()) { onNicknameSubmit(nickname.trim()); } };
     return (
-        <div>
-            <div className="flex justify-between items-center mb-6">
-                <div>
-                    <h2 className="text-2xl font-bold text-slate-800">Teacher Dashboard</h2>
-                    <p className="text-slate-600">Welcome, {currentUser.displayName || 'Teacher'}!</p>
-                </div>
-                <Button onClick={onSignOut} variant="primary">Sign Out</Button>
-            </div>
-            <div className="text-center mb-8">
-                <Button onClick={onCreateNewGame} size="large">
-                    <span className="flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
-                        Create New Game
-                    </span>
-                </Button>
-            </div>
-            <div>
-                <h3 className="text-xl font-bold text-slate-500 uppercase tracking-wider mb-3">Game History</h3>
-                {loading ? (
-                    <div className="flex justify-center p-8"><LoadingSpinner /></div>
-                ) : games.length > 0 ? (
-                    <div className="space-y-4">
-                        {games.map(game => (
-                            <div key={game.id} className="bg-white p-4 rounded-lg shadow-md border border-slate-200 flex justify-between items-center">
-                                <div>
-                                    <p className="font-semibold text-sky-700">{game.prompt.text}</p>
-                                    <p className="text-sm text-slate-500">{formatDate(game.createdAt)} &bull; {Object.keys(game.players).length} players</p>
-                                </div>
-                                <Button onClick={() => onViewGame(game)} size="small" variant="secondary">View Results</Button>
-                            </div>
-                        ))}
-                    </div>
-                ) : (
-                    <div className="text-center bg-slate-100 p-8 rounded-lg">
-                        <p className="text-slate-600">You haven't hosted any games yet.</p>
-                        <p className="text-slate-500 text-sm mt-1">Click "Create New Game" to get started!</p>
-                    </div>
-                )}
+        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="bg-white p-8 rounded-xl shadow-2xl w-full max-w-sm text-center">
+                <h2 className="text-2xl font-bold text-slate-800 mb-4">Enter Player Name</h2>
+                <p className="text-slate-600 mb-6">Use a consistent name so your teacher can see your progress.</p>
+                <form onSubmit={handleSubmit}>
+                    <input type="text" value={nickname} onChange={(e) => setNickname(e.target.value)} className="w-full p-3 border border-slate-300 rounded-lg shadow-inner focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-shadow duration-200 text-lg text-center" placeholder="e.g. Rachel F" maxLength="10" required />
+                    <Button type="submit" size="large" className="mt-6 w-full">Let's Go!</Button>
+                </form>
             </div>
         </div>
     );
+};
+
+// components/ResultsScreen.js
+const ResultsScreen = ({ gameData, playerId, onPlayAgain, onGoHome }) => {
+  const myPlayer = gameData.players[playerId];
+  const myAnalysis = myPlayer?.analysis;
+  const myFinalStory = myPlayer?.story;
+
+  const sortedPlayers = Object.entries(gameData.players)
+    .map(([id, data]) => ({ id, ...data, totalScore: data.analysis?.totalScore || 0 }))
+    .sort((a, b) => b.totalScore - a.totalScore);
+
+  return (
+      <div className="flex flex-col items-center">
+          <h2 className="text-3xl font-bold text-emerald-600 mb-2">Time's Up!</h2>
+          <p className="text-slate-600 mb-6">Fantastic effort! Here are the final scores.</p>
+          <div className="w-full grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-2 bg-white p-6 rounded-lg shadow-md border border-slate-200">
+                  <h3 className="text-xl font-bold mb-2 text-slate-800">{myFinalStory?.title || "Untitled Story"}</h3>
+                  <p className="text-sm font-semibold text-sky-600 mb-4">{gameData.prompt.text}</p>
+                  <div className="prose max-w-none text-slate-700 whitespace-pre-wrap bg-slate-50 p-4 rounded-md">{myFinalStory?.text || "You didn't write anything this time. Try again!"}</div>
+              </div>
+              <div className="lg:col-span-1 space-y-6">
+                  <div className="bg-white p-6 rounded-lg shadow-md border border-slate-200">
+                       <h3 className="text-lg font-bold text-slate-500 uppercase tracking-wider mb-3">Leaderboard</h3>
+                       <ol className="space-y-2">
+                        {sortedPlayers.map((player, index) => (
+                           <li key={player.id} className={`p-2 rounded-md flex justify-between items-center ${player.id === playerId ? 'bg-sky-100' : 'bg-slate-50'}`}>
+                             <span className="font-semibold text-slate-700">{index + 1}. {player.nickname}</span>
+                             <span className="font-bold text-sky-600">{player.totalScore.toLocaleString()}</span>
+                           </li>
+                        ))}
+                       </ol>
+                  </div>
+                  {myAnalysis && (
+                      <div className="bg-white p-6 rounded-lg shadow-md border border-slate-200">
+                          <h3 className="text-xl font-bold mb-4 text-slate-800">Your Score Breakdown</h3>
+                           <ul className="space-y-2">
+                              {myAnalysis.breakdown.map((item) => (
+                                  <li key={item.id} className="flex justify-between items-center text-sm p-2 bg-slate-50 rounded-md">
+                                      <span className="text-slate-700">{item.name} ({item.count})</span>
+                                      <span className="font-semibold text-emerald-600">+{item.score.toLocaleString()}</span>
+                                  </li>
+                              ))}
+                               <li className="flex justify-between items-center text-base font-bold p-2 bg-sky-100 rounded-md mt-4">
+                                      <span className="text-sky-800">Total Score</span>
+                                      <span className="text-sky-800">{myAnalysis.totalScore.toLocaleString()}</span>
+                                  </li>
+                          </ul>
+                      </div>
+                  )}
+              </div>
+          </div>
+          <div className="flex items-center gap-4 mt-8">
+              <Button onClick={onPlayAgain} size="large">Play Again</Button>
+              <Button onClick={onGoHome} variant="secondary" size="large">Back to Home</Button>
+          </div>
+      </div>
+  );
+};
+
+// components/GameScreen.js
+const GameScreen = ({ gameData, playerId, onTimeUp, onGoHome, onScoreUpdate }) => {
+    const fullCriteria = useMemo(() => {
+      if (!gameData || !gameData.criteria) return [];
+      return gameData.criteria
+          .map(id => ALL_SCORING_CRITERIA.find(c => c.id === id))
+          .filter(Boolean);
+    }, [gameData]);
+
+    const [title, setTitle] = useState('');
+    const [text, setText] = useState('');
+    const [planningText, setPlanningText] = useState('');
+    const [scoreAnalysis, setScoreAnalysis] = useState(() => analyzeScore('', fullCriteria));
+    const [isScoreAnimating, setIsScoreAnimating] = useState(false);
+    const hasFired = useRef(false);
+    const prevScoreRef = useRef(0);
+    const wordCount = useMemo(() => { if (!text.trim()) return 0; return text.trim().split(/\s+/).length; }, [text]);
+    
+    const onScoreUpdateRef = useRef(onScoreUpdate);
+    onScoreUpdateRef.current = onScoreUpdate;
+
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            const analysis = analyzeScore(text, fullCriteria);
+            setScoreAnalysis(analysis);
+            if (onScoreUpdateRef.current) {
+                onScoreUpdateRef.current(analysis);
+            }
+            if (analysis.totalScore > prevScoreRef.current) {
+                setIsScoreAnimating(true);
+                setTimeout(() => setIsScoreAnimating(false), 300);
+            }
+            prevScoreRef.current = analysis.totalScore;
+        }, 500);
+        return () => clearTimeout(handler);
+    }, [text, fullCriteria]);
+
+    const onTimeUpRef = useRef(onTimeUp);
+    onTimeUpRef.current = onTimeUp;
+
+    const handleTimeUp = useCallback(() => {
+        if (!hasFired.current) {
+            hasFired.current = true;
+            const finalAnalysis = analyzeScore(text, fullCriteria);
+            onTimeUpRef.current({ title, text }, finalAnalysis);
+        }
+    }, [title, text, fullCriteria]);
+
+    useEffect(() => {
+      if (gameData && gameData.status === 'finished' && !hasFired.current) {
+          handleTimeUp();
+      }
+    }, [gameData, handleTimeUp]);
+
+    const planningPlaceholder = "Jot down your ideas...\n- Beginning: \n- Middle (The Problem): \n- End (The Solution): \n- Senses to include: ";
+
+    return (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2">
+                <div className="relative bg-white p-6 rounded-lg shadow-md border border-slate-200 mb-4">
+                    <Button onClick={onGoHome} variant="secondary" size="small" className="absolute top-4 right-4">Quit Game</Button>
+                    <p className="text-sm font-semibold text-sky-600 mb-2">{gameData.prompt.category}</p>
+                    <p className="text-lg text-slate-700 pr-24">{gameData.prompt.text}</p>
+                </div>
+                 <div className="mb-4">
+                    <label htmlFor="planning-area" className="block text-sm font-bold text-slate-700 mb-1">Planning</label>
+                    <textarea id="planning-area" value={planningText} onChange={(e) => setPlanningText(e.target.value)} className="w-full h-28 p-2 border border-slate-300 rounded-lg shadow-inner focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-shadow duration-200 text-sm" placeholder={planningPlaceholder} aria-label="Planning area" />
+                </div>
+                <div className="mb-4">
+                    <label htmlFor="story-title" className="block text-sm font-bold text-slate-700 mb-1">Story Title</label>
+                    <input id="story-title" type="text" value={title} onChange={(e) => setTitle(e.target.value)} className="w-full p-3 border border-slate-300 rounded-lg shadow-inner focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-shadow duration-200 text-lg" placeholder="Enter your title here" />
+                </div>
+                <textarea value={text} onChange={(e) => setText(e.target.value)} className="w-full min-h-[400px] p-4 border border-slate-300 rounded-lg shadow-inner focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-shadow duration-200" placeholder="Start writing your story here..." aria-label="Story writing area" spellCheck="false" autoComplete="off" autoCorrect="off" autoCapitalize="off" />
+            </div>
+            <div className="lg:col-span-1">
+                <div className="sticky top-8 space-y-6">
+                    <div className="bg-sky-600 text-white p-4 rounded-lg shadow-lg text-center"><p className="text-lg font-semibold">Time Remaining</p><Timer startTime={gameData.startTime} duration={gameData.duration} onTimeUp={handleTimeUp} /></div>
+                    <div className="bg-emerald-600 text-white p-4 rounded-lg shadow-lg text-center"><p className="text-lg font-semibold">Your Score</p><p className={`text-5xl font-bold tracking-tighter transition-transform duration-300 ease-out ${isScoreAnimating ? 'scale-125' : 'scale-100'}`}>{scoreAnalysis.totalScore.toLocaleString()}</p></div>
+                    <div className="bg-violet-600 text-white p-4 rounded-lg shadow-lg text-center"><p className="text-lg font-semibold">Word Count</p><p className="text-5xl font-bold tracking-tighter">{wordCount}</p></div>
+                    <div className="bg-white p-6 rounded-lg shadow-md border border-slate-200">
+                        <h3 className="text-xl font-bold mb-4 text-slate-800 border-b pb-2">Scoring Goals</h3>
+                        <ul className="space-y-1">
+                            {fullCriteria.map((criterion) => {
+                                const item = scoreAnalysis.breakdown.find(b => b.id === criterion.id) || { count: 0 };
+                                const hasAchieved = item.count > 0;
+                                return <li key={criterion.id} className={`p-2 rounded-md transition-all duration-300 flex justify-between items-center ${hasAchieved ? 'bg-emerald-50' : 'bg-transparent'}`} aria-live="polite"><span className="text-sm text-slate-600 pr-2"><span className={`font-bold ${hasAchieved ? 'text-emerald-700' : 'text-slate-500'}`}>+{criterion.points.toLocaleString()} pts:</span> {criterion.description}</span><span className={`font-bold text-xs px-2 py-0.5 rounded-full transition-all duration-300 flex-shrink-0 ${hasAchieved ? 'bg-emerald-200 text-emerald-800 scale-110' : 'bg-slate-100 text-slate-500'}`}>{item.count}</span></li>;
+                            })}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// components/HostScreen.js
+const HostScreen = ({ gameData, onEndGame }) => {
+  const sortedPlayers = Object.entries(gameData.players)
+    .map(([id, data]) => ({ id, ...data, totalScore: data.analysis?.totalScore || 0 }))
+    .sort((a, b) => b.totalScore - a.totalScore);
+
+  return (
+      <div className="flex flex-col items-center">
+          <h2 className="text-2xl font-bold text-slate-800 mb-2">Host Dashboard</h2>
+          <p className="text-slate-600 mb-6">The game is in progress. You can see the live scores below.</p>
+          
+          <div className="w-full grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-2">
+                  <div className="bg-white p-6 rounded-lg shadow-md border border-slate-200 mb-6">
+                      <h3 className="text-xl font-bold mb-4 text-slate-800">Live Leaderboard</h3>
+                      {sortedPlayers.length > 0 ? (
+                          <ol className="space-y-2">
+                              {sortedPlayers.map((player, index) => (
+                                  <li key={player.id} className="p-3 rounded-md flex justify-between items-center bg-slate-50 transition-all">
+                                      <span className="font-semibold text-slate-700">{index + 1}. {player.nickname}</span>
+                                      <span className="font-bold text-sky-600">{player.totalScore.toLocaleString()}</span>
+                                  </li>
+                              ))}
+                          </ol>
+                      ) : (
+                          <p className="text-slate-500 text-center py-4">Waiting for players to score...</p>
+                      )}
+                  </div>
+              </div>
+              <div className="lg:col-span-1 space-y-6">
+                   <div className="sticky top-8">
+                      <div className="bg-sky-600 text-white p-4 rounded-lg shadow-lg text-center mb-6">
+                          <p className="text-lg font-semibold">Time Remaining</p>
+                          <Timer startTime={gameData.startTime} duration={gameData.duration} onTimeUp={onEndGame} />
+                      </div>
+                      <Button onClick={onEndGame} size="large" className="w-full bg-red-600 hover:bg-red-700 focus:ring-red-500">End Game Now</Button>
+                  </div>
+              </div>
+          </div>
+      </div>
+  );
+};
+
+// components/HostResultsScreen.js
+const HostResultsScreen = ({ gameData, onNewGame, onGoHome, isHistoryView = false, onBackToDashboard }) => {
+  const [selectedPlayer, setSelectedPlayer] = useState(null);
+
+  const sortedPlayers = Object.entries(gameData.players)
+    .map(([id, data]) => ({ id, ...data, totalScore: data.analysis?.totalScore || 0 }))
+    .sort((a, b) => b.totalScore - a.totalScore);
+
+  const downloadPDF = (nickname, story) => {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    
+    const title = story?.title || 'Untitled Story';
+    const text = story?.text || 'No text submitted.';
+
+    // Title
+    doc.setFontSize(22);
+    doc.setFont('helvetica', 'bold');
+    doc.text(title, 105, 20, { align: 'center' });
+
+    // Author
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`By: ${nickname}`, 105, 30, { align: 'center' });
+    
+    // Prompt
+    doc.setFontSize(10);
+    doc.setTextColor(150);
+    doc.text(`Prompt: ${gameData.prompt.text}`, 10, 45, { maxWidth: 190 });
+
+    // Divider
+    doc.setLineWidth(0.5);
+    doc.line(10, 55, 200, 55);
+
+    // Story Text
+    doc.setFontSize(12);
+    doc.setTextColor(0);
+    const storyLines = doc.splitTextToSize(text, 190);
+    doc.text(storyLines, 10, 65);
+
+    // Save file
+    doc.save(`InkXP_Story_${nickname.replace(/\s/g, '_')}.pdf`);
   };
 
-
-  // components/HomeScreen.js
-  const ModeCard = ({ title, description, icon, onClick, disabled, buttonText }) => (
-      <div className={`p-6 rounded-xl shadow-md flex flex-col items-center text-center transition-all duration-300 ${disabled ? 'bg-slate-200 text-slate-500' : 'bg-white hover:shadow-xl hover:-translate-y-1'}`}>
-          <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${disabled ? 'bg-slate-300' : 'bg-sky-100 text-sky-600'}`}>
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8"><path strokeLinecap="round" strokeLinejoin="round" d={icon} /></svg>
-          </div>
-          <h3 className="text-xl font-bold mb-2">{title}</h3>
-          <p className="text-sm mb-4 flex-grow">{description}</p>
-          <Button onClick={onClick} disabled={disabled} className="mt-auto">{buttonText}</Button>
-      </div>
-  );
-  const HomeScreen = ({ onSelectTeacherLogin, onSelectDashboard, onSelectJoin, onSelectSolo, currentUser }) => (
-      <div className="text-center">
-          <h2 className="text-3xl font-bold text-slate-800 mb-4">Welcome!</h2>
-          <p className="text-lg text-slate-600 mb-8 max-w-2xl mx-auto">Choose a mode to begin your writing adventure. Sharpen your skills, join a friend's game, or create a challenge for your class!</p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-              <ModeCard 
-                title={currentUser ? "Teacher Dashboard" : "Create a Game"}
-                description={currentUser ? "View your game history and create new challenges for your students." : "Sign in to be the game master! Choose prompts and set timers."}
-                icon={currentUser ? "M3.75 3v11.25A2.25 2.25 0 006 16.5h12A2.25 2.25 0 0020.25 14.25V3.75A2.25 2.25 0 0018 1.5H6A2.25 2.25 0 003.75 3zM12 18.75a.75.75 0 01.75.75v.008a.75.75 0 01-.75.75h-.008a.75.75 0 01-.75-.75v-.008a.75.75 0 01.75-.75h.008z" : "M12 4.5v15m7.5-7.5h-15" }
-                onClick={currentUser ? onSelectDashboard : onSelectTeacherLogin} 
-                buttonText={currentUser ? "Go to Dashboard" : "Teacher Login"}
-              />
-              <ModeCard title="Join a Game" description="Got a game code? Enter it here to join a writing quest with your classmates." icon="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" onClick={onSelectJoin} disabled={false} buttonText="Let's Go!" />
-              <ModeCard title="Solo Mode" description="Fly solo! Get a random prompt and practice your writing skills at your own pace." icon="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" onClick={onSelectSolo} disabled={false} buttonText="Let's Go!" />
-          </div>
-      </div>
-  );
-
-  // App.js
-  const App = () => {
-      const { useState, useEffect, useCallback } = React;
-      const [gameState, setGameState] = useState(GameState.Home);
-      const [playerId, setPlayerId] = useState(null);
-      const [playerNickname, setPlayerNickname] = useState(null);
-      const [gameId, setGameId] = useState(null);
-      const [gameData, setGameData] = useState(null);
-      const [soloData, setSoloData] = useState(null);
-      const [finalStory, setFinalStory] = useState(null);
-      const [scoreAnalysis, setScoreAnalysis] = useState(null);
-      const [currentUser, setCurrentUser] = useState(null);
-      const [viewingGameData, setViewingGameData] = useState(null);
-      const [authLoading, setAuthLoading] = useState(true);
-
-      useEffect(() => {
-        let storedPlayerId = localStorage.getItem('inkxp_playerId');
-        if (!storedPlayerId) {
-            storedPlayerId = `player_${Math.random().toString(36).substring(2, 11)}`;
-            localStorage.setItem('inkxp_playerId', storedPlayerId);
-        }
-        setPlayerId(storedPlayerId);
-        
-        const unsubscribe = onAuthChange(user => {
-            setCurrentUser(user);
-            setAuthLoading(false);
-        });
-        return () => unsubscribe();
-      }, []);
-
-      useEffect(() => {
-        if (!gameId) return;
-        const unsubscribe = getGameStream(gameId, (data) => {
-            if (data) {
-                setGameData(data);
-                if (data.status === 'in-progress') setGameState(GameState.InGame);
-                if (data.status === 'finished') setGameState(GameState.Results);
-            } else {
-                alert("Game session not found or has been deleted.");
-                handleGoHome();
-            }
-        });
-        return () => unsubscribe();
-      }, [gameId]);
-      
-      const handleSetNickname = useCallback((nickname) => {
-        setPlayerNickname(nickname);
-      }, []);
-
-      const handleTeacherLogin = async () => {
-        try {
-            await signInWithGoogle();
-            setGameState(GameState.TeacherDashboard);
-        } catch (error) {
-            console.error("Error signing in: ", error);
-            alert("Could not sign in with Google. Please try again.");
-        }
-      };
-      
-      const handleSignOut = async () => {
-          await signOutUser();
-          setGameState(GameState.Home);
-      };
-
-      const handleCreateLobby = async (prompt, criteriaIds, duration) => {
-        if (!currentUser) {
-            alert("You must be signed in to create a game.");
-            return;
-        }
-        const newGameId = await createGame(playerId, prompt, criteriaIds, duration, currentUser.uid);
-        setGameId(newGameId);
-        setGameState(GameState.Lobby);
-      };
-
-      const handleJoinGame = async (code) => {
-        await joinGame(code, playerId, playerNickname);
-        setGameId(code);
-        setGameState(GameState.Lobby);
-      };
-
-      const handleStartGame = async () => await startGame(gameId);
-      
-      const handleForceEndGame = useCallback(async () => {
-        if (gameId) {
-            await finishGame(gameId);
-        }
-      }, [gameId]);
-
-      const handleStartSolo = useCallback((prompt, criteriaIds, duration) => {
-          setSoloData({ prompt, criteria: criteriaIds, duration });
-          setGameState(GameState.InGame);
-      }, []);
-
-      const handleEndSolo = useCallback((story, analysis) => {
-          setFinalStory(story);
-          setScoreAnalysis(analysis);
-          setGameState(GameState.Results);
-      }, []);
-
-      const handleEndMultiplayerGame = useCallback(async (story, analysis) => {
-        await submitResult(gameId, playerId, story, analysis);
-      }, [gameId, playerId]);
-      
-      const handleScoreUpdate = useCallback(async (analysis) => {
-          if (gameId && playerId) {
-              await updatePlayerAnalysis(gameId, playerId, analysis);
-          }
-      }, [gameId, playerId]);
-      
-      const handleViewGameHistory = (game) => {
-        setViewingGameData(game);
-        setGameState(GameState.Results);
-      };
-
-      const resetGame = useCallback(() => {
-          setGameId(null);
-          setGameData(null);
-          setSoloData(null);
-          setFinalStory(null);
-          setScoreAnalysis(null);
-          setViewingGameData(null);
-      }, []);
-
-      const handleGoToDashboard = useCallback(() => {
-          resetGame();
-          setGameState(GameState.TeacherDashboard);
-      }, [resetGame]);
-
-      const handleGoHome = useCallback(() => {
-          resetGame();
-          setGameState(GameState.Home);
-      }, [resetGame]);
-      
-      const renderContent = () => {
-          if (authLoading) {
-            return <div className="flex justify-center p-8"><LoadingSpinner /></div>;
-          }
-
-          const shouldPromptForNickname = playerId && !playerNickname && 
-            (gameState === GameState.JoinGameSetup || (gameState === GameState.Lobby && gameData && !gameData.players[playerId] && gameData.hostId !== playerId));
-
-          if (shouldPromptForNickname) {
-            return <NicknamePrompt onNicknameSubmit={handleSetNickname} />;
-          }
-
-          switch (gameState) {
-              case GameState.Home:
-                return <HomeScreen 
-                    currentUser={currentUser}
-                    onSelectTeacherLogin={handleTeacherLogin}
-                    onSelectDashboard={() => setGameState(GameState.TeacherDashboard)}
-                    onSelectJoin={() => setGameState(GameState.JoinGameSetup)}
-                    onSelectSolo={() => setGameState(GameState.SoloSetup)} />;
-              case GameState.SoloSetup: 
-                return <SetupScreen onStart={handleStartSolo} onGoHome={handleGoHome} isSolo={true} />;
-              case GameState.TeacherDashboard:
-                return currentUser ? <TeacherDashboard 
-                    currentUser={currentUser}
-                    onCreateNewGame={() => setGameState(GameState.CreateGameSetup)}
-                    onViewGame={handleViewGameHistory}
-                    onSignOut={handleSignOut}
-                /> : <HomeScreen />; // Redirect to home if not logged in
-              case GameState.CreateGameSetup:
-                return <SetupScreen onStart={handleCreateLobby} onBackToDashboard={handleGoToDashboard} isSolo={false} isTeacher={!!currentUser} />;
-              case GameState.JoinGameSetup:
-                return <JoinGameScreen onJoin={handleJoinGame} onGoHome={handleGoHome} />;
-              case GameState.Lobby:
-                return gameData && <LobbyScreen gameId={gameId} gameData={gameData} playerId={playerId} onStartGame={handleStartGame} />;
-              case GameState.InGame:
-                if (soloData) { // Solo mode
-                    const soloGameWithStartTime = { ...soloData, startTime: new Date() }; // Mock start time for solo
-                    return <GameScreen gameData={soloGameWithStartTime} playerId={playerId} onTimeUp={handleEndSolo} onGoHome={handleGoHome} />;
-                }
-                if (gameData) { // Multiplayer mode
-                    const isHost = playerId === gameData.hostId;
-                    if (isHost) {
-                        return <HostScreen gameData={gameData} onEndGame={handleForceEndGame} />;
-                    }
-                    return <GameScreen gameData={gameData} playerId={playerId} onTimeUp={handleEndMultiplayerGame} onGoHome={handleGoHome} onScoreUpdate={handleScoreUpdate} />;
-                }
-                return null;
-              case GameState.Results: 
-                if (viewingGameData) { // Viewing history
-                    return <HostResultsScreen gameData={viewingGameData} isHistoryView={true} onBackToDashboard={handleGoToDashboard} />;
-                }
-                if (scoreAnalysis) { // Solo results
-                    const soloGameData = { prompt: soloData.prompt, players: { [playerId]: { nickname: 'You', story: finalStory, analysis: scoreAnalysis } } };
-                    return <ResultsScreen gameData={soloGameData} playerId={playerId} onPlayAgain={handleGoHome} onGoHome={handleGoHome} />;
-                }
-                if (gameData) { // Multiplayer results
-                    const isHost = playerId === gameData.hostId;
-                    if (isHost) {
-                      return <HostResultsScreen gameData={gameData} onNewGame={() => setGameState(GameState.CreateGameSetup)} onGoHome={handleGoHome} />;
-                    }
-                    return <ResultsScreen gameData={gameData} playerId={playerId} onPlayAgain={handleGoHome} onGoHome={handleGoHome} />;
-                }
-                return null;
-              default: 
-                return <HomeScreen />;
-          }
-      };
-
+  const PlayerDetailModal = ({ player, onClose }) => {
+      if (!player) return null;
+      const analysis = player.analysis || { breakdown: [], totalScore: 0 };
       return (
-          <div className="min-h-screen bg-gradient-to-br from-sky-100 to-emerald-100 p-4 sm:p-6 md:p-8">
-              <div className="max-w-7xl mx-auto">
-                  <header className="text-center mb-8">
-                      <div className="flex items-center justify-center gap-3">
-                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-10 h-10 text-sky-600"><path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg>
-                          <h1 className="text-4xl sm:text-5xl font-bold text-sky-700 tracking-tight">InkXP</h1>
+          <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={onClose}>
+              <div className="bg-white p-6 rounded-xl shadow-2xl w-full max-w-3xl text-left relative" onClick={(e) => e.stopPropagation()}>
+                  <button onClick={onClose} className="absolute top-3 right-4 text-slate-500 hover:text-slate-800 text-3xl font-bold">&times;</button>
+                  <h3 className="text-2xl font-bold text-slate-800 mb-4">{player.story?.title || 'Untitled Story'}</h3>
+                  <p className="text-slate-600 mb-4 -mt-2">by: {player.nickname}</p>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-h-[70vh]">
+                      <div className="md:col-span-2 overflow-y-auto pr-2">
+                           <h4 className="text-lg font-bold text-slate-800 mb-2">Full Story</h4>
+                           <p className="text-sm font-semibold text-sky-600 mb-2">{gameData.prompt.text}</p>
+                           <div className="prose max-w-none text-slate-700 whitespace-pre-wrap bg-slate-50 p-4 rounded-md">{player.story?.text || "No text submitted."}</div>
                       </div>
-                      <p className="text-slate-600 mt-2 text-lg">Level up your writing experience.</p>
-                  </header>
-                  <main className="bg-white/70 backdrop-blur-sm p-6 sm:p-8 rounded-2xl shadow-lg border border-slate-200">{renderContent()}</main>
-                  <footer className="text-center mt-8 text-sm text-slate-500"><p>(c) Manakouri 2025</p></footer>
+                      <div className="overflow-y-auto">
+                          <h4 className="text-lg font-bold text-slate-800 mb-2">Score Breakdown</h4>
+                          <ul className="space-y-2">
+                             {analysis.breakdown.map((item) => (
+                                 <li key={item.id} className="flex justify-between items-center text-sm p-2 bg-slate-50 rounded-md">
+                                     <span className="text-slate-700">{item.name} ({item.count})</span>
+                                     <span className="font-semibold text-emerald-600">+{item.score.toLocaleString()}</span>
+                                 </li>
+                             ))}
+                              <li className="flex justify-between items-center text-base font-bold p-2 bg-sky-100 rounded-md mt-4">
+                                     <span className="text-sky-800">Total Score</span>
+                                     <span className="text-sky-800">{analysis.totalScore.toLocaleString()}</span>
+                                 </li>
+                         </ul>
+                         <Button onClick={() => downloadPDF(player.nickname, player.story)} size="medium" className="mt-6 w-full">Download as PDF</Button>
+                      </div>
+                  </div>
               </div>
           </div>
       );
   };
 
-  // index.js
-  const rootElement = document.getElementById('root');
-  if (!rootElement) {
-    throw new Error("Could not find root element to mount to");
+  return (
+      <div className="flex flex-col items-center">
+          <h2 className="text-3xl font-bold text-emerald-600 mb-2">{isHistoryView ? "Game Results" : "Game Over!"}</h2>
+          <p className="text-slate-600 mb-6">{isHistoryView ? "Here are the results for this game session." : "Here are the final results and all the amazing stories written."}</p>
+          <div className="w-full max-w-2xl bg-white p-6 rounded-lg shadow-md border border-slate-200">
+               <h3 className="text-xl font-bold text-slate-500 uppercase tracking-wider mb-3">Final Leaderboard</h3>
+               {sortedPlayers.length > 0 ? (
+                  <ol className="space-y-2">
+                   {sortedPlayers.map((player, index) => (
+                      <li key={player.id} className="p-3 rounded-md flex justify-between items-center bg-slate-50">
+                        <div className="flex items-center gap-4">
+                         <span className="font-bold text-slate-600 text-lg w-6">{index + 1}.</span>
+                         <span className="font-semibold text-slate-800 text-lg">{player.nickname}</span>
+                         <span className="font-bold text-sky-600">{player.totalScore.toLocaleString()}</span>
+                        </div>
+                        <Button onClick={() => setSelectedPlayer(player)} size="small">View Writing</Button>
+                      </li>
+                   ))}
+                  </ol>
+               ) : (
+                  <p className="text-slate-500 text-center py-4">No players submitted a score.</p>
+               )}
+          </div>
+           <div className="flex items-center gap-4 mt-8">
+              {isHistoryView ? (
+                  <Button onClick={onBackToDashboard} variant="secondary" size="large">Back to Dashboard</Button>
+              ) : (
+                  <>
+                      <Button onClick={onNewGame} size="large">Create New Game</Button>
+                      <Button onClick={onGoHome} variant="secondary" size="large">Back to Home</Button>
+                  </>
+              )}
+          </div>
+          <PlayerDetailModal player={selectedPlayer} onClose={() => setSelectedPlayer(null)} />
+      </div>
+  );
+};
+
+
+// components/LobbyScreen.js
+const LobbyScreen = ({ gameId, gameData, playerId, onStartGame }) => {
+  const isHost = gameData.hostId === playerId;
+  const playerList = Object.entries(gameData.players);
+
+  const handleCopyCode = () => {
+      navigator.clipboard.writeText(gameId);
+      // Maybe show a small "Copied!" message
+  };
+
+  return (
+      <div className="flex flex-col items-center">
+          <h2 className="text-2xl font-bold text-slate-800 mb-2">Game Lobby</h2>
+          <p className="text-slate-600 mb-6">Share the code with your friends! The game will begin when the host starts.</p>
+          <div className="mb-6">
+              <p className="text-sm text-slate-500">GAME CODE</p>
+              <div className="flex items-center gap-2 mt-1">
+                  <p className="text-4xl font-bold tracking-widest text-sky-600 bg-sky-100 p-3 rounded-lg">{gameId}</p>
+                  <Button onClick={handleCopyCode} variant="secondary" title="Copy Code">
+                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 011.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 00-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 01-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5a3.375 3.375 0 00-3.375-3.375H9.75" /></svg>
+                  </Button>
+              </div>
+          </div>
+
+          <div className="w-full max-w-md bg-white p-6 rounded-lg shadow-md border border-slate-200 mb-8">
+              <h3 className="text-xl font-bold mb-4 text-slate-800">Players ({playerList.length})</h3>
+              <ul className="space-y-2">
+                  {playerList.map(([id, player]) => (
+                      <li key={id} className="flex items-center gap-3 p-2 bg-slate-100 rounded-md">
+                         <span className="font-bold text-slate-700">{player.nickname}</span>
+                         {gameData.hostId === id && <span className="text-xs font-bold text-sky-700 bg-sky-200 px-2 py-0.5 rounded-full">HOST (Not Playing)</span>}
+                      </li>
+                  ))}
+                  {playerList.length === 0 && <p className="text-slate-500 text-center py-2">Waiting for players to join...</p>}
+              </ul>
+          </div>
+
+          {isHost ? (
+              <Button onClick={onStartGame} size="large" disabled={playerList.length === 0}>Start Game for Everyone!</Button>
+          ) : (
+              <p className="text-lg text-slate-600 animate-pulse">Waiting for host to start the game...</p>
+          )}
+      </div>
+  );
+};
+
+// components/JoinGameScreen.js
+const JoinGameScreen = ({ onJoin, onGoHome }) => {
+    const [gameCode, setGameCode] = useState('');
+    const [error, setError] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+
+    const handleJoin = async (e) => {
+      e.preventDefault();
+      if (!gameCode.trim()) return;
+      setError('');
+      setIsLoading(true);
+      try {
+          await onJoin(gameCode.trim().toUpperCase());
+      } catch (err) {
+          setError(err.message);
+      } finally {
+          setIsLoading(false);
+      }
+    };
+
+    return (
+        <div className="flex flex-col items-center">
+            <h2 className="text-2xl font-bold text-slate-800 mb-2">Join a Game</h2>
+            <p className="text-slate-600 mb-6">Enter the 6-character code from your game host.</p>
+            <form onSubmit={handleJoin} className="w-full max-w-sm flex flex-col items-center">
+                <input
+                  type="text"
+                  value={gameCode}
+                  onChange={(e) => setGameCode(e.target.value)}
+                  className="w-full p-3 border border-slate-300 rounded-lg shadow-inner focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-shadow duration-200 text-2xl text-center tracking-[0.5em] uppercase"
+                  placeholder="ABCXYZ"
+                  maxLength="6"
+                  required
+                />
+                {error && <p className="text-red-500 mt-2">{error}</p>}
+                <div className="flex items-center gap-4 mt-8">
+                  <Button onClick={onGoHome} variant="secondary" size="large" type="button">Back to Home</Button>
+                  <Button type="submit" size="large" disabled={isLoading}>{isLoading ? 'Joining...' : 'Join Game'}</Button>
+                </div>
+            </form>
+        </div>
+    );
+};
+
+// components/SetupScreen.js
+const SetupScreen = ({ onStart, onGoHome, onBackToDashboard, isSolo = false, isTeacher = false }) => {
+    const [currentPrompt, setCurrentPrompt] = useState(() => NARRATIVE_PROMPTS[Math.floor(Math.random() * NARRATIVE_PROMPTS.length)]);
+    const [duration, setDuration] = useState(5);
+    const [useCustomPrompt, setUseCustomPrompt] = useState(false);
+    const [customPromptText, setCustomPromptText] = useState('');
+
+    const generateNewPrompt = useCallback(() => {
+        const newPrompt = NARRATIVE_PROMPTS[Math.floor(Math.random() * NARRATIVE_PROMPTS.length)];
+        setCurrentPrompt(newPrompt);
+    }, []);
+
+    const selectedCriteria = useMemo(() => {
+        const generalGoals = ALL_SCORING_CRITERIA.filter(c => c.id === 'sentence' || c.id === 'conjunctions');
+        const mainGoalsPool = ALL_SCORING_CRITERIA.filter(c => c.id !== 'sentence' && c.id !== 'conjunctions');
+        const shuffled = [...mainGoalsPool].sort(() => 0.5 - Math.random());
+        const selectedMainGoals = shuffled.slice(0, 3);
+        return [...generalGoals, ...selectedMainGoals];
+    }, [currentPrompt]);
+
+    const handleStart = () => {
+        const criteriaIds = selectedCriteria.map(c => c.id);
+        const promptToUse = useCustomPrompt && isTeacher 
+            ? { category: "Teacher's Choice", text: customPromptText.trim() }
+            : currentPrompt;
+
+        if (useCustomPrompt && isTeacher && !customPromptText.trim()) {
+            alert("Please enter your custom prompt before starting the game.");
+            return;
+        }
+
+        onStart(promptToUse, criteriaIds, duration * 60);
+    };
+    
+    return (
+        <div className="flex flex-col items-center">
+            <h2 className="text-2xl font-bold text-slate-800 mb-2">{isSolo ? "Solo Mode" : "Create a Game"}</h2>
+            <p className="text-slate-600 mb-6">Generate a story idea and choose the writing time.</p>
+            <div className="w-full max-w-3xl bg-white p-6 rounded-lg shadow-md border border-slate-200 mb-6">
+              {isTeacher && !isSolo && useCustomPrompt ? (
+                  <div>
+                      <label htmlFor="custom-prompt" className="block text-sm font-semibold text-sky-600 mb-2">Enter Your Custom Prompt</label>
+                      <textarea 
+                          id="custom-prompt"
+                          value={customPromptText}
+                          onChange={(e) => setCustomPromptText(e.target.value)}
+                          className="w-full p-2 border border-slate-300 rounded-lg shadow-inner focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-all duration-200"
+                          rows="3"
+                          placeholder="e.g., A friendly dragon has lost its roar. Write a story about how it gets it back."
+                      />
+                  </div>
+              ) : (
+                  <>
+                      <p className="text-sm font-semibold text-sky-600 mb-2">{currentPrompt.category}</p>
+                      <p className="text-lg text-slate-700">{currentPrompt.text}</p>
+                  </>
+              )}
+            </div>
+            <div className="flex items-center gap-4 mb-6">
+              {!(isTeacher && useCustomPrompt) && (
+                  <Button onClick={generateNewPrompt} variant="secondary">
+                      Generate New Prompt
+                  </Button>
+              )}
+              {isTeacher && !isSolo && (
+                  <Button onClick={() => setUseCustomPrompt(prev => !prev)} variant="secondary">
+                      {useCustomPrompt ? "Use a Random Prompt" : "Write My Own Prompt"}
+                  </Button>
+              )}
+            </div>
+            <div className="w-full max-w-sm mb-8">
+                <label htmlFor="duration" className="block text-center text-sm font-medium text-slate-700 mb-2">Set Timer (minutes)</label>
+                <div className="flex items-center justify-center gap-4">
+                    <input type="range" id="duration" min="5" max="45" step="5" value={duration} onChange={(e) => setDuration(parseInt(e.target.value))} className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer dark:bg-slate-700" />
+                    <span className="font-bold text-sky-600 text-lg w-12 text-center">{duration}</span>
+                </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <Button onClick={isTeacher ? onBackToDashboard : onGoHome} variant="secondary" size="large">{isTeacher ? "Back to Dashboard" : "Back to Home"}</Button>
+              <Button onClick={handleStart} size="large">{isSolo ? "Start Writing!" : "Create Game Lobby"}</Button>
+            </div>
+        </div>
+    );
+};
+
+// components/TeacherDashboard.js
+const TeacherDashboard = ({ currentUser, onCreateNewGame, onViewGame, onSignOut }) => {
+  const [games, setGames] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+      if (!currentUser) return;
+      const unsubscribe = getGamesForTeacher(currentUser.uid, (fetchedGames) => {
+          setGames(fetchedGames);
+          setLoading(false);
+      });
+      return () => unsubscribe();
+  }, [currentUser]);
+
+  const formatDate = (timestamp) => {
+      if (!timestamp) return 'Just now';
+      return timestamp.toDate().toLocaleDateString('en-US', {
+          year: 'numeric', month: 'long', day: 'numeric'
+      });
   }
-  const root = ReactDOM.createRoot(rootElement);
-  root.render(<React.StrictMode><App /></React.StrictMode>);
-});
+
+  return (
+      <div>
+          <div className="flex justify-between items-center mb-6">
+              <div>
+                  <h2 className="text-2xl font-bold text-slate-800">Teacher Dashboard</h2>
+                  <p className="text-slate-600">Welcome, {currentUser.displayName || 'Teacher'}!</p>
+              </div>
+              <Button onClick={onSignOut} variant="primary">Sign Out</Button>
+          </div>
+          <div className="text-center mb-8">
+              <Button onClick={onCreateNewGame} size="large">
+                  <span className="flex items-center gap-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+                      Create New Game
+                  </span>
+              </Button>
+          </div>
+          <div>
+              <h3 className="text-xl font-bold text-slate-500 uppercase tracking-wider mb-3">Game History</h3>
+              {loading ? (
+                  <div className="flex justify-center p-8"><LoadingSpinner /></div>
+              ) : games.length > 0 ? (
+                  <div className="space-y-4">
+                      {games.map(game => (
+                          <div key={game.id} className="bg-white p-4 rounded-lg shadow-md border border-slate-200 flex justify-between items-center">
+                              <div>
+                                  <p className="font-semibold text-sky-700">{game.prompt.text}</p>
+                                  <p className="text-sm text-slate-500">{formatDate(game.createdAt)} &bull; {Object.keys(game.players).length} players</p>
+                              </div>
+                              <Button onClick={() => onViewGame(game)} size="small" variant="secondary">View Results</Button>
+                          </div>
+                      ))}
+                  </div>
+              ) : (
+                  <div className="text-center bg-slate-100 p-8 rounded-lg">
+                      <p className="text-slate-600">You haven't hosted any games yet.</p>
+                      <p className="text-slate-500 text-sm mt-1">Click "Create New Game" to get started!</p>
+                  </div>
+              )}
+          </div>
+      </div>
+  );
+};
+
+
+// components/HomeScreen.js
+const ModeCard = ({ title, description, icon, onClick, disabled, buttonText }) => (
+    <div className={`p-6 rounded-xl shadow-md flex flex-col items-center text-center transition-all duration-300 ${disabled ? 'bg-slate-200 text-slate-500' : 'bg-white hover:shadow-xl hover:-translate-y-1'}`}>
+        <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${disabled ? 'bg-slate-300' : 'bg-sky-100 text-sky-600'}`}>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8"><path strokeLinecap="round" strokeLinejoin="round" d={icon} /></svg>
+        </div>
+        <h3 className="text-xl font-bold mb-2">{title}</h3>
+        <p className="text-sm mb-4 flex-grow">{description}</p>
+        <Button onClick={onClick} disabled={disabled} className="mt-auto">{buttonText}</Button>
+    </div>
+);
+const HomeScreen = ({ onSelectTeacherLogin, onSelectDashboard, onSelectJoin, onSelectSolo, currentUser }) => (
+    <div className="text-center">
+        <h2 className="text-3xl font-bold text-slate-800 mb-4">Welcome!</h2>
+        <p className="text-lg text-slate-600 mb-8 max-w-2xl mx-auto">Choose a mode to begin your writing adventure. Sharpen your skills, join a friend's game, or create a challenge for your class!</p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+            <ModeCard 
+              title={currentUser ? "Teacher Dashboard" : "Create a Game"}
+              description={currentUser ? "View your game history and create new challenges for your students." : "Sign in to be the game master! Choose prompts and set timers."}
+              icon={currentUser ? "M3.75 3v11.25A2.25 2.25 0 006 16.5h12A2.25 2.25 0 0020.25 14.25V3.75A2.25 2.25 0 0018 1.5H6A2.25 2.25 0 003.75 3zM12 18.75a.75.75 0 01.75.75v.008a.75.75 0 01-.75.75h-.008a.75.75 0 01-.75-.75v-.008a.75.75 0 01.75-.75h.008z" : "M12 4.5v15m7.5-7.5h-15" }
+              onClick={currentUser ? onSelectDashboard : onSelectTeacherLogin} 
+              buttonText={currentUser ? "Go to Dashboard" : "Teacher Login"}
+              disabled={false}
+            />
+            <ModeCard title="Join a Game" description="Got a game code? Enter it here to join a writing quest with your classmates." icon="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" onClick={onSelectJoin} disabled={false} buttonText="Let's Go!" />
+            <ModeCard title="Solo Mode" description="Fly solo! Get a random prompt and practice your writing skills at your own pace." icon="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" onClick={onSelectSolo} disabled={false} buttonText="Let's Go!" />
+        </div>
+    </div>
+);
+
+// App.js
+const App = () => {
+    const [gameState, setGameState] = useState(GameState.Home);
+    const [playerId, setPlayerId] = useState(null);
+    const [playerNickname, setPlayerNickname] = useState(null);
+    const [gameId, setGameId] = useState(null);
+    const [gameData, setGameData] = useState(null);
+    const [soloData, setSoloData] = useState(null);
+    const [finalStory, setFinalStory] = useState(null);
+    const [scoreAnalysis, setScoreAnalysis] = useState(null);
+    const [currentUser, setCurrentUser] = useState(null);
+    const [viewingGameData, setViewingGameData] = useState(null);
+    const [authLoading, setAuthLoading] = useState(true);
+
+    useEffect(() => {
+      let storedPlayerId = localStorage.getItem('inkxp_playerId');
+      if (!storedPlayerId) {
+          storedPlayerId = `player_${Math.random().toString(36).substring(2, 11)}`;
+          localStorage.setItem('inkxp_playerId', storedPlayerId);
+      }
+      setPlayerId(storedPlayerId);
+      
+      const unsubscribe = onAuthChange(user => {
+          setCurrentUser(user);
+          setAuthLoading(false);
+      });
+      return () => unsubscribe();
+    }, []);
+
+    useEffect(() => {
+      if (!gameId) return;
+      const unsubscribe = getGameStream(gameId, (data) => {
+          if (data) {
+              setGameData(data);
+              if (data.status === 'in-progress') setGameState(GameState.InGame);
+              if (data.status === 'finished') setGameState(GameState.Results);
+          } else {
+              alert("Game session not found or has been deleted.");
+              handleGoHome();
+          }
+      });
+      return () => unsubscribe();
+    }, [gameId]);
+    
+    const handleSetNickname = useCallback((nickname) => {
+      setPlayerNickname(nickname);
+    }, []);
+
+    const handleTeacherLogin = async () => {
+      try {
+          await signInWithGoogle();
+          setGameState(GameState.TeacherDashboard);
+      } catch (error) {
+          console.error("Error signing in: ", error);
+          alert("Could not sign in with Google. Please try again.");
+      }
+    };
+    
+    const handleSignOut = async () => {
+        await signOutUser();
+        setGameState(GameState.Home);
+    };
+
+    const handleCreateLobby = async (prompt, criteriaIds, duration) => {
+      if (!currentUser) {
+          alert("You must be signed in to create a game.");
+          return;
+      }
+      const newGameId = await createGame(playerId, prompt, criteriaIds, duration, currentUser.uid);
+      setGameId(newGameId);
+      setGameState(GameState.Lobby);
+    };
+
+    const handleJoinGame = async (code) => {
+      await joinGame(code, playerId, playerNickname);
+      setGameId(code);
+      setGameState(GameState.Lobby);
+    };
+
+    const handleStartGame = async () => await startGame(gameId);
+    
+    const handleForceEndGame = useCallback(async () => {
+      if (gameId) {
+          await finishGame(gameId);
+      }
+    }, [gameId]);
+
+    const handleStartSolo = useCallback((prompt, criteriaIds, duration) => {
+        setSoloData({ prompt, criteria: criteriaIds, duration });
+        setGameState(GameState.InGame);
+    }, []);
+
+    const handleEndSolo = useCallback((story, analysis) => {
+        setFinalStory(story);
+        setScoreAnalysis(analysis);
+        setGameState(GameState.Results);
+    }, []);
+
+    const handleEndMultiplayerGame = useCallback(async (story, analysis) => {
+      await submitResult(gameId, playerId, story, analysis);
+    }, [gameId, playerId]);
+    
+    const handleScoreUpdate = useCallback(async (analysis) => {
+        if (gameId && playerId) {
+            await updatePlayerAnalysis(gameId, playerId, analysis);
+        }
+    }, [gameId, playerId]);
+    
+    const handleViewGameHistory = (game) => {
+      setViewingGameData(game);
+      setGameState(GameState.Results);
+    };
+
+    const resetGame = useCallback(() => {
+        setGameId(null);
+        setGameData(null);
+        setSoloData(null);
+        setFinalStory(null);
+        setScoreAnalysis(null);
+        setViewingGameData(null);
+    }, []);
+
+    const handleGoToDashboard = useCallback(() => {
+        resetGame();
+        setGameState(GameState.TeacherDashboard);
+    }, [resetGame]);
+
+    const handleGoHome = useCallback(() => {
+        resetGame();
+        setGameState(GameState.Home);
+    }, [resetGame]);
+    
+    const renderContent = () => {
+        if (authLoading) {
+          return <div className="flex justify-center p-8"><LoadingSpinner /></div>;
+        }
+
+        const shouldPromptForNickname = playerId && !playerNickname && 
+          (gameState === GameState.JoinGameSetup || (gameState === GameState.Lobby && gameData && !gameData.players[playerId] && gameData.hostId !== playerId));
+
+        if (shouldPromptForNickname) {
+          return <NicknamePrompt onNicknameSubmit={handleSetNickname} />;
+        }
+
+        switch (gameState) {
+            case GameState.Home:
+              return <HomeScreen 
+                  currentUser={currentUser}
+                  onSelectTeacherLogin={handleTeacherLogin}
+                  onSelectDashboard={() => setGameState(GameState.TeacherDashboard)}
+                  onSelectJoin={() => setGameState(GameState.JoinGameSetup)}
+                  onSelectSolo={() => setGameState(GameState.SoloSetup)} />;
+            case GameState.SoloSetup: 
+              return <SetupScreen onStart={handleStartSolo} onGoHome={handleGoHome} isSolo={true} onBackToDashboard={handleGoHome} />;
+            case GameState.TeacherDashboard:
+              return currentUser ? <TeacherDashboard 
+                  currentUser={currentUser}
+                  onCreateNewGame={() => setGameState(GameState.CreateGameSetup)}
+                  onViewGame={handleViewGameHistory}
+                  onSignOut={handleSignOut}
+              /> : <HomeScreen 
+                  currentUser={currentUser}
+                  onSelectTeacherLogin={handleTeacherLogin}
+                  onSelectDashboard={() => setGameState(GameState.TeacherDashboard)}
+                  onSelectJoin={() => setGameState(GameState.JoinGameSetup)}
+                  onSelectSolo={() => setGameState(GameState.SoloSetup)} />;
+            case GameState.CreateGameSetup:
+              return <SetupScreen onStart={handleCreateLobby} onGoHome={handleGoHome} onBackToDashboard={handleGoToDashboard} isSolo={false} isTeacher={!!currentUser} />;
+            case GameState.JoinGameSetup:
+              return <JoinGameScreen onJoin={handleJoinGame} onGoHome={handleGoHome} />;
+            case GameState.Lobby:
+              return gameData && <LobbyScreen gameId={gameId} gameData={gameData} playerId={playerId} onStartGame={handleStartGame} />;
+            case GameState.InGame:
+              if (soloData) { // Solo mode
+                  const soloGameWithStartTime = { ...soloData, startTime: new Date() }; // Mock start time for solo
+                  return <GameScreen gameData={soloGameWithStartTime} playerId={playerId} onTimeUp={handleEndSolo} onGoHome={handleGoHome} onScoreUpdate={() => {}} />;
+              }
+              if (gameData) { // Multiplayer mode
+                  const isHost = playerId === gameData.hostId;
+                  if (isHost) {
+                      return <HostScreen gameData={gameData} onEndGame={handleForceEndGame} />;
+                  }
+                  return <GameScreen gameData={gameData} playerId={playerId} onTimeUp={handleEndMultiplayerGame} onGoHome={handleGoHome} onScoreUpdate={handleScoreUpdate} />;
+              }
+              return null;
+            case GameState.Results: 
+              if (viewingGameData) { // Viewing history
+                  return <HostResultsScreen gameData={viewingGameData} isHistoryView={true} onBackToDashboard={handleGoToDashboard} onNewGame={() => {}} onGoHome={() => {}} />;
+              }
+              if (scoreAnalysis) { // Solo results
+                  const soloGameData = { prompt: soloData.prompt, players: { [playerId]: { nickname: 'You', story: finalStory, analysis: scoreAnalysis } } };
+                  return <ResultsScreen gameData={soloGameData} playerId={playerId} onPlayAgain={handleGoHome} onGoHome={handleGoHome} />;
+              }
+              if (gameData) { // Multiplayer results
+                  const isHost = playerId === gameData.hostId;
+                  if (isHost) {
+                    return <HostResultsScreen gameData={gameData} onNewGame={() => setGameState(GameState.CreateGameSetup)} onGoHome={handleGoHome} onBackToDashboard={() => {}} />;
+                  }
+                  return <ResultsScreen gameData={gameData} playerId={playerId} onPlayAgain={handleGoHome} onGoHome={handleGoHome} />;
+              }
+              return null;
+            default: 
+              return <HomeScreen 
+                  currentUser={currentUser}
+                  onSelectTeacherLogin={handleTeacherLogin}
+                  onSelectDashboard={() => setGameState(GameState.TeacherDashboard)}
+                  onSelectJoin={() => setGameState(GameState.JoinGameSetup)}
+                  onSelectSolo={() => setGameState(GameState.SoloSetup)} />;
+        }
+    };
+
+    return (
+        <div className="min-h-screen bg-gradient-to-br from-sky-100 to-emerald-100 p-4 sm:p-6 md:p-8">
+            <div className="max-w-7xl mx-auto">
+                <header className="text-center mb-8">
+                    <div className="flex items-center justify-center gap-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-10 h-10 text-sky-600"><path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg>
+                        <h1 className="text-4xl sm:text-5xl font-bold text-sky-700 tracking-tight">InkXP</h1>
+                    </div>
+                    <p className="text-slate-600 mt-2 text-lg">Level up your writing experience.</p>
+                </header>
+                <main className="bg-white/70 backdrop-blur-sm p-6 sm:p-8 rounded-2xl shadow-lg border border-slate-200">{renderContent()}</main>
+                <footer className="text-center mt-8 text-sm text-slate-500"><p>(c) Manakouri 2025</p></footer>
+            </div>
+        </div>
+    );
+};
+
+const rootElement = document.getElementById('root');
+if (!rootElement) {
+  throw new Error("Could not find root element to mount to");
+}
+const root = ReactDOM.createRoot(rootElement);
+root.render(<App />);
     </script>
   </body>
 </html>
