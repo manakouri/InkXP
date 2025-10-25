@@ -110,8 +110,8 @@ window.addEventListener('load', () => {
 
   // services/geminiService.js
   const { GoogleGenAI } = window.genai;
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const generateFeedback = async (text, analysis) => {
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       if (!text.trim()) {
           return "It looks like you didn't get a chance to write anything. No worries! Give it another go and see what amazing story you can create.";
       }
