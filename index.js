@@ -1,0 +1,1 @@
+// This script is intentionally left blank. The application entry point has been moved to an inline script in index.html.
