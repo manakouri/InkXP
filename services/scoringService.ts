@@ -1,6 +1,6 @@
 
-import { ScoringCriterion, ScoreAnalysis } from '../types.ts';
-import { ADJECTIVES, ALL_SENSORY_WORDS, CONJUNCTIONS, TRANSITIONAL_WORDS } from '../constants.ts';
+import { ScoringCriterion, ScoreAnalysis } from '../types.js';
+import { ADJECTIVES, ALL_SENSORY_WORDS, CONJUNCTIONS, TRANSITIONAL_WORDS } from '../constants.js';
 
 const countWords = (text: string, words: string[]): number => {
     const lowerText = text.toLowerCase();

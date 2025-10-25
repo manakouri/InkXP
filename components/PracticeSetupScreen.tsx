@@ -1,9 +1,9 @@
 
 import React, { useState, useCallback, useMemo } from 'react';
-import { Prompt, ScoringCriterion } from '../types.ts';
-import { NARRATIVE_PROMPTS } from '../constants.ts';
-import Button from './Button.tsx';
-import { ALL_SCORING_CRITERIA } from '../services/scoringService.ts';
+import { Prompt, ScoringCriterion } from '../types.js';
+import { NARRATIVE_PROMPTS } from '../constants.js';
+import Button from './Button.js';
+import { ALL_SCORING_CRITERIA } from '../services/scoringService.js';
 
 interface PracticeSetupScreenProps {
     onStartGame: (prompt: Prompt, criteria: ScoringCriterion[], duration: number) => void;

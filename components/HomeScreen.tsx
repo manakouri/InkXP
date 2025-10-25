@@ -1,6 +1,6 @@
 
 import React from 'react';
-import Button from './Button.tsx';
+import Button from './Button.js';
 
 interface HomeScreenProps {
     onSelectPractice: () => void;
