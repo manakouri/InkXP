@@ -17,360 +17,373 @@
   <body class="bg-slate-50 text-slate-800">
     <div id="root"></div>
 
-    <!-- External Libraries (UMD Builds) -->
-    <script src="https://aistudiocdn.com/react@^19.2.0"></script>
-    <script src="https://aistudiocdn.com/react-dom@^19.2.0"></script>
-    <script src="https://aistudiocdn.com/@google/genai@^1.27.0"></script>
+    <!-- Babel for in-browser transpilation -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- 
+      Bridge Script: Load modern ESM libraries and attach them to the window object 
+      for the classic babel script to use. This solves all module-related errors.
+    -->
+    <script type="module">
+      import React from "https://aistudiocdn.com/react@^19.2.0";
+      import ReactDOM from "https://aistudiocdn.com/react-dom@^19.2.0/client";
+      import * as genai from "https://aistudiocdn.com/@google/genai@^1.27.0";
+
+      window.React = React;
+      window.ReactDOM = ReactDOM;
+      window.genai = genai;
+    </script>
 
     <!-- Consolidated Application Script -->
     <script type="text/babel">
-// types.js
-var GameState;
-(function (GameState) {
-    GameState[GameState["Home"] = 0] = "Home";
-    GameState[GameState["PracticeSetup"] = 1] = "PracticeSetup";
-    GameState[GameState["InGame"] = 2] = "InGame";
-    GameState[GameState["Results"] = 3] = "Results";
-})(GameState || (GameState = {}));
+window.addEventListener('load', () => {
+  // types.js
+  var GameState;
+  (function (GameState) {
+      GameState[GameState["Home"] = 0] = "Home";
+      GameState[GameState["PracticeSetup"] = 1] = "PracticeSetup";
+      GameState[GameState["InGame"] = 2] = "InGame";
+      GameState[GameState["Results"] = 3] = "Results";
+  })(GameState || (GameState = {}));
 
-var WritingCategory;
-(function (WritingCategory) {
-    WritingCategory["Narrative"] = "Narrative";
-    WritingCategory["Persuasive"] = "Persuasive";
-    WritingCategory["Informative"] = "Informative";
-    WritingCategory["Editing"] = "Editing";
-})(WritingCategory || (WritingCategory = {}));
+  var WritingCategory;
+  (function (WritingCategory) {
+      WritingCategory["Narrative"] = "Narrative";
+      WritingCategory["Persuasive"] = "Persuasive";
+      WritingCategory["Informative"] = "Informative";
+      WritingCategory["Editing"] = "Editing";
+  })(WritingCategory || (WritingCategory = {}));
 
-// constants.js
-const NARRATIVE_PROMPTS = [
-    { category: "Mystery & Discovery", text: "My fingers closed around a smooth, cool stone in the riverbed. It wasn't just any rock; it was pounamu, carved in a perfect spiral. As I lifted it out of the water, the stone grew strangely warm in my hand, and a deep, pulsing hum vibrated up my arm." },
-    { category: "Mystery & Discovery", text: "The old bach at the end of the beach had been empty for years. But one night during a storm, I saw a light flickering in the window. I crept closer, wiped the salty spray from the glass, and peered inside. The room was empty, but sitting on the table was a single, steaming cup of tea." },
-    { category: "Mystery & Discovery", text: "No one ever went into the old sports shed; Mr. Henderson kept it locked. But as I chased a stray netball, I saw the padlock was broken, lying on the grass. I nudged the door open with my foot, revealing a set of dusty stairs leading down into pure darkness." },
-    { category: "Adventure & Action", text: "'Stay on the track!' our teacher yelled. I just stepped off the path for a second to see a cool fungus. When I looked up, the rest of my school camp group had vanished. I called out, but the only reply was the call of a distant morepork, even though it was the middle of the day." },
-    { category: "Fantasy & Sci-Fi", text: "My koro always told stories about the taniwha in the river. I thought he was just joking. But when I dropped my jandal in the water, a huge, scaly head with glowing red eyes rose from the rapids. It wasn't looking at my jandal; it was looking right at me." },
-    { category: "Real-Life & Emotional", text: "The moving van was packed. This was my last look at my old house. I waved goodbye to the pōhutukawa tree I used to climb and got in the car. As we drove past the dairy for the last time, I saw my best friend, Hemi, sprinting after the car, yelling and waving a small box I had never seen before." }
-];
-const ADJECTIVES = ['able', 'bad', 'best', 'better', 'big', 'black', 'blue', 'bright', 'busy', 'certain', 'clear', 'clean', 'cold', 'common', 'complete', 'cool', 'dark', 'dead', 'different', 'difficult', 'early', 'easy', 'empty', 'entire', 'fair', 'far', 'fast', 'few', 'final', 'fine', 'free', 'fresh', 'full', 'good', 'great', 'green', 'happy', 'hard', 'high', 'hot', 'huge', 'human', 'important', 'interesting', 'kind', 'large', 'last', 'late', 'light', 'little', 'long', 'low', 'main', 'major', 'many', 'mean', 'mental', 'modern', 'national', 'natural', 'near', 'new', 'next', 'nice', 'old', 'orange', 'only', 'open', 'other', 'past', 'personal', 'poor', 'possible', 'powerful', 'private', 'public', 'quick', 'quiet', 'real', 'recent', 'red', 'right', 'round', 'same', 'serious', 'short', 'similar', 'simple', 'single', 'small', 'soft', 'special', 'strong', 'sure', 'tall', 'true', 'warm', 'white', 'whole', 'wonderful', 'young', 'yellow'];
-const SENSORY_WORDS = { sight: ['bleak', 'blurred', 'bright', 'clear', 'colourful', 'crooked', 'dark', 'dazzling', 'dim', 'drab', 'dusky', 'faded', 'fiery', 'glistening', 'gloomy', 'glowing', 'hazy', 'murky', 'shimmering', 'sparkling'], sound: ['banging', 'blaring', 'buzzing', 'chiming', 'clanging', 'crashing', 'creaking', 'deafening', 'echoing', 'fizzing', 'grinding', 'gurgling', 'hissing', 'howling', 'humming', 'hushed', 'piercing', 'rasping', 'rattling', 'ringing', 'roaring', 'rumbling', 'rustling', 'screeching', 'sizzling', 'slamming', 'snapping', 'splashing', 'thudding', 'thumping', 'tinkling', 'wailing', 'whimpering', 'whirring', 'whispering'], smell: ['acrid', 'aromatic', 'burnt', 'damp', 'earthy', 'fishy', 'floral', 'fragrant', 'fresh', 'meaty', 'mouldy', 'musky', 'musty', 'perfumed', 'pungent', 'putrid', 'rancid', 'reeking', 'rotten', 'salty', 'smoky', 'sour', 'spicy', 'stale', 'sweet', 'tangy', 'woody'], touch: ['blistering', 'bristly', 'bubbling', 'chilled', 'clammy', 'coarse', 'cool', 'damp', 'freezing', 'frigid', 'frosty', 'fuzzy', 'gooey', 'gritty', 'hairy', 'icy', 'jagged', 'lukewarm', 'numb', 'prickly', 'pulsing', 'rough', 'scalding', 'silky', 'slimy', 'slippery', 'smooth', 'soaked', 'sodden', 'spiky', 'spongy', 'steaming', 'sticky', 'stinging', 'tepid', 'thorny', 'throbbing', 'velvety', 'warm', 'waxy', 'wet', 'woolly'], taste: ['acidic', 'bitter', 'bland', 'briny', 'chalky', 'cheesy', 'citrusy', 'creamy', 'crisp', 'crumbly', 'fiery', 'flavourful', 'fruity', 'gingery', 'hearty', 'honeyed', 'hot', 'juicy', 'meaty', 'minty', 'overripe', 'peppery', 'pickled', 'rich', 'ripe', 'roasted', 'salty', 'savoury', 'sharp', 'smoky', 'sour', 'spicy', 'stale', 'sugary', 'sweet', 'tangy', 'tart', 'watery', 'zesty'] };
-const ALL_SENSORY_WORDS = Object.values(SENSORY_WORDS).flat();
-const CONJUNCTIONS = ['for', 'and', 'nor', 'but', 'or', 'yet', 'so', 'after', 'although', 'as', 'because', 'before', 'if', 'since', 'though', 'unless', 'until', 'when', 'while'];
-const TRANSITIONAL_WORDS = ['after', 'afterward', 'all of a sudden', 'as soon as', 'at first', 'at last', 'at that moment', 'before', 'by the time', 'concurrently', 'earlier', 'eventually', 'finally', 'first', 'following', 'from that point on', 'immediately', 'in the beginning', 'in the meantime', 'instantly', 'just then', 'later', 'later on', 'meanwhile', 'next', 'not long after', 'now', 'once', 'presently', 'second', 'shortly after', 'simultaneously', 'since', 'soon', 'suddenly', 'then', 'third', 'until', 'when', 'while', 'above all', 'additionally', 'also', 'and', 'another', 'as well', 'besides', 'especially', 'furthermore', 'in addition', 'in fact', 'indeed', 'more importantly', 'moreover', 'not only... but also', 'of course', 'specifically', 'then again', 'too', 'truly', 'although', 'but', 'despite', 'even so', 'even though', 'however', 'in contrast', 'instead', 'nevertheless', 'nonetheless', 'on the contrary', 'on the other hand', 'otherwise', 'still', 'though', 'unlike', 'whereas', 'yet', 'accordingly', 'as a result', 'because', 'consequently', 'due to', 'for this reason', 'hence', 'so', 'therefore', 'thus', 'above', 'across', 'around', 'behind', 'below', 'beside', 'beyond', 'here', 'nearby', 'opposite', 'over', 'under'];
+  // constants.js
+  const NARRATIVE_PROMPTS = [
+      { category: "Mystery & Discovery", text: "My fingers closed around a smooth, cool stone in the riverbed. It wasn't just any rock; it was pounamu, carved in a perfect spiral. As I lifted it out of the water, the stone grew strangely warm in my hand, and a deep, pulsing hum vibrated up my arm." },
+      { category: "Mystery & Discovery", text: "The old bach at the end of the beach had been empty for years. But one night during a storm, I saw a light flickering in the window. I crept closer, wiped the salty spray from the glass, and peered inside. The room was empty, but sitting on the table was a single, steaming cup of tea." },
+      { category: "Mystery & Discovery", text: "No one ever went into the old sports shed; Mr. Henderson kept it locked. But as I chased a stray netball, I saw the padlock was broken, lying on the grass. I nudged the door open with my foot, revealing a set of dusty stairs leading down into pure darkness." },
+      { category: "Adventure & Action", text: "'Stay on the track!' our teacher yelled. I just stepped off the path for a second to see a cool fungus. When I looked up, the rest of my school camp group had vanished. I called out, but the only reply was the call of a distant morepork, even though it was the middle of the day." },
+      { category: "Fantasy & Sci-Fi", text: "My koro always told stories about the taniwha in the river. I thought he was just joking. But when I dropped my jandal in the water, a huge, scaly head with glowing red eyes rose from the rapids. It wasn't looking at my jandal; it was looking right at me." },
+      { category: "Real-Life & Emotional", text: "The moving van was packed. This was my last look at my old house. I waved goodbye to the pōhutukawa tree I used to climb and got in the car. As we drove past the dairy for the last time, I saw my best friend, Hemi, sprinting after the car, yelling and waving a small box I had never seen before." }
+  ];
+  const ADJECTIVES = ['able', 'bad', 'best', 'better', 'big', 'black', 'blue', 'bright', 'busy', 'certain', 'clear', 'clean', 'cold', 'common', 'complete', 'cool', 'dark', 'dead', 'different', 'difficult', 'early', 'easy', 'empty', 'entire', 'fair', 'far', 'fast', 'few', 'final', 'fine', 'free', 'fresh', 'full', 'good', 'great', 'green', 'happy', 'hard', 'high', 'hot', 'huge', 'human', 'important', 'interesting', 'kind', 'large', 'last', 'late', 'light', 'little', 'long', 'low', 'main', 'major', 'many', 'mean', 'mental', 'modern', 'national', 'natural', 'near', 'new', 'next', 'nice', 'old', 'orange', 'only', 'open', 'other', 'past', 'personal', 'poor', 'possible', 'powerful', 'private', 'public', 'quick', 'quiet', 'real', 'recent', 'red', 'right', 'round', 'same', 'serious', 'short', 'similar', 'simple', 'single', 'small', 'soft', 'special', 'strong', 'sure', 'tall', 'true', 'warm', 'white', 'whole', 'wonderful', 'young', 'yellow'];
+  const SENSORY_WORDS = { sight: ['bleak', 'blurred', 'bright', 'clear', 'colourful', 'crooked', 'dark', 'dazzling', 'dim', 'drab', 'dusky', 'faded', 'fiery', 'glistening', 'gloomy', 'glowing', 'hazy', 'murky', 'shimmering', 'sparkling'], sound: ['banging', 'blaring', 'buzzing', 'chiming', 'clanging', 'crashing', 'creaking', 'deafening', 'echoing', 'fizzing', 'grinding', 'gurgling', 'hissing', 'howling', 'humming', 'hushed', 'piercing', 'rasping', 'rattling', 'ringing', 'roaring', 'rumbling', 'rustling', 'screeching', 'sizzling', 'slamming', 'snapping', 'splashing', 'thudding', 'thumping', 'tinkling', 'wailing', 'whimpering', 'whirring', 'whispering'], smell: ['acrid', 'aromatic', 'burnt', 'damp', 'earthy', 'fishy', 'floral', 'fragrant', 'fresh', 'meaty', 'mouldy', 'musky', 'musty', 'perfumed', 'pungent', 'putrid', 'rancid', 'reeking', 'rotten', 'salty', 'smoky', 'sour', 'spicy', 'stale', 'sweet', 'tangy', 'woody'], touch: ['blistering', 'bristly', 'bubbling', 'chilled', 'clammy', 'coarse', 'cool', 'damp', 'freezing', 'frigid', 'frosty', 'fuzzy', 'gooey', 'gritty', 'hairy', 'icy', 'jagged', 'lukewarm', 'numb', 'prickly', 'pulsing', 'rough', 'scalding', 'silky', 'slimy', 'slippery', 'smooth', 'soaked', 'sodden', 'spiky', 'spongy', 'steaming', 'sticky', 'stinging', 'tepid', 'thorny', 'throbbing', 'velvety', 'warm', 'waxy', 'wet', 'woolly'], taste: ['acidic', 'bitter', 'bland', 'briny', 'chalky', 'cheesy', 'citrusy', 'creamy', 'crisp', 'crumbly', 'fiery', 'flavourful', 'fruity', 'gingery', 'hearty', 'honeyed', 'hot', 'juicy', 'meaty', 'minty', 'overripe', 'peppery', 'pickled', 'rich', 'ripe', 'roasted', 'salty', 'savoury', 'sharp', 'smoky', 'sour', 'spicy', 'stale', 'sugary', 'sweet', 'tangy', 'tart', 'watery', 'zesty'] };
+  const ALL_SENSORY_WORDS = Object.values(SENSORY_WORDS).flat();
+  const CONJUNCTIONS = ['for', 'and', 'nor', 'but', 'or', 'yet', 'so', 'after', 'although', 'as', 'because', 'before', 'if', 'since', 'though', 'unless', 'until', 'when', 'while'];
+  const TRANSITIONAL_WORDS = ['after', 'afterward', 'all of a sudden', 'as soon as', 'at first', 'at last', 'at that moment', 'before', 'by the time', 'concurrently', 'earlier', 'eventually', 'finally', 'first', 'following', 'from that point on', 'immediately', 'in the beginning', 'in the meantime', 'instantly', 'just then', 'later', 'later on', 'meanwhile', 'next', 'not long after', 'now', 'once', 'presently', 'second', 'shortly after', 'simultaneously', 'since', 'soon', 'suddenly', 'then', 'third', 'until', 'when', 'while', 'above all', 'additionally', 'also', 'and', 'another', 'as well', 'besides', 'especially', 'furthermore', 'in addition', 'in fact', 'indeed', 'more importantly', 'moreover', 'not only... but also', 'of course', 'specifically', 'then again', 'too', 'truly', 'although', 'but', 'despite', 'even so', 'even though', 'however', 'in contrast', 'instead', 'nevertheless', 'nonetheless', 'on the contrary', 'on the other hand', 'otherwise', 'still', 'though', 'unlike', 'whereas', 'yet', 'accordingly', 'as a result', 'because', 'consequently', 'due to', 'for this reason', 'hence', 'so', 'therefore', 'thus', 'above', 'across', 'around', 'behind', 'below', 'beside', 'beyond', 'here', 'nearby', 'opposite', 'over', 'under'];
 
-// services/scoringService.js
-const countWords = (text, words) => {
-    const lowerText = text.toLowerCase();
-    let count = 0;
-    for (const word of words) {
-        const regex = new RegExp(`\\b${word.toLowerCase().replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}\\b`, 'g');
-        const matches = lowerText.match(regex);
-        if (matches) {
-            count += matches.length;
-        }
-    }
-    return count;
-};
-const ALL_SCORING_CRITERIA = [
-    { id: 'dialogue', name: 'Dialogue', description: 'Using speech with correct punctuation', points: 1000, check: (text) => (text.match(/"[^"]*"/g) || []).length },
-    { id: 'adjectives', name: 'Adjectives', description: `Using varied adjectives`, points: 500, check: (text) => countWords(text, ADJECTIVES) },
-    { id: 'sensory', name: 'Sensory Detail', description: 'Using sensory details (sight, sound, smell, touch, taste)', points: 1000, check: (text) => countWords(text, ALL_SENSORY_WORDS) },
-    { id: 'sentence', name: 'Sentence Structure', description: 'Correctly punctuated sentence (. ! ?)', points: 50, check: (text) => { const sentences = text.split(/[.!?]/).filter(s => s.trim().length > 0); return sentences.filter(s => s.trim().match(/^[A-Z]/)).length; } },
-    { id: 'conjunctions', name: 'Complex Sentences', description: 'Using conjunctions to create compound/complex sentences', points: 50, check: (text) => countWords(text, CONJUNCTIONS) },
-    { id: 'simile', name: 'Similes', description: 'Using similes (comparing with "like" or "as")', points: 100, check: (text) => (text.match(/\b\w+\s+(like|as)\s+\w+\b/gi) || []).length },
-    { id: 'transitional', name: 'Transitional Words', description: 'Using transitional words or phrases', points: 100, check: (text) => countWords(text, TRANSITIONAL_WORDS) }
-];
-const analyzeScore = (text, criteria) => {
-    let totalScore = 0;
-    const breakdown = criteria.map(criterion => {
-        const count = criterion.check(text);
-        const score = count * criterion.points;
-        totalScore += score;
-        return { id: criterion.id, name: criterion.name, count, score };
-    });
-    if (breakdown.length === 0) {
-        return { totalScore: 0, breakdown: [], highestScoring: { name: 'N/A', score: 0}, lowestScoring: { name: 'N/A', score: 0}};
-    }
-    const sortedByScore = [...breakdown].sort((a, b) => b.score - a.score);
-    const highestScoring = { name: sortedByScore[0].name, score: sortedByScore[0].score };
-    const lowestScoring = { name: sortedByScore[sortedByScore.length - 1].name, score: sortedByScore[sortedByScore.length - 1].score };
-    return { totalScore, breakdown, highestScoring, lowestScoring };
-};
+  // services/scoringService.js
+  const countWords = (text, words) => {
+      const lowerText = text.toLowerCase();
+      let count = 0;
+      for (const word of words) {
+          const regex = new RegExp(`\\b${word.toLowerCase().replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}\\b`, 'g');
+          const matches = lowerText.match(regex);
+          if (matches) {
+              count += matches.length;
+          }
+      }
+      return count;
+  };
+  const ALL_SCORING_CRITERIA = [
+      { id: 'dialogue', name: 'Dialogue', description: 'Using speech with correct punctuation', points: 1000, check: (text) => (text.match(/"[^"]*"/g) || []).length },
+      { id: 'adjectives', name: 'Adjectives', description: `Using varied adjectives`, points: 500, check: (text) => countWords(text, ADJECTIVES) },
+      { id: 'sensory', name: 'Sensory Detail', description: 'Using sensory details (sight, sound, smell, touch, taste)', points: 1000, check: (text) => countWords(text, ALL_SENSORY_WORDS) },
+      { id: 'sentence', name: 'Sentence Structure', description: 'Correctly punctuated sentence (. ! ?)', points: 50, check: (text) => { const sentences = text.split(/[.!?]/).filter(s => s.trim().length > 0); return sentences.filter(s => s.trim().match(/^[A-Z]/)).length; } },
+      { id: 'conjunctions', name: 'Complex Sentences', description: 'Using conjunctions to create compound/complex sentences', points: 50, check: (text) => countWords(text, CONJUNCTIONS) },
+      { id: 'simile', name: 'Similes', description: 'Using similes (comparing with "like" or "as")', points: 100, check: (text) => (text.match(/\b\w+\s+(like|as)\s+\w+\b/gi) || []).length },
+      { id: 'transitional', name: 'Transitional Words', description: 'Using transitional words or phrases', points: 100, check: (text) => countWords(text, TRANSITIONAL_WORDS) }
+  ];
+  const analyzeScore = (text, criteria) => {
+      let totalScore = 0;
+      const breakdown = criteria.map(criterion => {
+          const count = criterion.check(text);
+          const score = count * criterion.points;
+          totalScore += score;
+          return { id: criterion.id, name: criterion.name, count, score };
+      });
+      if (breakdown.length === 0) {
+          return { totalScore: 0, breakdown: [], highestScoring: { name: 'N/A', score: 0}, lowestScoring: { name: 'N/A', score: 0}};
+      }
+      const sortedByScore = [...breakdown].sort((a, b) => b.score - a.score);
+      const highestScoring = { name: sortedByScore[0].name, score: sortedByScore[0].score };
+      const lowestScoring = { name: sortedByScore[sortedByScore.length - 1].name, score: sortedByScore[sortedByScore.length - 1].score };
+      return { totalScore, breakdown, highestScoring, lowestScoring };
+  };
 
-// services/geminiService.js
-const { GoogleGenAI } = window.genai;
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-const generateFeedback = async (text, analysis) => {
-    if (!text.trim()) {
-        return "It looks like you didn't get a chance to write anything. No worries! Give it another go and see what amazing story you can create.";
-    }
-    const breakdownText = analysis.breakdown.map(item => `- ${item.name}: You scored ${item.score} points from ${item.count} use(s).`).join('\n');
-    const prompt = `You are an experienced, friendly, and encouraging primary school teacher specializing in literacy. A student has just finished a creative writing practice game. Your task is to provide clear, constructive, and positive feedback on their writing. Here is the student's story: --- ${text} --- Here is their score analysis: - Total Score: ${analysis.totalScore} - Score Breakdown: ${breakdownText} - They scored the MOST points for: ${analysis.highestScoring.name}. - They scored the LEAST points for: ${analysis.lowestScoring.name}. Please provide feedback in a single block of text, using simple paragraph breaks (\\n\\n). Address the student directly. Your feedback should: 1. Start with a positive and encouraging opening. 2. Specifically praise what they did well, referencing their highest-scoring area (${analysis.highestScoring.name}). Give a brief example from their text if possible. 3. Gently suggest an area for improvement, referencing their lowest-scoring area (${analysis.lowestScoring.name}). Provide a clear, actionable tip on how they could incorporate this into their writing next time. For example, if they need more transitional words, suggest examples like 'Suddenly' or 'A moment later'. 4. End with a positive and motivating closing statement. 5. Keep the tone light, fun, and appropriate for a 9-11 year old. Do not be overly critical.`;
-    try {
-        const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
-        return response.text;
-    } catch (error) {
-        console.error("Gemini API error:", error);
-        throw new Error("Failed to generate feedback from AI.");
-    }
-};
+  // services/geminiService.js
+  const { GoogleGenAI } = window.genai;
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const generateFeedback = async (text, analysis) => {
+      if (!text.trim()) {
+          return "It looks like you didn't get a chance to write anything. No worries! Give it another go and see what amazing story you can create.";
+      }
+      const breakdownText = analysis.breakdown.map(item => `- ${item.name}: You scored ${item.score} points from ${item.count} use(s).`).join('\n');
+      const prompt = `You are an experienced, friendly, and encouraging primary school teacher specializing in literacy. A student has just finished a creative writing practice game. Your task is to provide clear, constructive, and positive feedback on their writing. Here is the student's story: --- ${text} --- Here is their score analysis: - Total Score: ${analysis.totalScore} - Score Breakdown: ${breakdownText} - They scored the MOST points for: ${analysis.highestScoring.name}. - They scored the LEAST points for: ${analysis.lowestScoring.name}. Please provide feedback in a single block of text, using simple paragraph breaks (\\n\\n). Address the student directly. Your feedback should: 1. Start with a positive and encouraging opening. 2. Specifically praise what they did well, referencing their highest-scoring area (${analysis.highestScoring.name}). Give a brief example from their text if possible. 3. Gently suggest an area for improvement, referencing their lowest-scoring area (${analysis.lowestScoring.name}). Provide a clear, actionable tip on how they could incorporate this into their writing next time. For example, if they need more transitional words, suggest examples like 'Suddenly' or 'A moment later'. 4. End with a positive and motivating closing statement. 5. Keep the tone light, fun, and appropriate for a 9-11 year old. Do not be overly critical.`;
+      try {
+          const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
+          return response.text;
+      } catch (error) {
+          console.error("Gemini API error:", error);
+          throw new Error("Failed to generate feedback from AI.");
+      }
+  };
 
-// components/LoadingSpinner.js
-const LoadingSpinner = () => <div className="w-8 h-8 border-4 border-sky-200 border-t-sky-600 rounded-full animate-spin"></div>;
+  // components/LoadingSpinner.js
+  const LoadingSpinner = () => <div className="w-8 h-8 border-4 border-sky-200 border-t-sky-600 rounded-full animate-spin"></div>;
 
-// components/Timer.js
-const Timer = ({ initialSeconds, onTimeUp }) => {
-    const { useState, useEffect } = React;
-    const [seconds, setSeconds] = useState(initialSeconds);
-    useEffect(() => {
-        if (seconds <= 0) {
-            onTimeUp();
-            return;
-        }
-        const intervalId = setInterval(() => { setSeconds(prevSeconds => prevSeconds - 1); }, 1000);
-        return () => clearInterval(intervalId);
-    }, [seconds, onTimeUp]);
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return <div className="text-5xl font-bold tracking-tighter"><span>{minutes.toString().padStart(2, '0')}</span><span className="animate-pulse">:</span><span>{remainingSeconds.toString().padStart(2, '0')}</span></div>;
-};
+  // components/Timer.js
+  const Timer = ({ initialSeconds, onTimeUp }) => {
+      const { useState, useEffect } = React;
+      const [seconds, setSeconds] = useState(initialSeconds);
+      useEffect(() => {
+          if (seconds <= 0) {
+              onTimeUp();
+              return;
+          }
+          const intervalId = setInterval(() => { setSeconds(prevSeconds => prevSeconds - 1); }, 1000);
+          return () => clearInterval(intervalId);
+      }, [seconds, onTimeUp]);
+      const minutes = Math.floor(seconds / 60);
+      const remainingSeconds = seconds % 60;
+      return <div className="text-5xl font-bold tracking-tighter"><span>{minutes.toString().padStart(2, '0')}</span><span className="animate-pulse">:</span><span>{remainingSeconds.toString().padStart(2, '0')}</span></div>;
+  };
 
-// components/Button.js
-const Button = ({ children, className = '', variant = 'primary', size = 'medium', ...props }) => {
-    const baseStyles = 'font-bold rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition-transform duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed transform active:scale-95';
-    const variantStyles = { primary: 'bg-sky-600 text-white hover:bg-sky-700 focus:ring-sky-500 disabled:hover:bg-sky-600', secondary: 'bg-slate-200 text-slate-800 hover:bg-slate-300 focus:ring-slate-400 disabled:hover:bg-slate-200' };
-    const sizeStyles = { small: 'py-1.5 px-3 text-sm', medium: 'py-2 px-5 text-base', large: 'py-3 px-8 text-lg' };
-    return <button className={`${baseStyles} ${variantStyles[variant]} ${sizeStyles[size]} ${className}`} {...props}>{children}</button>;
-};
+  // components/Button.js
+  const Button = ({ children, className = '', variant = 'primary', size = 'medium', ...props }) => {
+      const baseStyles = 'font-bold rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition-transform duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed transform active:scale-95';
+      const variantStyles = { primary: 'bg-sky-600 text-white hover:bg-sky-700 focus:ring-sky-500 disabled:hover:bg-sky-600', secondary: 'bg-slate-200 text-slate-800 hover:bg-slate-300 focus:ring-slate-400 disabled:hover:bg-slate-200' };
+      const sizeStyles = { small: 'py-1.5 px-3 text-sm', medium: 'py-2 px-5 text-base', large: 'py-3 px-8 text-lg' };
+      return <button className={`${baseStyles} ${variantStyles[variant]} ${sizeStyles[size]} ${className}`} {...props}>{children}</button>;
+  };
 
-// components/ResultsScreen.js
-const ResultsScreen = ({ prompt, finalText, analysis, onPlayAgain }) => {
-    const { useState, useEffect } = React;
-    const [feedback, setFeedback] = useState('');
-    const [isLoading, setIsLoading] = useState(true);
-    useEffect(() => {
-        const getFeedback = async () => {
-            setIsLoading(true);
-            try {
-                const generatedFeedback = await generateFeedback(finalText, analysis);
-                setFeedback(generatedFeedback);
-            } catch (error) {
-                console.error("Error generating feedback:", error);
-                setFeedback("I had a little trouble generating feedback this time. Great effort on your writing, though! Please try again.");
-            }
-            setIsLoading(false);
-        };
-        getFeedback();
-    }, [finalText, analysis]);
-    return (
-        <div className="flex flex-col items-center">
-            <h2 className="text-3xl font-bold text-emerald-600 mb-2">Time's Up!</h2>
-            <p className="text-slate-600 mb-6">Fantastic effort! Here's your final score and feedback.</p>
-            <div className="w-full grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-2 bg-white p-6 rounded-lg shadow-md border border-slate-200">
-                    <h3 className="text-xl font-bold mb-4 text-slate-800">Your Story</h3>
-                    <p className="text-sm font-semibold text-sky-600 mb-2">{prompt.text}</p>
-                    <div className="prose max-w-none text-slate-700 whitespace-pre-wrap bg-slate-50 p-4 rounded-md">{finalText || "You didn't write anything this time. Try again!"}</div>
-                </div>
-                <div className="lg:col-span-1 space-y-6">
-                    <div className="bg-white p-6 rounded-lg shadow-md border border-slate-200 text-center">
-                        <h3 className="text-lg font-bold text-slate-500 uppercase tracking-wider">Total Score</h3>
-                        <p className="text-6xl font-bold text-sky-600 my-2">{analysis.totalScore}</p>
-                    </div>
-                    <div className="bg-white p-6 rounded-lg shadow-md border border-slate-200">
-                        <h3 className="text-xl font-bold mb-4 text-slate-800">Teacher Feedback</h3>
-                        {isLoading ? <div className="flex items-center justify-center h-24"><LoadingSpinner /><span className="ml-4 text-slate-500">Thinking...</span></div> : <div className="prose prose-sm max-w-none text-slate-700" dangerouslySetInnerHTML={{ __html: feedback.replace(/\\n/g, '<br />') }}></div>}
-                    </div>
-                </div>
-            </div>
-            <Button onClick={onPlayAgain} size="large" className="mt-8">Play Again</Button>
-        </div>
-    );
-};
+  // components/ResultsScreen.js
+  const ResultsScreen = ({ prompt, finalText, analysis, onPlayAgain }) => {
+      const { useState, useEffect } = React;
+      const [feedback, setFeedback] = useState('');
+      const [isLoading, setIsLoading] = useState(true);
+      useEffect(() => {
+          const getFeedback = async () => {
+              setIsLoading(true);
+              try {
+                  const generatedFeedback = await generateFeedback(finalText, analysis);
+                  setFeedback(generatedFeedback);
+              } catch (error) {
+                  console.error("Error generating feedback:", error);
+                  setFeedback("I had a little trouble generating feedback this time. Great effort on your writing, though! Please try again.");
+              }
+              setIsLoading(false);
+          };
+          getFeedback();
+      }, [finalText, analysis]);
+      return (
+          <div className="flex flex-col items-center">
+              <h2 className="text-3xl font-bold text-emerald-600 mb-2">Time's Up!</h2>
+              <p className="text-slate-600 mb-6">Fantastic effort! Here's your final score and feedback.</p>
+              <div className="w-full grid grid-cols-1 lg:grid-cols-3 gap-8">
+                  <div className="lg:col-span-2 bg-white p-6 rounded-lg shadow-md border border-slate-200">
+                      <h3 className="text-xl font-bold mb-4 text-slate-800">Your Story</h3>
+                      <p className="text-sm font-semibold text-sky-600 mb-2">{prompt.text}</p>
+                      <div className="prose max-w-none text-slate-700 whitespace-pre-wrap bg-slate-50 p-4 rounded-md">{finalText || "You didn't write anything this time. Try again!"}</div>
+                  </div>
+                  <div className="lg:col-span-1 space-y-6">
+                      <div className="bg-white p-6 rounded-lg shadow-md border border-slate-200 text-center">
+                          <h3 className="text-lg font-bold text-slate-500 uppercase tracking-wider">Total Score</h3>
+                          <p className="text-6xl font-bold text-sky-600 my-2">{analysis.totalScore}</p>
+                      </div>
+                      <div className="bg-white p-6 rounded-lg shadow-md border border-slate-200">
+                          <h3 className="text-xl font-bold mb-4 text-slate-800">Teacher Feedback</h3>
+                          {isLoading ? <div className="flex items-center justify-center h-24"><LoadingSpinner /><span className="ml-4 text-slate-500">Thinking...</span></div> : <div className="prose prose-sm max-w-none text-slate-700" dangerouslySetInnerHTML={{ __html: feedback.replace(/\\n/g, '<br />') }}></div>}
+                      </div>
+                  </div>
+              </div>
+              <Button onClick={onPlayAgain} size="large" className="mt-8">Play Again</Button>
+          </div>
+      );
+  };
 
-// components/GameScreen.js
-const GameScreen = ({ prompt, criteria, duration, onTimeUp }) => {
-    const { useState, useEffect, useRef, useCallback, useMemo } = React;
-    const [text, setText] = useState('');
-    const [scoreAnalysis, setScoreAnalysis] = useState(() => analyzeScore('', criteria));
-    const [isScoreAnimating, setIsScoreAnimating] = useState(false);
-    const hasFired = useRef(false);
-    const prevScoreRef = useRef(0);
-    const wordCount = useMemo(() => { if (!text.trim()) return 0; return text.trim().split(/\s+/).length; }, [text]);
-    useEffect(() => {
-        const handler = setTimeout(() => {
-            const analysis = analyzeScore(text, criteria);
-            setScoreAnalysis(analysis);
-            if (analysis.totalScore > prevScoreRef.current) {
-                setIsScoreAnimating(true);
-                setTimeout(() => setIsScoreAnimating(false), 300);
-            }
-            prevScoreRef.current = analysis.totalScore;
-        }, 500);
-        return () => clearTimeout(handler);
-    }, [text, criteria]);
-    const textRef = useRef(text);
-    textRef.current = text;
-    const criteriaRef = useRef(criteria);
-    criteriaRef.current = criteria;
-    const onTimeUpRef = useRef(onTimeUp);
-    onTimeUpRef.current = onTimeUp;
-    const handleTimeUp = useCallback(() => {
-        if (!hasFired.current) {
-            hasFired.current = true;
-            const currentText = textRef.current;
-            const currentCriteria = criteriaRef.current;
-            const finalAnalysis = analyzeScore(currentText, currentCriteria);
-            onTimeUpRef.current(currentText, finalAnalysis);
-        }
-    }, []);
-    return (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2">
-                <div className="bg-white p-6 rounded-lg shadow-md border border-slate-200 mb-4">
-                    <p className="text-sm font-semibold text-sky-600 mb-2">{prompt.category}</p>
-                    <p className="text-lg text-slate-700">{prompt.text}</p>
-                </div>
-                <textarea value={text} onChange={(e) => setText(e.target.value)} className="w-full min-h-[400px] p-4 border border-slate-300 rounded-lg shadow-inner focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-shadow duration-200" placeholder="Start writing your story here..." aria-label="Story writing area" />
-            </div>
-            <div className="lg:col-span-1">
-                <div className="sticky top-8 space-y-6">
-                    <div className="bg-sky-600 text-white p-4 rounded-lg shadow-lg text-center"><p className="text-lg font-semibold">Time Remaining</p><Timer initialSeconds={duration} onTimeUp={handleTimeUp} /></div>
-                    <div className="bg-emerald-600 text-white p-4 rounded-lg shadow-lg text-center"><p className="text-lg font-semibold">Your Score</p><p className={`text-5xl font-bold tracking-tighter transition-transform duration-300 ease-out ${isScoreAnimating ? 'scale-125' : 'scale-100'}`}>{scoreAnalysis.totalScore.toLocaleString()}</p></div>
-                    <div className="bg-violet-600 text-white p-4 rounded-lg shadow-lg text-center"><p className="text-lg font-semibold">Word Count</p><p className="text-5xl font-bold tracking-tighter">{wordCount}</p></div>
-                    <div className="bg-white p-6 rounded-lg shadow-md border border-slate-200">
-                        <h3 className="text-xl font-bold mb-4 text-slate-800 border-b pb-2">Scoring Goals</h3>
-                        <ul className="space-y-1">
-                            {criteria.map((criterion) => {
-                                const item = scoreAnalysis.breakdown.find(b => b.id === criterion.id) || { count: 0 };
-                                const hasAchieved = item.count > 0;
-                                return <li key={criterion.id} className={`p-2 rounded-md transition-all duration-300 flex justify-between items-center ${hasAchieved ? 'bg-emerald-50' : 'bg-transparent'}`} aria-live="polite"><span className="text-sm text-slate-600 pr-2"><span className={`font-bold ${hasAchieved ? 'text-emerald-700' : 'text-slate-500'}`}>+{criterion.points.toLocaleString()} pts:</span> {criterion.description}</span><span className={`font-bold text-xs px-2 py-0.5 rounded-full transition-all duration-300 flex-shrink-0 ${hasAchieved ? 'bg-emerald-200 text-emerald-800 scale-110' : 'bg-slate-100 text-slate-500'}`}>{item.count}</span></li>;
-                            })}
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-};
+  // components/GameScreen.js
+  const GameScreen = ({ prompt, criteria, duration, onTimeUp }) => {
+      const { useState, useEffect, useRef, useCallback, useMemo } = React;
+      const [text, setText] = useState('');
+      const [scoreAnalysis, setScoreAnalysis] = useState(() => analyzeScore('', criteria));
+      const [isScoreAnimating, setIsScoreAnimating] = useState(false);
+      const hasFired = useRef(false);
+      const prevScoreRef = useRef(0);
+      const wordCount = useMemo(() => { if (!text.trim()) return 0; return text.trim().split(/\s+/).length; }, [text]);
+      useEffect(() => {
+          const handler = setTimeout(() => {
+              const analysis = analyzeScore(text, criteria);
+              setScoreAnalysis(analysis);
+              if (analysis.totalScore > prevScoreRef.current) {
+                  setIsScoreAnimating(true);
+                  setTimeout(() => setIsScoreAnimating(false), 300);
+              }
+              prevScoreRef.current = analysis.totalScore;
+          }, 500);
+          return () => clearTimeout(handler);
+      }, [text, criteria]);
+      const textRef = useRef(text);
+      textRef.current = text;
+      const criteriaRef = useRef(criteria);
+      criteriaRef.current = criteria;
+      const onTimeUpRef = useRef(onTimeUp);
+      onTimeUpRef.current = onTimeUp;
+      const handleTimeUp = useCallback(() => {
+          if (!hasFired.current) {
+              hasFired.current = true;
+              const currentText = textRef.current;
+              const currentCriteria = criteriaRef.current;
+              const finalAnalysis = analyzeScore(currentText, currentCriteria);
+              onTimeUpRef.current(currentText, finalAnalysis);
+          }
+      }, []);
+      return (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-2">
+                  <div className="bg-white p-6 rounded-lg shadow-md border border-slate-200 mb-4">
+                      <p className="text-sm font-semibold text-sky-600 mb-2">{prompt.category}</p>
+                      <p className="text-lg text-slate-700">{prompt.text}</p>
+                  </div>
+                  <textarea value={text} onChange={(e) => setText(e.target.value)} className="w-full min-h-[400px] p-4 border border-slate-300 rounded-lg shadow-inner focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-shadow duration-200" placeholder="Start writing your story here..." aria-label="Story writing area" />
+              </div>
+              <div className="lg:col-span-1">
+                  <div className="sticky top-8 space-y-6">
+                      <div className="bg-sky-600 text-white p-4 rounded-lg shadow-lg text-center"><p className="text-lg font-semibold">Time Remaining</p><Timer initialSeconds={duration} onTimeUp={handleTimeUp} /></div>
+                      <div className="bg-emerald-600 text-white p-4 rounded-lg shadow-lg text-center"><p className="text-lg font-semibold">Your Score</p><p className={`text-5xl font-bold tracking-tighter transition-transform duration-300 ease-out ${isScoreAnimating ? 'scale-125' : 'scale-100'}`}>{scoreAnalysis.totalScore.toLocaleString()}</p></div>
+                      <div className="bg-violet-600 text-white p-4 rounded-lg shadow-lg text-center"><p className="text-lg font-semibold">Word Count</p><p className="text-5xl font-bold tracking-tighter">{wordCount}</p></div>
+                      <div className="bg-white p-6 rounded-lg shadow-md border border-slate-200">
+                          <h3 className="text-xl font-bold mb-4 text-slate-800 border-b pb-2">Scoring Goals</h3>
+                          <ul className="space-y-1">
+                              {criteria.map((criterion) => {
+                                  const item = scoreAnalysis.breakdown.find(b => b.id === criterion.id) || { count: 0 };
+                                  const hasAchieved = item.count > 0;
+                                  return <li key={criterion.id} className={`p-2 rounded-md transition-all duration-300 flex justify-between items-center ${hasAchieved ? 'bg-emerald-50' : 'bg-transparent'}`} aria-live="polite"><span className="text-sm text-slate-600 pr-2"><span className={`font-bold ${hasAchieved ? 'text-emerald-700' : 'text-slate-500'}`}>+{criterion.points.toLocaleString()} pts:</span> {criterion.description}</span><span className={`font-bold text-xs px-2 py-0.5 rounded-full transition-all duration-300 flex-shrink-0 ${hasAchieved ? 'bg-emerald-200 text-emerald-800 scale-110' : 'bg-slate-100 text-slate-500'}`}>{item.count}</span></li>;
+                              })}
+                          </ul>
+                      </div>
+                  </div>
+              </div>
+          </div>
+      );
+  };
 
-// components/PracticeSetupScreen.js
-const PracticeSetupScreen = ({ onStartGame }) => {
-    const { useState, useCallback, useMemo } = React;
-    const [currentPrompt, setCurrentPrompt] = useState(() => NARRATIVE_PROMPTS[Math.floor(Math.random() * NARRATIVE_PROMPTS.length)]);
-    const [duration, setDuration] = useState(10);
-    const generateNewPrompt = useCallback(() => {
-        const newPrompt = NARRATIVE_PROMPTS[Math.floor(Math.random() * NARRATIVE_PROMPTS.length)];
-        setCurrentPrompt(newPrompt);
-    }, []);
-    const selectedCriteria = useMemo(() => {
-        const generalGoals = ALL_SCORING_CRITERIA.filter(c => c.id === 'sentence' || c.id === 'conjunctions');
-        const mainGoalsPool = ALL_SCORING_CRITERIA.filter(c => c.id !== 'sentence' && c.id !== 'conjunctions');
-        const shuffled = [...mainGoalsPool].sort(() => 0.5 - Math.random());
-        const selectedMainGoals = shuffled.slice(0, 3);
-        return [...generalGoals, ...selectedMainGoals];
-    }, [currentPrompt]);
-    const handleStart = () => { onStartGame(currentPrompt, selectedCriteria, duration * 60); };
-    return (
-        <div className="flex flex-col items-center">
-            <h2 className="text-2xl font-bold text-slate-800 mb-2">Practice Mode: Narrative Writing</h2>
-            <p className="text-slate-600 mb-6">Generate a story idea below and choose your writing time.</p>
-            <div className="w-full max-w-3xl bg-white p-6 rounded-lg shadow-md border border-slate-200 mb-6"><p className="text-sm font-semibold text-sky-600 mb-2">{currentPrompt.category}</p><p className="text-lg text-slate-700">{currentPrompt.text}</p></div>
-            <div className="flex items-center gap-4 mb-6"><Button onClick={generateNewPrompt} variant="secondary">Generate New Prompt</Button></div>
-            <div className="w-full max-w-sm mb-8">
-                <label htmlFor="duration" className="block text-center text-sm font-medium text-slate-700 mb-2">Set Timer (minutes)</label>
-                <div className="flex items-center justify-center gap-4">
-                    <input type="range" id="duration" min="10" max="45" step="5" value={duration} onChange={(e) => setDuration(parseInt(e.target.value))} className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer dark:bg-slate-700" />
-                    <span className="font-bold text-sky-600 text-lg w-12 text-center">{duration}</span>
-                </div>
-            </div>
-            <Button onClick={handleStart} size="large">Start Writing!</Button>
-        </div>
-    );
-};
+  // components/PracticeSetupScreen.js
+  const PracticeSetupScreen = ({ onStartGame }) => {
+      const { useState, useCallback, useMemo } = React;
+      const [currentPrompt, setCurrentPrompt] = useState(() => NARRATIVE_PROMPTS[Math.floor(Math.random() * NARRATIVE_PROMPTS.length)]);
+      const [duration, setDuration] = useState(10);
+      const generateNewPrompt = useCallback(() => {
+          const newPrompt = NARRATIVE_PROMPTS[Math.floor(Math.random() * NARRATIVE_PROMPTS.length)];
+          setCurrentPrompt(newPrompt);
+      }, []);
+      const selectedCriteria = useMemo(() => {
+          const generalGoals = ALL_SCORING_CRITERIA.filter(c => c.id === 'sentence' || c.id === 'conjunctions');
+          const mainGoalsPool = ALL_SCORING_CRITERIA.filter(c => c.id !== 'sentence' && c.id !== 'conjunctions');
+          const shuffled = [...mainGoalsPool].sort(() => 0.5 - Math.random());
+          const selectedMainGoals = shuffled.slice(0, 3);
+          return [...generalGoals, ...selectedMainGoals];
+      }, [currentPrompt]);
+      const handleStart = () => { onStartGame(currentPrompt, selectedCriteria, duration * 60); };
+      return (
+          <div className="flex flex-col items-center">
+              <h2 className="text-2xl font-bold text-slate-800 mb-2">Practice Mode: Narrative Writing</h2>
+              <p className="text-slate-600 mb-6">Generate a story idea below and choose your writing time.</p>
+              <div className="w-full max-w-3xl bg-white p-6 rounded-lg shadow-md border border-slate-200 mb-6"><p className="text-sm font-semibold text-sky-600 mb-2">{currentPrompt.category}</p><p className="text-lg text-slate-700">{currentPrompt.text}</p></div>
+              <div className="flex items-center gap-4 mb-6"><Button onClick={generateNewPrompt} variant="secondary">Generate New Prompt</Button></div>
+              <div className="w-full max-w-sm mb-8">
+                  <label htmlFor="duration" className="block text-center text-sm font-medium text-slate-700 mb-2">Set Timer (minutes)</label>
+                  <div className="flex items-center justify-center gap-4">
+                      <input type="range" id="duration" min="10" max="45" step="5" value={duration} onChange={(e) => setDuration(parseInt(e.target.value))} className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer dark:bg-slate-700" />
+                      <span className="font-bold text-sky-600 text-lg w-12 text-center">{duration}</span>
+                  </div>
+              </div>
+              <Button onClick={handleStart} size="large">Start Writing!</Button>
+          </div>
+      );
+  };
 
-// components/HomeScreen.js
-const ModeCard = ({ title, description, icon, onClick, disabled }) => (
-    <div className={`p-6 rounded-xl shadow-md flex flex-col items-center text-center transition-all duration-300 ${disabled ? 'bg-slate-200 text-slate-500' : 'bg-white hover:shadow-xl hover:-translate-y-1'}`}>
-        <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${disabled ? 'bg-slate-300' : 'bg-sky-100 text-sky-600'}`}>
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8"><path strokeLinecap="round" strokeLinejoin="round" d={icon} /></svg>
-        </div>
-        <h3 className="text-xl font-bold mb-2">{title}</h3>
-        <p className="text-sm mb-4 flex-grow">{description}</p>
-        <Button onClick={onClick} disabled={disabled} className="mt-auto">{disabled ? 'Coming Soon' : 'Let\'s Go!'}</Button>
-    </div>
-);
-const HomeScreen = ({ onSelectPractice }) => (
-    <div className="text-center">
-        <h2 className="text-3xl font-bold text-slate-800 mb-4">Welcome, Young Writer!</h2>
-        <p className="text-lg text-slate-600 mb-8 max-w-2xl mx-auto">Choose a mode to begin your writing adventure. Sharpen your skills, join a friend's game, or create a challenge for your class!</p>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-            <ModeCard title="Create a Game" description="Be the game master! Choose prompts, set timers, and challenge your friends." icon=" M12 4.5v15m7.5-7.5h-15" onClick={() => alert("Create a Game mode is coming soon!")} disabled={true} />
-            <ModeCard title="Join a Game" description="Got a game code? Enter it here to join a writing quest with your classmates." icon="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" onClick={() => alert("Join a Game mode is coming soon!")} disabled={true} />
-            <ModeCard title="Practice Mode" description="Fly solo! Get a random prompt and practice your writing skills at your own pace." icon="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" onClick={onSelectPractice} disabled={false} />
-        </div>
-    </div>
-);
+  // components/HomeScreen.js
+  const ModeCard = ({ title, description, icon, onClick, disabled }) => (
+      <div className={`p-6 rounded-xl shadow-md flex flex-col items-center text-center transition-all duration-300 ${disabled ? 'bg-slate-200 text-slate-500' : 'bg-white hover:shadow-xl hover:-translate-y-1'}`}>
+          <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${disabled ? 'bg-slate-300' : 'bg-sky-100 text-sky-600'}`}>
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8"><path strokeLinecap="round" strokeLinejoin="round" d={icon} /></svg>
+          </div>
+          <h3 className="text-xl font-bold mb-2">{title}</h3>
+          <p className="text-sm mb-4 flex-grow">{description}</p>
+          <Button onClick={onClick} disabled={disabled} className="mt-auto">{disabled ? 'Coming Soon' : 'Let\'s Go!'}</Button>
+      </div>
+  );
+  const HomeScreen = ({ onSelectPractice }) => (
+      <div className="text-center">
+          <h2 className="text-3xl font-bold text-slate-800 mb-4">Welcome, Young Writer!</h2>
+          <p className="text-lg text-slate-600 mb-8 max-w-2xl mx-auto">Choose a mode to begin your writing adventure. Sharpen your skills, join a friend's game, or create a challenge for your class!</p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+              <ModeCard title="Create a Game" description="Be the game master! Choose prompts, set timers, and challenge your friends." icon=" M12 4.5v15m7.5-7.5h-15" onClick={() => alert("Create a Game mode is coming soon!")} disabled={true} />
+              <ModeCard title="Join a Game" description="Got a game code? Enter it here to join a writing quest with your classmates." icon="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" onClick={() => alert("Join a Game mode is coming soon!")} disabled={true} />
+              <ModeCard title="Practice Mode" description="Fly solo! Get a random prompt and practice your writing skills at your own pace." icon="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" onClick={onSelectPractice} disabled={false} />
+          </div>
+      </div>
+  );
 
-// App.js
-const App = () => {
-    const { useState, useCallback } = React;
-    const [gameState, setGameState] = useState(GameState.Home);
-    const [gamePrompt, setGamePrompt] = useState(null);
-    const [gameCriteria, setGameCriteria] = useState([]);
-    const [gameDuration, setGameDuration] = useState(600);
-    const [finalText, setFinalText] = useState('');
-    const [scoreAnalysis, setScoreAnalysis] = useState(null);
-    const handleStartPractice = useCallback((prompt, criteria, duration) => {
-        setGamePrompt(prompt);
-        setGameCriteria(criteria);
-        setGameDuration(duration);
-        setGameState(GameState.InGame);
-    }, []);
-    const handleEndGame = useCallback((text, analysis) => {
-        setFinalText(text);
-        setScoreAnalysis(analysis);
-        setGameState(GameState.Results);
-    }, []);
-    const handlePlayAgain = useCallback(() => {
-        setGamePrompt(null);
-        setGameCriteria([]);
-        setFinalText('');
-        setScoreAnalysis(null);
-        setGameState(GameState.PracticeSetup);
-    }, []);
-    const renderContent = () => {
-        switch (gameState) {
-            case GameState.Home: return <HomeScreen onSelectPractice={() => setGameState(GameState.PracticeSetup)} />;
-            case GameState.PracticeSetup: return <PracticeSetupScreen onStartGame={handleStartPractice} />;
-            case GameState.InGame: return gamePrompt && gameCriteria.length > 0 ? <GameScreen prompt={gamePrompt} criteria={gameCriteria} duration={gameDuration} onTimeUp={handleEndGame} /> : <HomeScreen onSelectPractice={() => setGameState(GameState.PracticeSetup)} />;
-            case GameState.Results: return scoreAnalysis && gamePrompt ? <ResultsScreen prompt={gamePrompt} finalText={finalText} analysis={scoreAnalysis} onPlayAgain={handlePlayAgain} /> : <HomeScreen onSelectPractice={() => setGameState(GameState.PracticeSetup)} />;
-            default: return <HomeScreen onSelectPractice={() => setGameState(GameState.PracticeSetup)} />;
-        }
-    };
-    return (
-        <div className="min-h-screen bg-gradient-to-br from-sky-100 to-emerald-100 p-4 sm:p-6 md:p-8">
-            <div className="max-w-7xl mx-auto">
-                <header className="text-center mb-8">
-                    <div className="flex items-center justify-center gap-3">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-10 h-10 text-sky-600"><path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg>
-                        <h1 className="text-4xl sm:text-5xl font-bold text-sky-700 tracking-tight">InkXP</h1>
-                    </div>
-                    <p className="text-slate-600 mt-2 text-lg">Level up your writing experience.</p>
-                </header>
-                <main className="bg-white/70 backdrop-blur-sm p-6 sm:p-8 rounded-2xl shadow-lg border border-slate-200">{renderContent()}</main>
-                <footer className="text-center mt-8 text-sm text-slate-500"><p>A gamified writing experience for young authors.</p></footer>
-            </div>
-        </div>
-    );
-};
+  // App.js
+  const App = () => {
+      const { useState, useCallback } = React;
+      const [gameState, setGameState] = useState(GameState.Home);
+      const [gamePrompt, setGamePrompt] = useState(null);
+      const [gameCriteria, setGameCriteria] = useState([]);
+      const [gameDuration, setGameDuration] = useState(600);
+      const [finalText, setFinalText] = useState('');
+      const [scoreAnalysis, setScoreAnalysis] = useState(null);
+      const handleStartPractice = useCallback((prompt, criteria, duration) => {
+          setGamePrompt(prompt);
+          setGameCriteria(criteria);
+          setGameDuration(duration);
+          setGameState(GameState.InGame);
+      }, []);
+      const handleEndGame = useCallback((text, analysis) => {
+          setFinalText(text);
+          setScoreAnalysis(analysis);
+          setGameState(GameState.Results);
+      }, []);
+      const handlePlayAgain = useCallback(() => {
+          setGamePrompt(null);
+          setGameCriteria([]);
+          setFinalText('');
+          setScoreAnalysis(null);
+          setGameState(GameState.PracticeSetup);
+      }, []);
+      const renderContent = () => {
+          switch (gameState) {
+              case GameState.Home: return <HomeScreen onSelectPractice={() => setGameState(GameState.PracticeSetup)} />;
+              case GameState.PracticeSetup: return <PracticeSetupScreen onStartGame={handleStartPractice} />;
+              case GameState.InGame: return gamePrompt && gameCriteria.length > 0 ? <GameScreen prompt={gamePrompt} criteria={gameCriteria} duration={gameDuration} onTimeUp={handleEndGame} /> : <HomeScreen onSelectPractice={() => setGameState(GameState.PracticeSetup)} />;
+              case GameState.Results: return scoreAnalysis && gamePrompt ? <ResultsScreen prompt={gamePrompt} finalText={finalText} analysis={scoreAnalysis} onPlayAgain={handlePlayAgain} /> : <HomeScreen onSelectPractice={() => setGameState(GameState.PracticeSetup)} />;
+              default: return <HomeScreen onSelectPractice={() => setGameState(GameState.PracticeSetup)} />;
+          }
+      };
+      return (
+          <div className="min-h-screen bg-gradient-to-br from-sky-100 to-emerald-100 p-4 sm:p-6 md:p-8">
+              <div className="max-w-7xl mx-auto">
+                  <header className="text-center mb-8">
+                      <div className="flex items-center justify-center gap-3">
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-10 h-10 text-sky-600"><path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg>
+                          <h1 className="text-4xl sm:text-5xl font-bold text-sky-700 tracking-tight">InkXP</h1>
+                      </div>
+                      <p className="text-slate-600 mt-2 text-lg">Level up your writing experience.</p>
+                  </header>
+                  <main className="bg-white/70 backdrop-blur-sm p-6 sm:p-8 rounded-2xl shadow-lg border border-slate-200">{renderContent()}</main>
+                  <footer className="text-center mt-8 text-sm text-slate-500"><p>A gamified writing experience for young authors.</p></footer>
+              </div>
+          </div>
+      );
+  };
 
-// index.js
-const rootElement = document.getElementById('root');
-if (!rootElement) {
-  throw new Error("Could not find root element to mount to");
-}
-const root = ReactDOM.createRoot(rootElement);
-root.render(<React.StrictMode><App /></React.StrictMode>);
+  // index.js
+  const rootElement = document.getElementById('root');
+  if (!rootElement) {
+    throw new Error("Could not find root element to mount to");
+  }
+  const root = ReactDOM.createRoot(rootElement);
+  root.render(<React.StrictMode><App /></React.StrictMode>);
+});
     </script>
   </body>
 </html>
