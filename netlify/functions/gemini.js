@@ -37,7 +37,8 @@ const getFeedback = async (payload) => {
     Respond ONLY with a valid JSON object.`;
 
     const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
+        // Fix: Use a more advanced model for better feedback quality.
+        model: "gemini-2.5-pro",
         contents: prompt,
         config: {
             responseMimeType: "application/json",
