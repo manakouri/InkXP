@@ -286,8 +286,21 @@ const ALL_SCORING_CRITERIA = [
         description: 'For each correctly punctuated sentence (. ! ?) with a capital letter', points: 100,
         check: (text) => {
             if (!text) return 0;
-            const sentences = text.split(/[.!?]/).filter(s => s.trim().length > 0);
-            return sentences.filter(s => s.trim().match(/^[A-Z]/)).length;
+            // Split text into potential sentences. This is more robust than splitting by punctuation alone.
+            const potentialSentences = text.split(/(?<=[.!?])\s+/);
+            
+            let count = 0;
+            for (const sentence of potentialSentences) {
+                const trimmed = sentence.trim();
+                if (trimmed) {
+                    const startsWithCapital = /^[A-Z]/.test(trimmed);
+                    const endsWithPunctuation = /[.!?]$/.test(trimmed);
+                    if (startsWithCapital && endsWithPunctuation) {
+                        count++;
+                    }
+                }
+            }
+            return count;
         }
     },
     {
