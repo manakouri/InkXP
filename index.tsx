@@ -368,20 +368,21 @@ const LoadingSpinner = () => <div className="w-8 h-8 border-4 border-sky-200 bor
 
 // components/Timer.js
 const Timer = ({ startTime, duration, onTimeUp }) => {
-    const [secondsLeft, setSecondsLeft] = useState(duration);
+    // Fix: Ensure duration is treated as a number for state and calculations
+    const [secondsLeft, setSecondsLeft] = useState(Number(duration));
     const onTimeUpRef = useRef(onTimeUp);
     onTimeUpRef.current = onTimeUp;
 
     useEffect(() => {
         if (!startTime) {
-            setSecondsLeft(duration);
+            setSecondsLeft(Number(duration));
             return;
         }
 
         const intervalId = setInterval(() => {
             const gameStartTime = (startTime.toDate ? startTime.toDate() : startTime).getTime();
             const elapsed = Math.floor((Date.now() - gameStartTime) / 1000);
-            const remaining = duration - elapsed;
+            const remaining = Number(duration) - elapsed;
 
             if (remaining <= 0) {
                 setSecondsLeft(0);
@@ -425,7 +426,8 @@ const NicknamePrompt = ({ onNicknameSubmit }) => {
                 <h2 className="text-2xl font-bold text-slate-800 mb-4">Enter Player Name(s)</h2>
                 <p className="text-slate-600 mb-6">If playing together on this device, separate names with a comma (e.g., Rachel F, Sam C).</p>
                 <form onSubmit={handleSubmit}>
-                    <input type="text" value={nickname} onChange={(e) => setNickname(e.target.value)} className="w-full p-3 border border-slate-300 rounded-lg shadow-inner focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-shadow duration-200 text-lg text-center" placeholder="e.g. Rachel F, Sam C" maxLength="50" required />
+                    {/* Fix: Pass maxLength as a number, not a string */}
+                    <input type="text" value={nickname} onChange={(e) => setNickname(e.target.value)} className="w-full p-3 border border-slate-300 rounded-lg shadow-inner focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-shadow duration-200 text-lg text-center" placeholder="e.g. Rachel F, Sam C" maxLength={50} required />
                     <Button type="submit" size="large" className="mt-6 w-full">Let's Go!</Button>
                 </form>
             </div>
@@ -838,13 +840,14 @@ const JoinGameScreen = ({ onJoin, onGoHome }) => {
             <h2 className="text-2xl font-bold text-slate-800 mb-2">Join a Game</h2>
             <p className="text-slate-600 mb-6">Enter the 6-character code from your game host.</p>
             <form onSubmit={handleJoin} className="w-full max-w-sm flex flex-col items-center">
+                {/* Fix: Pass maxLength as a number, not a string */}
                 <input
                   type="text"
                   value={gameCode}
                   onChange={(e) => setGameCode(e.target.value)}
                   className="w-full p-3 border border-slate-300 rounded-lg shadow-inner focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-shadow duration-200 text-2xl text-center tracking-[0.5em] uppercase"
                   placeholder="ABCXYZ"
-                  maxLength="6"
+                  maxLength={6}
                   required
                 />
                 {error && <p className="text-red-500 mt-2">{error}</p>}
@@ -939,7 +942,8 @@ const SetupScreen = ({ onStart, onGoHome, onBackToDashboard, isSolo = false, isT
             <div className="w-full max-w-sm mb-8">
                 <label htmlFor="duration" className="block text-center text-sm font-medium text-slate-700 mb-2">Set Timer (minutes)</label>
                 <div className="flex items-center justify-center gap-4">
-                    <input type="range" id="duration" min="5" max="45" step="5" value={duration} onChange={(e) => setDuration(parseInt(e.target.value))} className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer dark:bg-slate-700" />
+                    {/* Fix: Pass min, max, and step as numbers, not strings */}
+                    <input type="range" id="duration" min={5} max={45} step={5} value={duration} onChange={(e) => setDuration(parseInt(e.target.value))} className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer dark:bg-slate-700" />
                     <span className="font-bold text-sky-600 text-lg w-12 text-center">{duration}</span>
                 </div>
             </div>
@@ -1384,7 +1388,8 @@ const HomeScreen = ({ onSelectTeacherLogin, onSelectDashboard, onSelectJoin, onS
 
 // App.js
 const App = () => {
-    const [gameState, setGameState] = useState(GameState.Home);
+    // Fix: Explicitly type gameState as number to allow all GameState values, resolving multiple type errors.
+    const [gameState, setGameState] = useState<number>(GameState.Home);
     const [playerId, setPlayerId] = useState(null);
     const [playerNickname, setPlayerNickname] = useState(null);
     const [gameId, setGameId] = useState(null);
