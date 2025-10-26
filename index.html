@@ -26,12 +26,19 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+    
+    <!-- Gemini API -->
+    <script type="module">
+        import { GoogleGenAI, Type } from "https://esm.run/@google/genai";
+        window.GoogleGenAI = GoogleGenAI;
+        window.GeminiType = Type;
+    </script>
 
     <!-- Load Babel to transpile JSX in the browser -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     
     <!-- Set script type to "text/babel" for Babel to transpile -->
-    <script type="text/babel">
+    <script type="text/babel" data-type="module">
 const { useState, useEffect, useCallback, useMemo, useRef } = React;
 
 // types.js
@@ -44,6 +51,7 @@ const GameState = Object.freeze({
     InGame: 5,
     Results: 6,
     TeacherDashboard: 7,
+    SentenceBuilder: 8,
 });
 
 const WritingCategory = Object.freeze({
@@ -83,6 +91,71 @@ const SENSORY_WORDS = { sight: ['bleak', 'blurred', 'bright', 'clear', 'colourfu
 const ALL_SENSORY_WORDS = Object.values(SENSORY_WORDS).flat();
 const CONJUNCTIONS = ['for', 'and', 'nor', 'but', 'or', 'yet', 'so', 'after', 'although', 'as', 'as if', 'as long as', 'as much as', 'as soon as', 'as though', 'because', 'before', 'by the time', 'even if', 'even though', 'if', 'in case', 'in order that', 'lest', 'now that', 'once', 'only if', 'provided that', 'since', 'so that', 'than', 'that', 'though', 'till', 'unless', 'until', 'when', 'whenever', 'where', 'whereas', 'wherever', 'whether', 'while', 'both...and', 'either...or', 'neither...nor', 'not only...but also', 'whether...or'];
 const TRANSITIONAL_WORDS = ['after', 'afterward', 'all of a sudden', 'as soon as', 'at first', 'at last', 'at that moment', 'before', 'by the time', 'concurrently', 'earlier', 'eventually', 'finally', 'first', 'following', 'from that point on', 'immediately', 'in the beginning', 'in the meantime', 'instantly', 'just then', 'later', 'later on', 'meanwhile', 'next', 'not long after', 'now', 'once', 'presently', 'second', 'shortly after', 'simultaneously', 'since', 'soon', 'suddenly', 'then', 'third', 'until', 'when', 'while', 'above all', 'additionally', 'also', 'and', 'another', 'as well', 'besides', 'especially', 'furthermore', 'in addition', 'in fact', 'indeed', 'more importantly', 'moreover', 'not only... but also', 'of course', 'specifically', 'then again', 'too', 'truly', 'although', 'but', 'despite', 'even so', 'even though', 'however', 'in contrast', 'instead', 'nevertheless', 'nonetheless', 'on the contrary', 'on the other hand', 'otherwise', 'still', 'though', 'unlike', 'whereas', 'yet', 'accordingly', 'as a result', 'because', 'consequently', 'due to', 'for this reason', 'hence', 'so', 'therefore', 'thus', 'above', 'across', 'around', 'behind', 'below', 'beside', 'beyond', 'here', 'nearby', 'opposite', 'over', 'under', 'for example', 'for instance', 'in other words', 'that is', 'to illustrate', 'in conclusion', 'in summary', 'to sum up'];
+const SENTENCE_ROOTS = [
+    { root: "The cat sat.", verb: "sat" },
+    { root: "The dog barked.", verb: "barked" },
+    { root: "The bird flew.", verb: "flew" },
+    { root: "The sun shone.", verb: "shone" },
+    { root: "The car moved.", verb: "moved" },
+    { root: "The girl ran.", verb: "ran" },
+    { root: "The boy jumped.", verb: "jumped" },
+    { root: "The river flowed.", verb: "flowed" },
+    { root: "The tree stood.", verb: "stood" },
+    { root: "The baby cried.", verb: "cried" },
+];
+const KETE_WORDS = {
+    'Describing Words': ['ancient', 'big', 'brave', 'bright', 'calm', 'colourful', 'creepy', 'curious', 'dangerous', 'dark', 'delicious', 'enormous', 'fluffy', 'friendly', 'gentle', 'giant', 'grumpy', 'huge', 'lonely', 'loud', 'massive', 'mysterious', 'quiet', 'shaggy', 'small', 'sparkling', 'strange', 'sunny', 'sweet', 'tiny', 'weary'],
+    'Action Words': ['ambled', 'crawled', 'crept', 'cried', 'danced', 'darted', 'dashed', 'drifted', 'exploded', 'floated', 'flew', 'glided', 'hopped', 'hurried', 'leaped', 'raced', 'ran', 'roared', 'rushed', 'scampered', 'screamed', 'shouted', 'skipped', 'soared', 'sprinted', 'stormed', 'strolled', 'wandered', 'whispered', 'yelled', 'zoomed'],
+    'How/When/Where Phrases': ['across the field', 'after school', 'all of a sudden', 'at the park', 'behind the door', 'down the street', 'early in the morning', 'in the afternoon', 'inside the box', 'late at night', 'like a rocket', 'near the river', 'on the weekend', 'over the fence', 'quickly', 'quietly', 'slowly', 'suddenly', 'through the forest', 'under the bed', 'with excitement'],
+    'Sensory Details': ['a delicious smell', 'a loud crash', 'a sharp sting', 'a sweet taste', 'bright colours', 'cold wind', 'crunchy leaves', 'fluffy clouds', 'freezing water', 'hot sun', 'rough bark', 'silky smooth', 'the sound of waves', 'warm sand', 'with a high-pitched yip']
+};
+
+// services/geminiService.js
+const getSentenceFeedback = async (rootSentence, userSentence) => {
+    if (!window.GoogleGenAI) {
+        throw new Error("Gemini API not loaded.");
+    }
+    // API_KEY is automatically injected by the environment
+    const ai = new window.GoogleGenAI({ apiKey: process.env.API_KEY });
+
+    const prompt = `You are an AI writing tutor for a 10-year-old. The original sentence was '${rootSentence}'. The student created this new sentence: '${userSentence}'.
+
+    1. Rate the new sentence's quality on a scale of 0.5 to 2.0, where 1.0 is a good but standard improvement. A score of 2.0 should be reserved for exceptionally creative, clear, and well-structured sentences. A score below 1.0 might be for sentences that are overly long, awkward, or grammatically incorrect. This score will be used as a multiplier.
+    2. Provide one short, positive, and encouraging tip (no more than 20 words) for how they could make it even better next time.
+
+    Respond ONLY with a valid JSON object.`;
+
+    try {
+        const response = await ai.models.generateContent({
+          model: "gemini-2.5-flash",
+          contents: prompt,
+          config: {
+              responseMimeType: "application/json",
+              responseSchema: {
+                type: window.GeminiType.OBJECT,
+                properties: {
+                  qualityScore: { type: window.GeminiType.NUMBER },
+                  feedback: { type: window.GeminiType.STRING }
+                },
+                required: ['qualityScore', 'feedback']
+              }
+          }
+        });
+        
+        const jsonText = response.text.trim();
+        const result = JSON.parse(jsonText);
+
+        // Clamp the score to be safe
+        const clampedScore = Math.max(0.5, Math.min(result.qualityScore, 2.0));
+
+        return { qualityScore: clampedScore, feedback: result.feedback };
+    } catch (error) {
+        console.error("Error calling Gemini API:", error);
+        // Provide a default response on error so the game can continue
+        return { qualityScore: 1.0, feedback: "Great job trying something new!" };
+    }
+};
+
 
 // services/firebaseService.js
 const firebaseConfig = {
@@ -1029,6 +1102,166 @@ const TeacherDashboard = ({ currentUser, onCreateNewGame, onViewGame, onSignOut 
 };
 
 
+// components/SentenceBuilderScreen.js
+const SentenceBuilderScreen = ({ onGoHome }) => {
+    const [stage, setStage] = useState('rewrite'); // 'rewrite', 'kete', 'scoring', 'results'
+    const [rootSentence, setRootSentence] = useState(() => SENTENCE_ROOTS[Math.floor(Math.random() * SENTENCE_ROOTS.length)]);
+    const [userSentence, setUserSentence] = useState('');
+    const [score, setScore] = useState(null);
+    const [activeKeteTab, setActiveKeteTab] = useState(Object.keys(KETE_WORDS)[0]);
+    
+    const handleNext = () => {
+        if (userSentence.trim().length > rootSentence.root.length) {
+            setStage('kete');
+        } else {
+            alert("Try adding a bit more to your sentence before moving on!");
+        }
+    };
+    
+    const calculateMechanicalScore = (baseSentence, newSentence, baseVerb) => {
+        let score = 0;
+        const baseWords = new Set(baseSentence.toLowerCase().match(/\b\w+\b/g));
+        const newWords = newSentence.toLowerCase().match(/\b\w+\b/g) || [];
+
+        const addedWords = newWords.filter(word => !baseWords.has(word));
+
+        score += countWords(addedWords.join(' '), ADJECTIVES) * 10;
+        score += countWords(addedWords.join(' '), Object.values(KETE_WORDS).flat()) * 5; // General reward for kete words
+        
+        // Check if verb was changed
+        if (!newSentence.toLowerCase().includes(baseVerb)) {
+            score += 25;
+        }
+
+        return score;
+    };
+
+    const handleGetScore = async () => {
+        setStage('scoring');
+        const mechanicalScore = calculateMechanicalScore(rootSentence.root, userSentence, rootSentence.verb);
+        const geminiResult = await getSentenceFeedback(rootSentence.root, userSentence);
+        
+        const finalScore = Math.round(mechanicalScore * geminiResult.qualityScore);
+
+        setScore({
+            mechanicalScore,
+            qualityScore: geminiResult.qualityScore,
+            feedback: geminiResult.feedback,
+            finalScore
+        });
+        setStage('results');
+    };
+    
+    const handleTryAgain = () => {
+        setStage('rewrite');
+        setRootSentence(SENTENCE_ROOTS[Math.floor(Math.random() * SENTENCE_ROOTS.length)]);
+        setUserSentence('');
+        setScore(null);
+    };
+
+    if (stage === 'scoring') {
+        return (
+            <div className="flex flex-col items-center justify-center text-center p-8 min-h-[300px]">
+                <LoadingSpinner />
+                <p className="text-slate-600 mt-4 font-semibold text-lg animate-pulse">Our AI is reading your sentence...</p>
+            </div>
+        );
+    }
+    
+    if (stage === 'results') {
+        return (
+            <div className="text-center">
+                <h2 className="text-2xl font-bold text-slate-800 mb-4">Your Results!</h2>
+                <div className="bg-slate-100 p-4 rounded-lg mb-4">
+                    <p className="text-sm text-slate-500">Original Sentence</p>
+                    <p className="font-semibold">{rootSentence.root}</p>
+                </div>
+                <div className="bg-sky-100 p-4 rounded-lg mb-6">
+                    <p className="text-sm text-sky-700">Your Awesome Sentence</p>
+                    <p className="font-semibold text-sky-900 text-lg">{userSentence}</p>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div className="bg-white p-4 rounded-lg shadow-md border border-slate-200">
+                        <p className="text-sm font-bold text-slate-500">MECHANICAL SCORE</p>
+                        <p className="text-3xl font-bold text-slate-700">{score.mechanicalScore}</p>
+                    </div>
+                    <div className="bg-white p-4 rounded-lg shadow-md border border-slate-200">
+                        <p className="text-sm font-bold text-slate-500">AI QUALITY MULTIPLIER</p>
+                        <p className="text-3xl font-bold text-violet-600">x{score.qualityScore.toFixed(2)}</p>
+                    </div>
+                    <div className="bg-emerald-600 text-white p-4 rounded-lg shadow-lg">
+                        <p className="text-sm font-bold">FINAL SCORE</p>
+                        <p className="text-3xl font-bold">{score.finalScore}</p>
+                    </div>
+                </div>
+
+                <div className="bg-amber-100 border-l-4 border-amber-500 text-amber-800 p-4 rounded-r-lg mb-8">
+                    <p className="font-bold">AI Feedback:</p>
+                    <p>"{score.feedback}"</p>
+                </div>
+
+                <div className="flex items-center justify-center gap-4">
+                    <Button onClick={onGoHome} variant="secondary" size="large">Back to Home</Button>
+                    <Button onClick={handleTryAgain} size="large">Try Another One!</Button>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="flex flex-col items-center">
+             <h2 className="text-2xl font-bold text-slate-800 mb-2">Sentence Builder</h2>
+             <p className="text-slate-600 mb-6 max-w-2xl text-center">Let's turn a simple sentence into something amazing. {stage === 'rewrite' ? 'First, rewrite it on your own!' : 'Now, use the Kete for inspiration!'}</p>
+
+             <div className="w-full max-w-3xl">
+                 <div className="bg-slate-100 p-4 rounded-lg mb-4 text-center">
+                    <p className="text-sm text-slate-500">Your starting sentence:</p>
+                    <p className="text-xl font-semibold text-slate-800">{rootSentence.root}</p>
+                 </div>
+                 
+                 <textarea 
+                     value={userSentence}
+                     onChange={(e) => setUserSentence(e.target.value)}
+                     className="w-full p-4 border border-slate-300 rounded-lg shadow-inner focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-shadow duration-200 text-lg"
+                     rows="3"
+                     placeholder={stage === 'rewrite' ? "Rewrite the sentence here..." : "Refine your sentence..."}
+                 />
+                 
+                 {stage === 'kete' && (
+                     <div className="mt-6 bg-white p-4 rounded-lg shadow-md border border-slate-200">
+                         <h3 className="text-lg font-bold text-slate-700 mb-2">The Kete (Word Bank)</h3>
+                         <div className="flex flex-wrap gap-2 border-b border-slate-200 mb-3 pb-2">
+                             {Object.keys(KETE_WORDS).map(tabName => (
+                                 <button key={tabName} onClick={() => setActiveKeteTab(tabName)} className={`px-3 py-1 text-sm font-semibold rounded-full ${activeKeteTab === tabName ? 'bg-sky-600 text-white' : 'bg-slate-200 text-slate-700 hover:bg-slate-300'}`}>
+                                     {tabName}
+                                 </button>
+                             ))}
+                         </div>
+                         <div className="flex flex-wrap gap-2">
+                             {KETE_WORDS[activeKeteTab].map(word => (
+                                 <span key={word} className="bg-slate-100 text-slate-800 px-2 py-1 rounded-md text-sm cursor-default">
+                                     {word}
+                                 </span>
+                             ))}
+                         </div>
+                     </div>
+                 )}
+
+                <div className="flex items-center justify-center gap-4 mt-8">
+                    <Button onClick={onGoHome} variant="secondary" size="large">Back to Home</Button>
+                    {stage === 'rewrite' ? (
+                        <Button onClick={handleNext} size="large" disabled={!userSentence.trim()}>Next Step</Button>
+                    ) : (
+                        <Button onClick={handleGetScore} size="large" disabled={!userSentence.trim()}>Get My Score!</Button>
+                    )}
+                </div>
+             </div>
+        </div>
+    );
+};
+
+
 // components/HomeScreen.js
 const ModeCard = ({ title, description, icon, onClick, disabled, buttonText }) => (
     <div className={`p-6 rounded-xl shadow-md flex flex-col items-center text-center transition-all duration-300 ${disabled ? 'bg-slate-200 text-slate-500' : 'bg-white hover:shadow-xl hover:-translate-y-1'}`}>
@@ -1040,21 +1273,22 @@ const ModeCard = ({ title, description, icon, onClick, disabled, buttonText }) =
         <Button onClick={onClick} disabled={disabled} className="mt-auto">{buttonText}</Button>
     </div>
 );
-const HomeScreen = ({ onSelectTeacherLogin, onSelectDashboard, onSelectJoin, onSelectSolo, currentUser }) => (
+const HomeScreen = ({ onSelectTeacherLogin, onSelectDashboard, onSelectJoin, onSelectSolo, onSelectSentenceBuilder, currentUser }) => (
     <div className="text-center">
         <h2 className="text-3xl font-bold text-slate-800 mb-4">Welcome!</h2>
         <p className="text-lg text-slate-600 mb-8 max-w-2xl mx-auto">Choose a mode to begin your writing adventure. Sharpen your skills, join a friend's game, or create a challenge for your class!</p>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 max-w-4xl mx-auto">
             <ModeCard 
               title={currentUser ? "Teacher Dashboard" : "Create a Game"}
               description={currentUser ? "View your game history and create new challenges for your students." : "Sign in to be the game master! Choose prompts and set timers."}
-              icon={currentUser ? "M3.75 3v11.25A2.25 2.25 0 006 16.5h12A2.25 2.25 0 0020.25 14.25V3.75A2.25 2.25 0 0018 1.5H6A2.25 2.25 0 003.75 3zM12 18.75a.75.75 0 01.75.75v.008a.75.75 0 01-.75.75h-.008a.75.75 0 01-.75-.75v-.008a.75.75 0 01.75-.75h.008z" : "M12 4.5v15m7.5-7.5h-15" }
+              icon={currentUser ? "M3.75 3v11.25A2.25 2.25 0 006 16.5h12A2.25 2.25 0 0020.25 14.25V3.75A2.25 2.25 0 0018 1.5H6A2.25 2.25 0 003.75 3zM12 18.75a.75.75 0 01.75.75v.008a.75.75 0 01-.75.75h-.008a.75.75 0 01-.75-.75v-.008a.75.75 0 01.75.75h.008z" : "M12 4.5v15m7.5-7.5h-15" }
               onClick={currentUser ? onSelectDashboard : onSelectTeacherLogin} 
               buttonText={currentUser ? "Go to Dashboard" : "Teacher Login"}
               disabled={false}
             />
-            <ModeCard title="Join a Game" description="Got a game code? Enter it here to join a writing quest with your classmates." icon="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" onClick={onSelectJoin} disabled={false} buttonText="Let's Go!" />
-            <ModeCard title="Solo Mode" description="Fly solo! Get a random prompt and practice your writing skills at your own pace." icon="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" onClick={onSelectSolo} disabled={false} buttonText="Let's Go!" />
+            <ModeCard title="Join a Game" description="Got a game code? Enter it here to join a writing quest with your classmates." icon="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" onClick={onSelectJoin} disabled={false} buttonText="Join Game" />
+            <ModeCard title="Solo Mode (Story)" description="Fly solo! Get a random prompt and practice your long-form story writing skills." icon="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" onClick={onSelectSolo} disabled={false} buttonText="Write a Story" />
+            <ModeCard title="Sentence Builder" description="Practice creating amazing sentences! Start with a simple idea and make it shine." icon="M16.47,4.36,15.11,3,13.75,4.36,12.39,3,11,4.36,9.64,3,8.28,4.36,6.92,3,5.56,4.36,4.2,3,3,4.2,4.36,5.56,3,6.92,4.36,8.28,3,9.64,4.36,11,3,12.39,4.36,13.75,3,15.11,4.36,16.47,3,17.83,4.36,19.19,3,20.55,4.2,21.91,5.56,20.55,6.92,21.91,8.28,20.55,9.64,21.91,11,20.55,12.39,21.91,13.75,20.55,15.11,21.91,16.47,20.55,17.83,21.91,19.19,20.55,20.55,19.19,21.91,17.83,20.55,16.47,21.91,15.11,20.55,13.75,21.91,12.39,20.55,11,21.91,9.64,20.55,8.28,21.91,6.92,20.55,5.56,21.91,4.2,20.55,3,19.19,4.36,17.83,3,16.47,4.36Z" onClick={onSelectSentenceBuilder} disabled={false} buttonText="Build a Sentence" />
         </div>
     </div>
 );
@@ -1210,7 +1444,11 @@ const App = () => {
                   onSelectTeacherLogin={handleTeacherLogin}
                   onSelectDashboard={() => setGameState(GameState.TeacherDashboard)}
                   onSelectJoin={() => setGameState(GameState.JoinGameSetup)}
-                  onSelectSolo={() => setGameState(GameState.SoloSetup)} />;
+                  onSelectSolo={() => setGameState(GameState.SoloSetup)} 
+                  onSelectSentenceBuilder={() => setGameState(GameState.SentenceBuilder)}
+                  />;
+            case GameState.SentenceBuilder:
+                return <SentenceBuilderScreen onGoHome={handleGoHome} />;
             case GameState.SoloSetup: 
               return <SetupScreen onStart={handleStartSolo} onGoHome={handleGoHome} isSolo={true} onBackToDashboard={handleGoHome} />;
             case GameState.TeacherDashboard:
@@ -1224,7 +1462,9 @@ const App = () => {
                   onSelectTeacherLogin={handleTeacherLogin}
                   onSelectDashboard={() => setGameState(GameState.TeacherDashboard)}
                   onSelectJoin={() => setGameState(GameState.JoinGameSetup)}
-                  onSelectSolo={() => setGameState(GameState.SoloSetup)} />;
+                  onSelectSolo={() => setGameState(GameState.SoloSetup)}
+                  onSelectSentenceBuilder={() => setGameState(GameState.SentenceBuilder)}
+                  />;
             case GameState.CreateGameSetup:
               return <SetupScreen onStart={handleCreateLobby} onGoHome={handleGoHome} onBackToDashboard={handleGoToDashboard} isSolo={false} isTeacher={!!currentUser} />;
             case GameState.JoinGameSetup:
@@ -1266,7 +1506,9 @@ const App = () => {
                   onSelectTeacherLogin={handleTeacherLogin}
                   onSelectDashboard={() => setGameState(GameState.TeacherDashboard)}
                   onSelectJoin={() => setGameState(GameState.JoinGameSetup)}
-                  onSelectSolo={() => setGameState(GameState.SoloSetup)} />;
+                  onSelectSolo={() => setGameState(GameState.SoloSetup)}
+                  onSelectSentenceBuilder={() => setGameState(GameState.SentenceBuilder)}
+                  />;
         }
     };
 
