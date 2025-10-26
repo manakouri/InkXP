@@ -1,0 +1,7 @@
+[build]
+functions = "netlify/functions" # This tells Netlify where your serverless functions are located
+
+[[redirects]]
+  from = "/api/gemini/*"     # This is the path your frontend calls
+  to = "/.netlify/functions/gemini/:splat" # This forwards the call to your serverless function
+  status = 200                # Ensures the URL doesn't change in the browser
