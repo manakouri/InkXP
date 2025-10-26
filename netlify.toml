@@ -1,7 +1,14 @@
 [build]
-functions = "netlify/functions" # This tells Netlify where your serverless functions are located
+  # Set the directory that contains your built site files.
+  # Since your index.html is in the root, we use "."
+  publish = "."
+  
+  # Specify the directory for your serverless functions.
+  functions = "netlify/functions"
 
+# This rule makes your serverless function available at a clean URL.
+# It rewrites requests from "/api/..." to your function file.
 [[redirects]]
-  from = "/api/gemini/*"     # This is the path your frontend calls
-  to = "/.netlify/functions/gemini/:splat" # This forwards the call to your serverless function
-  status = 200                # Ensures the URL doesn't change in the browser
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
