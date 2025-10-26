@@ -1,13 +1,15 @@
 [build]
-  # Set the directory that contains your built site files.
-  # Since your index.html is in the root, we use "."
+  # This command overrides the Netlify UI settings. 
+  # It's a placeholder that does nothing but successfully completes.
+  command = "echo 'No build step required'"
+  
+  # The directory to publish. Since index.html is in the root, we use "."
   publish = "."
   
-  # Specify the directory for your serverless functions.
+  # The directory where your serverless function is.
   functions = "netlify/functions"
 
 # This rule makes your serverless function available at a clean URL.
-# It rewrites requests from "/api/..." to your function file.
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"
