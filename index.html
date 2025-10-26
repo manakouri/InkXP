@@ -29,9 +29,10 @@
     
     <!-- Gemini API -->
     <script type="module">
-        import { GoogleGenAI, Type } from "https://esm.run/@google/genai";
+        import { GoogleGenAI, Type, Modality } from "https://esm.run/@google/genai";
         window.GoogleGenAI = GoogleGenAI;
         window.GeminiType = Type;
+        window.GeminiModality = Modality;
     </script>
 
     <!-- Load Babel to transpile JSX in the browser -->
@@ -111,6 +112,36 @@ const KETE_WORDS = {
 };
 
 // services/geminiService.js
+const generateImageForPrompt = async (promptText) => {
+    if (!window.GoogleGenAI) {
+        console.error("Gemini API not loaded.");
+        return null;
+    }
+    try {
+        const ai = new window.GoogleGenAI({ apiKey: process.env.API_KEY });
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash-image',
+            contents: {
+                parts: [{ text: `A vibrant, child-friendly illustration for a story about: ${promptText}` }],
+            },
+            config: {
+                responseModalities: [window.GeminiModality.IMAGE],
+            },
+        });
+
+        for (const part of response.candidates[0].content.parts) {
+            if (part.inlineData) {
+                const base64ImageBytes = part.inlineData.data;
+                return `data:image/png;base64,${base64ImageBytes}`;
+            }
+        }
+        return null;
+    } catch (error) {
+        console.error("Error generating image with Gemini:", error);
+        return null;
+    }
+};
+
 const getSentenceFeedback = async (rootSentence, userSentence) => {
     if (!window.GoogleGenAI) {
         throw new Error("Gemini API not loaded.");
@@ -177,11 +208,11 @@ const signOutUser = () => auth.signOut();
 
 const generateGameCode = () => Math.random().toString(36).substring(2, 8).toUpperCase();
 
-const createGame = async (hostId, prompt, criteria, duration, teacherId) => {
+const createGame = async (hostId, prompt, criteria, duration, teacherId, promptImageUrl) => {
     const gameCode = generateGameCode();
     const gameRef = db.collection('games').doc(gameCode);
     const gameData = {
-        hostId, prompt, criteria, duration, teacherId,
+        hostId, prompt, criteria, duration, teacherId, promptImageUrl,
         status: 'waiting', // waiting, in-progress, finished
         players: {}, // Host is not a player, starts with empty players
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -578,8 +609,23 @@ const GameScreen = ({ gameData, playerId, onTimeUp, onGoHome, onScoreUpdate }) =
             <div className="lg:col-span-2">
                 <div className="relative bg-white p-6 rounded-lg shadow-md border border-slate-200 mb-4">
                     <Button onClick={onGoHome} variant="secondary" size="small" className="absolute top-4 right-4">Quit Game</Button>
-                    <p className="text-sm font-semibold text-sky-600 mb-2">{gameData.prompt.category}</p>
-                    <p className="text-lg text-slate-700 pr-24">{gameData.prompt.text}</p>
+                    <div className="flex items-start gap-4">
+                        {gameData.promptImageUrl ? (
+                             <img 
+                                src={gameData.promptImageUrl} 
+                                alt="AI generated image for the prompt" 
+                                className="w-24 h-24 object-cover rounded-lg shadow-sm border border-slate-200 flex-shrink-0"
+                            />
+                        ) : (
+                            <div className="w-24 h-24 bg-slate-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8 text-slate-400"><path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" /></svg>
+                            </div>
+                        )}
+                        <div className="flex-grow">
+                            <p className="text-sm font-semibold text-sky-600 mb-2">{gameData.prompt.category}</p>
+                            <p className="text-lg text-slate-700 pr-20">{gameData.prompt.text}</p>
+                        </div>
+                    </div>
                 </div>
                  <div className="mb-4">
                     <label htmlFor="planning-area" className="block text-sm font-bold text-slate-700 mb-1">Planning</label>
@@ -844,6 +890,7 @@ const SetupScreen = ({ onStart, onGoHome, onBackToDashboard, isSolo = false, isT
     const [duration, setDuration] = useState(5);
     const [useCustomPrompt, setUseCustomPrompt] = useState(false);
     const [customPromptText, setCustomPromptText] = useState('');
+    const [isGenerating, setIsGenerating] = useState(false);
 
     const generateNewPrompt = useCallback(() => {
         const newPrompt = NARRATIVE_PROMPTS[Math.floor(Math.random() * NARRATIVE_PROMPTS.length)];
@@ -858,7 +905,7 @@ const SetupScreen = ({ onStart, onGoHome, onBackToDashboard, isSolo = false, isT
         return [...alwaysGoals, ...selectedRandomGoals];
     }, [currentPrompt]);
 
-    const handleStart = () => {
+    const handleStart = async () => {
         const criteriaIds = selectedCriteria.map(c => c.id);
         const promptToUse = useCustomPrompt && isTeacher 
             ? { category: "Teacher's Choice", text: customPromptText.trim() }
@@ -869,7 +916,15 @@ const SetupScreen = ({ onStart, onGoHome, onBackToDashboard, isSolo = false, isT
             return;
         }
 
-        onStart(promptToUse, criteriaIds, duration * 60);
+        setIsGenerating(true);
+        try {
+            await onStart(promptToUse, criteriaIds, duration * 60);
+        } catch (error) {
+            console.error("Failed to start game:", error);
+            alert("There was an error generating the game image. Please check the console and try again.");
+        } finally {
+            setIsGenerating(false);
+        }
     };
     
     return (
@@ -917,7 +972,14 @@ const SetupScreen = ({ onStart, onGoHome, onBackToDashboard, isSolo = false, isT
             </div>
             <div className="flex items-center gap-4">
               <Button onClick={isTeacher ? onBackToDashboard : onGoHome} variant="secondary" size="large">{isTeacher ? "Back to Dashboard" : "Back to Home"}</Button>
-              <Button onClick={handleStart} size="large">{isSolo ? "Start Writing!" : "Create Game Lobby"}</Button>
+              <Button onClick={handleStart} size="large" disabled={isGenerating}>
+                  {isGenerating ? (
+                      <span className="flex items-center justify-center gap-2">
+                          <div className="w-5 h-5 border-2 border-white/50 border-t-white rounded-full animate-spin"></div>
+                          Generating...
+                      </span>
+                  ) : (isSolo ? "Start Writing!" : "Create Game Lobby")}
+              </Button>
             </div>
         </div>
     );
@@ -1361,7 +1423,8 @@ const App = () => {
           alert("You must be signed in to create a game.");
           return;
       }
-      const newGameId = await createGame(playerId, prompt, criteriaIds, duration, currentUser.uid);
+      const promptImageUrl = await generateImageForPrompt(prompt.text);
+      const newGameId = await createGame(playerId, prompt, criteriaIds, duration, currentUser.uid, promptImageUrl);
       setGameId(newGameId);
       setGameState(GameState.Lobby);
     };
@@ -1380,8 +1443,9 @@ const App = () => {
       }
     }, [gameId]);
 
-    const handleStartSolo = useCallback((prompt, criteriaIds, duration) => {
-        setSoloData({ prompt, criteria: criteriaIds, duration });
+    const handleStartSolo = useCallback(async (prompt, criteriaIds, duration) => {
+        const promptImageUrl = await generateImageForPrompt(prompt.text);
+        setSoloData({ prompt, criteria: criteriaIds, duration, promptImageUrl });
         setGameState(GameState.InGame);
     }, []);
 
