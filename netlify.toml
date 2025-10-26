@@ -1,15 +1,16 @@
 [build]
-  # This command overrides the Netlify UI settings. 
-  # It's a placeholder that does nothing but successfully completes.
-  command = "echo 'No build step required'"
+  # This command tells Netlify to run the "build" script from your package.json.
+  # That script will complete successfully, satisfying the build process.
+  command = "npm run build"
   
-  # The directory to publish. Since index.html is in the root, we use "."
+  # This explicitly tells Netlify your finished site (index.html, etc.) is in the root directory.
+  # This is the crucial setting that should override any conflicting defaults.
   publish = "."
   
-  # The directory where your serverless function is.
+  # This tells Netlify where to find your serverless function.
   functions = "netlify/functions"
 
-# This rule makes your serverless function available at a clean URL.
+# This rule makes your serverless function available at a clean URL for your frontend to use.
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"
