@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "InkXP App Functions",
   "scripts": {
-    "build": "echo \"No build required for this static site\""
+    "build": "echo 'Build script running... No output folder needed.'"
   },
   "dependencies": {
     "@google/genai": "^0.14.0"
