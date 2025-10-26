@@ -14,7 +14,14 @@
         font-family: 'Poppins', sans-serif;
       }
     </style>
-  </head>
+  <script type="importmap">
+{
+  "imports": {
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.27.0"
+  }
+}
+</script>
+</head>
   <body class="bg-slate-50 text-slate-800">
     <div id="root"></div>
 
@@ -27,14 +34,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
     
-    <!-- Gemini API -->
-    <script type="module">
-        import { GoogleGenAI, Type, Modality } from "https://esm.run/@google/genai";
-        window.GoogleGenAI = GoogleGenAI;
-        window.GeminiType = Type;
-        window.GeminiModality = Modality;
-    </script>
-
     <!-- Load Babel to transpile JSX in the browser -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     
@@ -112,81 +111,44 @@ const KETE_WORDS = {
 };
 
 // services/geminiService.js
-const generateImageForPrompt = async (promptText) => {
-    if (!window.GoogleGenAI) {
-        console.error("Gemini API not loaded.");
-        return null;
-    }
-    try {
-        const ai = new window.GoogleGenAI({ apiKey: process.env.API_KEY });
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash-image',
-            contents: {
-                parts: [{ text: `A vibrant, child-friendly illustration for a story about: ${promptText}` }],
-            },
-            config: {
-                responseModalities: [window.GeminiModality.IMAGE],
-            },
-        });
+// This is a helper function to call our Netlify serverless function
+const callApi = async (task, payload) => {
+    const response = await fetch('/api/gemini', { // Using the clean URL from netlify.toml
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ task, payload }),
+    });
 
-        for (const part of response.candidates[0].content.parts) {
-            if (part.inlineData) {
-                const base64ImageBytes = part.inlineData.data;
-                return `data:image/png;base64,${base64ImageBytes}`;
-            }
-        }
-        return null;
+    if (!response.ok) {
+        const errorBody = await response.json().catch(() => ({ error: `API call failed with status ${response.status}` }));
+        throw new Error(errorBody.error || `API call failed with status ${response.status}`);
+    }
+
+    return response.json();
+};
+
+const generateImageForPrompt = async (promptText) => {
+    try {
+        const result = await callApi('generateImage', { promptText });
+        return result.imageUrl;
     } catch (error) {
-        console.error("Error generating image with Gemini:", error);
+        console.error("Error generating image:", error);
+        // Return null to allow the game to continue without an image
         return null;
     }
 };
 
 const getSentenceFeedback = async (rootSentence, userSentence) => {
-    if (!window.GoogleGenAI) {
-        throw new Error("Gemini API not loaded.");
-    }
-    // API_KEY is automatically injected by the environment
-    const ai = new window.GoogleGenAI({ apiKey: process.env.API_KEY });
-
-    const prompt = `You are an AI writing tutor for a 10-year-old. The original sentence was '${rootSentence}'. The student created this new sentence: '${userSentence}'.
-
-    1. Rate the new sentence's quality on a scale of 0.5 to 2.0, where 1.0 is a good but standard improvement. A score of 2.0 should be reserved for exceptionally creative, clear, and well-structured sentences. A score below 1.0 might be for sentences that are overly long, awkward, or grammatically incorrect. This score will be used as a multiplier.
-    2. Provide one short, positive, and encouraging tip (no more than 20 words) for how they could make it even better next time.
-
-    Respond ONLY with a valid JSON object.`;
-
     try {
-        const response = await ai.models.generateContent({
-          model: "gemini-2.5-flash",
-          contents: prompt,
-          config: {
-              responseMimeType: "application/json",
-              responseSchema: {
-                type: window.GeminiType.OBJECT,
-                properties: {
-                  qualityScore: { type: window.GeminiType.NUMBER },
-                  feedback: { type: window.GeminiType.STRING }
-                },
-                required: ['qualityScore', 'feedback']
-              }
-          }
-        });
-        
-        const jsonText = response.text.trim();
-        const result = JSON.parse(jsonText);
-
-        // Clamp the score to be safe
-        const clampedScore = Math.max(0.5, Math.min(result.qualityScore, 2.0));
-
-        return { qualityScore: clampedScore, feedback: result.feedback };
+        return await callApi('getSentenceFeedback', { rootSentence, userSentence });
     } catch (error) {
-        console.error("Error calling Gemini API:", error);
+        console.error("Error getting sentence feedback:", error);
         // Provide a default response on error so the game can continue
         return { qualityScore: 1.0, feedback: "Great job trying something new!" };
     }
 };
-
 
 // services/firebaseService.js
 const firebaseConfig = {
