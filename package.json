@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "InkXP App Functions",
   "scripts": {
-    "build": "echo 'Build script running... No output folder needed.'"
+    "build": "mkdir dist && cp index.html dist/ && cp metadata.json dist/"
   },
   "dependencies": {
     "@google/genai": "^0.14.0"
