@@ -4,7 +4,7 @@
   "description": "InkXP App Functions",
   "scripts": {
   "build": "echo 'No build step needed for static site'"
-  }
+  },
   "dependencies": {
     "@google/genai": "^0.14.0"
   }
