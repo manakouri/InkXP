@@ -89,8 +89,8 @@ const NARRATIVE_PROMPTS = [
     { category: "Humour", text: "I tried to bake a cake for my mum's birthday, but I accidentally used salt instead of sugar. Her face when she took the first bite was priceless." },
     { category: "Humour", text: "Our class pet, a hamster named Nibbles, escaped from his cage. We found him in the library, sleeping on a tiny book he'd made into a bed." }
 ];
-const ADJECTIVES = ['able', 'bad', 'best', 'better', 'big', 'black', 'blue', 'bright', 'busy', 'certain', 'clear', 'clean', 'cold', 'common', 'complete', 'cool', 'dark', 'dead', 'different', 'difficult', 'early', 'easy', 'empty', 'entire', 'fair', 'far', 'fast', 'few', 'final', 'fine', 'free', 'fresh', 'full', 'good', 'great', 'green', 'happy', 'hard', 'high', 'hot', 'huge', 'human', 'important', 'interesting', 'kind', 'large', 'last', 'late', 'light', 'little', 'long', 'low', 'main', 'major', 'many', 'mean', 'mental', 'modern', 'national', 'natural', 'near', 'new', 'next', 'nice', 'old', 'orange', 'only', 'open', 'other', 'past', 'personal', 'poor', 'possible', 'powerful', 'private', 'public', 'quick', 'quiet', 'real', 'recent', 'red', 'right', 'round', 'same', 'serious', 'short', 'similar', 'simple', 'single', 'small', 'soft', 'special', 'strong', 'sure', 'tall', 'true', 'warm', 'white', 'whole', 'wonderful', 'young', 'yellow', 'ancient', 'beautiful', 'brave', 'calm', 'charming', 'clever', 'crazy', 'creepy', 'cruel', 'curious', 'cute', 'dangerous', 'deep', 'delicious', 'delightful', 'dirty', 'dry', 'dull', 'eager', 'elegant', 'enormous', 'evil', 'expensive', 'famous', 'fancy', 'fantastic', 'fierce', 'filthy', 'fluffy', 'foolish', 'fragile', 'friendly', 'funny', 'gentle', 'giant', 'gorgeous', 'graceful', 'grumpy', 'handsome', 'healthy', 'helpful', 'horrible', 'innocent', 'jolly', 'juicy', 'lazy', 'lively', 'lonely', 'loud', 'lovely', 'lucky', 'magnificent', 'massive', 'mild', 'mysterious', 'nasty', 'naughty', 'nervous', 'noisy', 'perfect', 'plain', 'pleasant', 'precious', 'proud', 'purple', 'silly', 'sleepy', 'slimy', 'slow', 'sparkling', 'strange', 'sweet', 'tasty', 'terrible', 'thankful', 'thirsty', 'tiny', 'ugly', 'unusual', 'violet', 'wandering', 'weak', 'weary', 'wicked', 'wise', 'witty', 'worried', 'zany'];
-const SENSORY_WORDS = { sight: ['bleak', 'blurred', 'bright', 'clear', 'colourful', 'crooked', 'dark', 'dazzling', 'dim', 'drab', 'dusky', 'faded', 'fiery', 'glistening', 'gloomy', 'glowing', 'hazy', 'murky', 'shimmering', 'sparkling', 'shadowy', 'vibrant', 'golden', 'silvery', 'transparent', 'glossy', 'matte', 'streaked', 'checkered', 'dotted', 'striped'], sound: ['banging', 'blaring', 'buzzing', 'chiming', 'clanging', 'crashing', 'creaking', 'deafening', 'echoing', 'fizzing', 'grinding', 'gurgling', 'hissing', 'howling', 'humming', 'hushed', 'piercing', 'rasping', 'rattling', 'ringing', 'roaring', 'rumbling', 'rustling', 'screeching', 'sizzling', 'slamming', 'snapping', 'splashing', 'thudding', 'thumping', 'tinkling', 'wailing', 'whimpering', 'whirring', 'whispering', 'melodious', 'shrill', 'silent', 'thundering'], smell: ['acrid', 'aromatic', 'burnt', 'damp', 'earthy', 'fishy', 'floral', 'fragrant', 'fresh', 'meaty', 'mouldy', 'musky', 'musty', 'perfumed', 'pungent', 'putrid', 'rancid', 'reeking', 'rotten', 'salty', 'smoky', 'sour', 'spicy', 'stale', 'sweet', 'tangy', 'woody', 'pine', 'scented', 'odourless'], touch: ['blistering', 'bristly', 'bubbling', 'chilled', 'clammy', 'coarse', 'cool', 'damp', 'freezing', 'frigid', 'frosty', 'fuzzy', 'gooey', 'gritty', 'hairy', 'icy', 'jagged', 'lukewarm', 'numb', 'prickly', 'pulsing', 'rough', 'scalding', 'silky', 'slimy', 'slippery', 'smooth', 'soaked', 'sodden', 'spiky', 'spongy', 'steaming', 'sticky', 'stinging', 'tepid', 'thorny', 'throbbing', 'velvety', 'warm', 'waxy', 'wet', 'woolly', 'sharp', 'blunt', 'feathery'], taste: ['acidic', 'bitter', 'bland', 'briny', 'chalky', 'cheesy', 'citrusy', 'creamy', 'crisp', 'crumbly', 'fiery', 'flavourful', 'fruity', 'gingery', 'hearty', 'honeyed', 'hot', 'juicy', 'meaty', 'minty', 'overripe', 'peppery', 'pickled', 'rich', 'ripe', 'roasted', 'salty', 'savoury', 'sharp', 'smoky', 'sour', 'spicy', 'stale', 'sugary', 'sweet', 'tangy', 'tart', 'watery', 'zesty', 'delicious', 'disgusting'] };
+const ADJECTIVES = ['able', 'bad', 'best', 'better', 'big', 'black', 'blue', 'bright', 'busy', 'certain', 'clear', 'clean', 'cold', 'common', 'complete', 'cool', 'dark', 'dead', 'different', 'difficult', 'early', 'easy', 'empty', 'entire', 'fair', 'far', 'fast', 'few', 'final', 'fine', 'free', 'fresh', 'full', 'good', 'great', 'green', 'happy', 'hard', 'high', 'hot', 'huge', 'human', 'important', 'interesting', 'kind', 'large', 'last', 'late', 'light', 'little', 'long', 'low', 'main', 'major', 'many', 'mean', 'mental', 'modern', 'national', 'natural', 'near', 'new', 'next', 'nice', 'old', 'orange', 'only', 'open', 'other', 'past', 'personal', 'poor', 'possible', 'powerful', 'private', 'public', 'quick', 'quiet', 'real', 'recent', 'red', 'right', 'round', 'same', 'serious', 'short', 'similar', 'simple', 'single', 'small', 'soft', 'special', 'strong', 'sure', 'tall', 'true', 'warm', 'white', 'whole', 'wonderful', 'young', 'yellow', 'ancient', 'beautiful', 'brave', 'calm', 'charming', 'clever', 'crazy', 'creepy', 'cruel', 'curious', 'cute', 'dangerous', 'deep', 'delicious', 'delightful', 'dirty', 'dry', 'dull', 'eager', 'elegant', 'enormous', 'evil', 'expensive', 'famous', 'fancy', 'fantastic', 'fierce', 'filthy', 'fluffy', 'foolish', 'fragile', 'friendly', 'funny', 'gentle', 'giant', 'gorgeous', 'graceful', 'grumpy', 'handsome', 'healthy', 'helpful', 'horrible', 'innocent', 'jolly', 'juicy', 'lazy', 'lively', 'lonely', 'loud', 'lovely', 'lucky', 'magnificent', 'massive', 'mild', 'mysterious', 'nasty', 'naughty', 'nervous', 'noisy', 'perfect', 'plain', 'pleasant', 'precious', 'proud', 'purple', 'silly', 'sleepy', 'slimy', 'slow', 'sparkling', 'strange', 'sweet', 'tasty', 'terrible', 'thankful', 'thirsty', 'tiny', 'ugly', 'unusual', 'violet', 'wandering', 'weak', 'weary', 'wicked', 'wise', 'witty', 'worried', 'zany', 'absurd', 'active', 'adorable', 'adventurous', 'aggressive', 'agitated', 'alert', 'aloof', 'ambitious', 'annoyed', 'anxious', 'arrogant', 'ashamed', 'astonishing', 'attractive', 'average', 'awful', 'awkward', 'bashful', 'bewildered', 'billowing', 'bitter', 'bizarre', 'blazing', 'blissful', 'boiling', 'bouncy', 'breathtaking', 'breezy', 'broken', 'bumpy', 'burning', 'bustling', 'cautious', 'celestial', 'chaotic', 'cheerful', 'chilly', 'clumsy', 'colossal', 'combative', 'comfortable', 'concerned', 'condemned', 'confused', 'courageous', 'cowardly', 'cozy', 'crabby', 'crisp', 'cuddly', 'cultured', 'damp', 'dapper', 'daring', 'dashing', 'dauntless', 'dazzling', 'defeated', 'defiant', 'determined', 'disgusted', 'distinct', 'disturbed', 'dizzy', 'drab', 'drained', 'dreadful', 'dreary', 'dubious', 'eerie', 'elated', 'enchanting', 'encouraging', 'energetic', 'enraged', 'enthusiastic', 'envious', 'exasperated', 'excited', 'exhilarated', 'exuberant', 'fabulous', 'faint', 'faithful', 'fake', 'fanatical', 'fearless', 'feisty', 'ferocious', 'festive', 'fiery', 'filthy', 'flat', 'flimsy', 'fluffy', 'fluttering', 'foamy', 'forgetful', 'frantic', 'freezing', 'frightened', 'frosty', 'fuming', 'furious', 'fuzzy', 'gaudy', 'ghastly', 'gleaming', 'gleeful', 'glittering', 'glorious', 'glossy', 'golden', 'goofy', 'grand', 'greedy', 'grieving', 'grimy', 'grotesque', 'grubby', 'gusty', 'hairy', 'hazy', 'heavenly', 'hefty', 'helpless', 'hilarious', 'hissing', 'hollow', 'homely', 'hopeful', 'howling', 'hulking', 'humble', 'humorous', 'hungry', 'hurt', 'hushed', 'icy', 'ideal', 'ill', 'immense', 'imperfect', 'inquisitive', 'irate', 'itchy', 'jittery', 'joyful', 'joyous', 'jubilant', 'jumpy', 'keen', 'lame', 'lanky', 'lavish', 'lethal', 'listless', 'livid', 'loathsome', 'luminous', 'luscious', 'lush', 'luxurious', 'magical', 'majestic', 'marvelous', 'meek', 'melancholy', 'melodic', 'melted', 'merciful', 'messy', 'metallic', 'mighty', 'miniature', 'mischievous', 'miserable', 'misty', 'motionless', 'muddy', 'murky', 'mushy', 'muted', 'mythical', 'needy', 'numb', 'nutty', 'obedient', 'obnoxious', 'odd', 'ornate', 'outrageous', 'panicky', 'panoramic', 'parallel', 'parched', 'peaceful', 'peppery', 'perky', 'perplexed', 'petite', 'phony', 'piercing', 'pink', 'placid', 'plump', 'pointless', 'polite', 'posh', 'prickly', 'puzzled', 'quaint', 'quivering', 'radiant', 'ragged', 'rambunctious', 'raspy', 'ratty', 'reassured', 'rejoicing', 'relaxed', 'relieved', 'remarkable', 'remorseful', 'repulsive', 'resonant', 'restless', 'restrained', 'rich', 'ripe', 'robust', 'rosy', 'rotten', 'rough', 'rowdy', 'rustic', 'sad', 'salty', 'sarcastic', 'sassy', 'satisfied', 'savory', 'scaly', 'scarce', 'scared', 'scary', 'scattered', 'scrawny', 'screeching', 'scruffy', 'selfish', 'serene', 'shaggy', 'shaky', 'shallow', 'sharp', 'shiny', 'shivering', 'shocked', 'shrill', 'shy', 'silent', 'silky', 'skinny', 'smoggy', 'smoky', 'smooth', 'smug', 'soggy', 'solid', 'somber', 'soothing', 'sore', 'sour', 'sparkling', 'spicy', 'spiky', 'splendid', 'spooky', 'spotless', 'spotty', 'square', 'squeaky', 'stale', 'statuesque', 'steaming', 'sticky', 'stiff', 'stingy', 'stormy', 'stout', 'straight', 'striped', 'stuffy', 'stunning', 'subtle', 'successful', 'succulent', 'sulky', 'sunny', 'superb', 'superficial', 'superior', 'swanky', 'sweltering', 'swift', 'talented', 'tame', 'tan', 'tart', 'taut', 'tearful', 'tedious', 'teeny', 'tender', 'tense', 'tepid', 'testy', 'thin', 'thoughtful', 'thoughtless', 'threatening', 'thrifty', 'thrilled', 'thundering', 'tight', 'timely', 'timid', 'torpid', 'tough', 'towering', 'tranquil', 'tremendous', 'tricky', 'troubled', 'tumultuous', 'turbulent', 'ubiquitous', 'unarmed', 'unbecoming', 'unbiased', 'uncommon', 'uncovered', 'uneven', 'uninterested', 'unique', 'unkempt', 'unknown', 'unusual', 'unwieldy', 'upbeat', 'upset', 'uptight', 'vast', 'vexed', 'vibrant', 'vicious', 'victorious', 'virtuous', 'vivacious', 'vivid', 'voiceless', 'volatile', 'voracious', 'wacky', 'watchful', 'watery', 'wavy', 'wealthy', 'whimsical', 'whopping', 'wild', 'windy', 'wiry', 'wonderful', 'wooden', 'worn', 'worthless', 'wrathful', 'wretched', 'wrong', 'yummy', 'zealous'];
+const SENSORY_WORDS = { sight: ['bleak', 'blurred', 'bright', 'clear', 'colourful', 'crooked', 'dark', 'dazzling', 'dim', 'drab', 'dusky', 'faded', 'fiery', 'glistening', 'gloomy', 'glowing', 'hazy', 'murky', 'shimmering', 'sparkling', 'shadowy', 'vibrant', 'golden', 'silvery', 'transparent', 'glossy', 'matte', 'streaked', 'checkered', 'dotted', 'striped', 'blazing', 'blurry', 'brilliant', 'cloudy', 'crystalline', 'ebony', 'emerald', 'flashing', 'flickering', 'fluorescent', 'foggy', 'gaudy', 'ghostly', 'gleaming', 'glinting', 'glittering', 'grainy', 'grimy', 'illuminated', 'in-focus', 'in-shadow', 'incandescent', 'iridescent', 'ivory', 'jet-black', 'luminous', 'lustrous', 'misty', 'monochromatic', 'mottled', 'muddy', 'opalescent', 'opaque', 'out-of-focus', 'pale', 'patchy', 'pearly', 'phosphorescent', 'pitch-black', 'polished', 'prismatic', 'radiant', 'reflective', 'rosy', 'ruby', 'rusty', 'sapphire', 'saturated', 'scarlet', 'sepia', 'smoky', 'smudged', 'sooty', 'speckled', 'spotless', 'spotted', 'starry', 'steamy', 'sun-bleached', 'sun-drenched', 'sun-kissed', 'swirling', 'tarnished', 'textured', 'translucent', 'variegated', 'velvety-black', 'vivid', 'washed-out', 'watery', 'wavy', 'waxen', 'weather-beaten', 'wispy', 'worn'], sound: ['banging', 'blaring', 'buzzing', 'chiming', 'clanging', 'crashing', 'creaking', 'deafening', 'echoing', 'fizzing', 'grinding', 'gurgling', 'hissing', 'howling', 'humming', 'hushed', 'piercing', 'rasping', 'rattling', 'ringing', 'roaring', 'rumbling', 'rustling', 'screeching', 'sizzling', 'slamming', 'snapping', 'splashing', 'thudding', 'thumping', 'tinkling', 'wailing', 'whimpering', 'whirring', 'whispering', 'melodious', 'shrill', 'silent', 'thundering', 'babbling', 'barking', 'bawling', 'baying', 'bellowing', 'bleating', 'booming', 'cackling', 'chattering', 'cheeping', 'chirping', 'clacking', 'clicking', 'clinking', 'clucking', 'cooing', 'coughing', 'croaking', 'crowing', 'crying', 'droning', 'drumming', 'exploding', 'flapping', 'footsteps', 'gasping', 'giggling', 'groaning', 'growling', 'grunting', 'guffawing', 'hiccuping', 'hollering', 'hooting', 'jingling', 'knocking', 'laughing', 'lapping', 'lilting', 'moaning', 'murmuring', 'muttering', 'neighing', 'panting', 'pattering', 'pealing', 'piping', 'popping', 'purring', 'quacking', 'rapping', 'reverberating', 'rippling', 'rustling', 'scratching', 'screaming', 'shouting', 'shrieking', 'sighing', 'sloshing', 'smacking', 'snarling', 'sniffling', 'snoozing', 'snoring', 'snorting', 'sobbing', 'splattering', 'splintering', 'squawking', 'squeaking', 'squealing', 'squishing', 'stammering', 'stomping', 'swishing', 'tapping', 'thwacking', 'ticking', 'tolling', 'tooting', 'trilling', 'tweeting', 'ululating', 'vibrating', 'warbling', 'wheezing', 'whining', 'whistling', 'whooshing', 'yelling', 'yelping', 'yipping', 'yodeling', 'zap', 'zing', 'zip', 'zoom', 'bam', 'bang', 'bash', 'beep', 'biff', 'boing', 'boink', 'bonk', 'bong', 'boom', 'boosh', 'bump', 'burp', 'clank', 'clap', 'clatter', 'clink', 'clomp', 'clunk', 'crack', 'crackle', 'crunch', 'ding', 'dong', 'drip', 'fizz', 'flump', 'glug', 'gong', 'honk', 'jangle', 'jingle', 'kerplunk', 'klang', 'klunk', 'oof', 'ouch', 'plink', 'plop', 'plunk', 'pow', 'puff', 'pitter-patter', 'ring', 'rip', 'slam', 'slap', 'smash', 'snip', 'splash', 'splat', 'squelch', 'squish', 'swat', 'swoosh', 'thud', 'thump', 'thwack', 'tick-tock', 'twang', 'vroom', 'whack', 'wham', 'whomp', 'whump', 'zlonk'], smell: ['acrid', 'aromatic', 'burnt', 'damp', 'earthy', 'fishy', 'floral', 'fragrant', 'fresh', 'meaty', 'mouldy', 'musky', 'musty', 'perfumed', 'pungent', 'putrid', 'rancid', 'reeking', 'rotten', 'salty', 'smoky', 'sour', 'spicy', 'stale', 'sweet', 'tangy', 'woody', 'pine', 'scented', 'odourless', 'acrid', 'antiseptic', 'balmy', 'briny', 'buttery', 'camphoric', 'caramelized', 'caustic', 'charred', 'chemical', 'chlorinated', 'chocolaty', 'cigar', 'cinnamon', 'citrus', 'clean', 'cloying', 'coastal', 'coffee', 'cologne', 'cool', 'creamy', 'crisp', 'curried', 'decaying', 'delectable', 'delicate', 'deodorized', 'dilly', 'disgusting', 'doughey', 'dry', 'dusty', 'eggy', 'ethereal', 'faint', 'fecal', 'fermented', 'feverish', 'fetid', 'fiery', 'floury', 'flowery', 'foul', 'foxy', 'fruity', 'fumes', 'fumy', 'fungal', 'gamy', 'garlicky', 'gaseous', 'gingery', 'greasy', 'grassy', 'heady', 'herbal', 'honeyed', 'hot', 'humid', 'incense', 'industrial', 'intoxicating', 'lactic', 'leathery', 'lemony', 'light', 'lilac', 'loamy', 'malty', 'marine', 'medicinal', 'mellow', 'mild', 'mildewed', 'milky', 'minty', 'moist', 'mossy', 'mouth-watering', 'muddy', 'musky', 'nauseating', 'new-car', 'nutty', 'oaky', 'oceanic', 'oily', 'old-book', 'oniony', 'overpowering', 'ozone', 'peaty', 'peppery', 'petrol', 'piney', 'piquant', 'plank', 'plastic', 'powdery', 'prickly', 'protein', 'pulpy', 'putrid', 'quince', 'rain-soaked', 'rancid', 'rank', 'raw', 'refreshing', 'resinous', 'rich', 'ripe', 'roasted', 'robust', 'rosy', 'rubbery', 'saccharine', 'saline', 'sanitized', 'savoury', 'septic', 'sharp', 'sickly', 'skunky', 'soapy', 'soothing', 'soupy', 'sour-milk', 'soapy', 'soothing', 'soupy', 'sour-milk', 'soya', 'spoiled', 'stagnant', 'steamy', 'sterile', 'stinging', 'strong', 'subtle', 'sugary', 'sulfuric', 'sweaty', 'syrupy', 'tainted', 'tarry', 'terpenic', 'toasted', 'tobacco', 'unscented', 'vanilla', 'vegetal', 'vile', 'vinegary', 'volcanic', 'warm', 'waxy', 'wet-dog', 'yeasty', 'zesty'], touch: ['blistering', 'bristly', 'bubbling', 'chilled', 'clammy', 'coarse', 'cool', 'damp', 'freezing', 'frigid', 'frosty', 'fuzzy', 'gooey', 'gritty', 'hairy', 'icy', 'jagged', 'lukewarm', 'numb', 'prickly', 'pulsing', 'rough', 'scalding', 'silky', 'slimy', 'slippery', 'smooth', 'soaked', 'sodden', 'spiky', 'spongy', 'steaming', 'sticky', 'stinging', 'tepid', 'thorny', 'throbbing', 'velvety', 'warm', 'waxy', 'wet', 'woolly', 'sharp', 'blunt', 'feathery', 'abrasive', 'airy', 'alive', 'barbed', 'bending', 'biting', 'bloated', 'boiling', 'bony', 'bouncy', 'bumpy', 'burning', 'bushy', 'buttery', 'calloused', 'chalky', 'cinder', 'clay-like', 'close', 'cloud-like', 'clumpy', 'cluttered', 'compact', 'congested', 'corduroy', 'cottony', 'crawling', 'crisp', 'cushioned', 'cushy', 'delicate', 'dense', 'doughy', 'downy', 'drenched', 'dry', 'dusty', 'elastic', 'embossed', 'engraved', 'etched', 'even', 'fibrous', 'fiery', 'fine-grained', 'firm', 'flat', 'fleshy', 'flimsy', 'fluffy', 'fluid', 'flushed', 'foamy', 'foggy', 'folded', 'fragile', 'furry', 'gelatinous', 'glassy', 'glutinous', 'gnarled', 'grainy', 'greasy', 'gummy', 'hard', 'hollow', 'hot', 'humid', 'impenetrable', 'indelible', 'inflated', 'in-the-way', 'ironed', 'irritating', 'ivory', 'kinky', 'knitted', 'knobby', 'knotted', 'lacy', 'laminated', 'lathery', 'leathery', 'level', 'light', 'limp', 'lined', 'long-haired', 'loose', 'lumpy', 'malleable', 'matted', 'metallic', 'moist', 'mossy', 'muddy', 'mushy', 'oily', 'open', 'padded', 'papery', 'parched', 'pasted', 'pasty', 'pebbly', 'penetrating', 'plastic', 'pliable', 'plump', 'plush', 'polished', 'puckered', 'puffy', 'pulpy', 'pungent', 'quilted', 'raised', 'raspy', 'raw', 'resilient', 'ribbed', 'rigid', 'rocky', 'rubbery', 'rugged', 'rumpled', 'rusty', 'sandy', 'satin', 'scabrous', 'scaly', 'scorching', 'scraped', 'scratched', 'scruffy', 'sculpted', 'searing', 'shaggy', 'shaky', 'shallow', 'shivering', 'short-haired', 'silken', 'sizzling', 'slick', 'slushy', 'soapy', 'soft', 'soggy', 'solid', 'soothing', 'springy', 'starched', 'stiff', 'stony', 'straw-like', 'stretchy', 'stringy', 'structured', 'stuffy', 'sturdy', 'suede', 'sugary', 'sunken', 'supple', 'taut', 'tender', 'tense', 'thick', 'thin', 'tickling', 'tight', 'tingling', 'tough', 'uneven', 'unstable', 'upholstered', 'vibrating', 'viscous', 'yielding'], taste: ['acidic', 'bitter', 'bland', 'briny', 'chalky', 'cheesy', 'citrusy', 'creamy', 'crisp', 'crumbly', 'fiery', 'flavourful', 'fruity', 'gingery', 'hearty', 'honeyed', 'hot', 'juicy', 'meaty', 'minty', 'overripe', 'peppery', 'pickled', 'rich', 'ripe', 'roasted', 'salty', 'savoury', 'sharp', 'smoky', 'sour', 'spicy', 'stale', 'sugary', 'sweet', 'tangy', 'tart', 'watery', 'zesty', 'delicious', 'disgusting', 'alkaline', 'ambrosial', 'appetizing', 'astringent', 'buttery', 'caramelized', 'caustic', 'charred', 'chocolaty', 'cinnamony', 'cloying', 'coarse', 'cool', 'curried', 'dank', 'doughy', 'dry', 'dulcet', 'eggy', 'fermented', 'foul', 'fresh', 'full-bodied', 'gamy', 'garlicky', 'gelatinous', 'gingery', 'glutinous', 'grainy', 'greasy', 'gritty', 'harsh', 'heady', 'herbal', 'infused', 'insipid', 'intense', 'leathery', 'lemony', 'light', 'mellow', 'metallic', 'mild', 'milky', 'moist', 'molten', 'mouth-watering', 'nectarous', 'nutty', 'oily', 'palatable', 'piquant', 'plastic', 'powdery', 'pulpy', 'pungent', 'raw', 'refreshing', 'resinous', 'robust', 'rubbery', 'saccharine', 'saline', 'scrumptious', 'seasoned', 'sharp', 'sickly', 'soapy', 'soothing', 'sour-milk', 'strong', 'succulent', 'syrupy', 'tainted', 'tasteless', 'thick', 'thin', 'toasted', 'tough', 'unappetizing', 'unflavored', 'unripe', 'vanilla', 'velvety', 'vinegary', 'weak', 'yeasty', 'yummy'] };
 const ALL_SENSORY_WORDS = Object.values(SENSORY_WORDS).flat();
 const CONJUNCTIONS = ['for', 'and', 'nor', 'but', 'or', 'yet', 'so', 'after', 'although', 'as', 'as if', 'as long as', 'as much as', 'as soon as', 'as though', 'because', 'before', 'by the time', 'even if', 'even though', 'if', 'in case', 'in order that', 'lest', 'now that', 'once', 'only if', 'provided that', 'since', 'so that', 'than', 'that', 'though', 'till', 'unless', 'until', 'when', 'whenever', 'where', 'whereas', 'wherever', 'whether', 'while', 'both...and', 'either...or', 'neither...nor', 'not only...but also', 'whether...or'];
 const TRANSITIONAL_WORDS = ['after', 'afterward', 'all of a sudden', 'as soon as', 'at first', 'at last', 'at that moment', 'before', 'by the time', 'concurrently', 'earlier', 'eventually', 'finally', 'first', 'following', 'from that point on', 'immediately', 'in the beginning', 'in the meantime', 'instantly', 'just then', 'later', 'later on', 'meanwhile', 'next', 'not long after', 'now', 'once', 'presently', 'second', 'shortly after', 'simultaneously', 'since', 'soon', 'suddenly', 'then', 'third', 'until', 'when', 'while', 'above all', 'additionally', 'also', 'and', 'another', 'as well', 'besides', 'especially', 'furthermore', 'in addition', 'in fact', 'indeed', 'more importantly', 'moreover', 'not only... but also', 'of course', 'specifically', 'then again', 'too', 'truly', 'although', 'but', 'despite', 'even so', 'even though', 'however', 'in contrast', 'instead', 'nevertheless', 'nonetheless', 'on the contrary', 'on the other hand', 'otherwise', 'still', 'though', 'unlike', 'whereas', 'yet', 'accordingly', 'as a result', 'because', 'consequently', 'due to', 'for this reason', 'hence', 'so', 'therefore', 'thus', 'above', 'across', 'around', 'behind', 'below', 'beside', 'beyond', 'here', 'nearby', 'opposite', 'over', 'under', 'for example', 'for instance', 'in other words', 'that is', 'to illustrate', 'in conclusion', 'in summary', 'to sum up'];
@@ -105,6 +105,17 @@ const SENTENCE_ROOTS = [
     { root: "The river flowed.", verb: "flowed" },
     { root: "The tree stood.", verb: "stood" },
     { root: "The baby cried.", verb: "cried" },
+    { root: "The door opened.", verb: "opened" },
+    { root: "The bell rang.", verb: "rang" },
+    { root: "The horse galloped.", verb: "galloped" },
+    { root: "The man walked.", verb: "walked" },
+    { root: "The flower grew.", verb: "grew" },
+    { root: "The phone rang.", verb: "rang" },
+    { root: "The ball bounced.", verb: "bounced" },
+    { root: "The star twinkled.", verb: "twinkled" },
+    { root: "The train arrived.", verb: "arrived" },
+    { root: "The child laughed.", verb: "laughed" },
+    { root: "The wind blew.", verb: "blew" }
 ];
 const KETE_WORDS = {
     'Describing Words': ['ancient', 'big', 'brave', 'bright', 'calm', 'colourful', 'creepy', 'curious', 'dangerous', 'dark', 'delicious', 'enormous', 'fluffy', 'friendly', 'gentle', 'giant', 'grumpy', 'huge', 'lonely', 'loud', 'massive', 'mysterious', 'quiet', 'shaggy', 'small', 'sparkling', 'strange', 'sunny', 'sweet', 'tiny', 'weary'],
@@ -429,10 +440,11 @@ const Tooltip = ({ children, text }) => (
     </div>
 );
 
-const ResultsScreen = ({ gameData, playerId, onPlayAgain, onGoHome }) => {
+const ResultsScreen = ({ gameData, playerId, onPlayAgain, onGoHome, onRetryPrompt, soloHighScore }) => {
   const myPlayer = gameData.players[playerId];
   const myAnalysis = myPlayer?.analysis;
   const myFinalStory = myPlayer?.story;
+  const isSolo = onRetryPrompt !== undefined;
 
   const sortedPlayers = Object.entries(gameData.players)
     .map(([id, data]) => ({ id, ...data, totalScore: data.analysis?.totalScore || 0 }))
@@ -449,17 +461,24 @@ const ResultsScreen = ({ gameData, playerId, onPlayAgain, onGoHome }) => {
                   <div className="prose max-w-none text-slate-700 whitespace-pre-wrap bg-slate-50 p-4 rounded-md">{myFinalStory?.text || "You didn't write anything this time. Try again!"}</div>
               </div>
               <div className="lg:col-span-1 space-y-6">
-                  <div className="bg-white p-6 rounded-lg shadow-md border border-slate-200">
-                       <h3 className="text-lg font-bold text-slate-500 uppercase tracking-wider mb-3">Leaderboard</h3>
-                       <ol className="space-y-2">
-                        {sortedPlayers.map((player, index) => (
-                           <li key={player.id} className={`p-2 rounded-md flex justify-between items-center ${player.id === playerId ? 'bg-sky-100' : 'bg-slate-50'}`}>
-                             <span className="font-semibold text-slate-700">{index + 1}. {player.nickname}</span>
-                             <span className="font-bold text-sky-600">{player.totalScore.toLocaleString()}</span>
-                           </li>
-                        ))}
-                       </ol>
-                  </div>
+                  {isSolo ? (
+                     <div className="bg-white p-6 rounded-lg shadow-md border border-slate-200 text-center">
+                         <h3 className="text-lg font-bold text-slate-500 uppercase tracking-wider mb-3">High Score</h3>
+                         <p className="text-4xl font-bold text-amber-500">{soloHighScore.toLocaleString()}</p>
+                     </div>
+                  ) : (
+                      <div className="bg-white p-6 rounded-lg shadow-md border border-slate-200">
+                           <h3 className="text-lg font-bold text-slate-500 uppercase tracking-wider mb-3">Leaderboard</h3>
+                           <ol className="space-y-2">
+                            {sortedPlayers.map((player, index) => (
+                               <li key={player.id} className={`p-2 rounded-md flex justify-between items-center ${player.id === playerId ? 'bg-sky-100' : 'bg-slate-50'}`}>
+                                 <span className="font-semibold text-slate-700">{index + 1}. {player.nickname}</span>
+                                 <span className="font-bold text-sky-600">{player.totalScore.toLocaleString()}</span>
+                               </li>
+                            ))}
+                           </ol>
+                      </div>
+                  )}
                   {myAnalysis && (
                       <div className="bg-white p-6 rounded-lg shadow-md border border-slate-200">
                           <h3 className="text-xl font-bold mb-4 text-slate-800">Your Score Breakdown</h3>
@@ -488,8 +507,18 @@ const ResultsScreen = ({ gameData, playerId, onPlayAgain, onGoHome }) => {
               </div>
           </div>
           <div className="flex items-center gap-4 mt-8">
-              <Button onClick={onPlayAgain} size="large">Play Again</Button>
-              <Button onClick={onGoHome} variant="secondary" size="large">Back to Home</Button>
+              {isSolo ? (
+                <>
+                    <Button onClick={onGoHome} variant="secondary" size="large">Back to Home</Button>
+                    <Button onClick={onRetryPrompt} variant="secondary" size="large">Try Same Prompt</Button>
+                    <Button onClick={onPlayAgain} size="large">New Prompt</Button>
+                </>
+              ) : (
+                <>
+                    <Button onClick={onPlayAgain} size="large">Play Again</Button>
+                    <Button onClick={onGoHome} variant="secondary" size="large">Back to Home</Button>
+                </>
+              )}
           </div>
       </div>
   );
@@ -555,15 +584,15 @@ const GameScreen = ({ gameData, playerId, onTimeUp, onGoHome, onScoreUpdate }) =
             <div className="lg:col-span-2">
                 <div className="relative bg-white p-6 rounded-lg shadow-md border border-slate-200 mb-4">
                     <Button onClick={onGoHome} variant="secondary" size="small" className="absolute top-4 right-4">Quit Game</Button>
-                    <div className="flex items-start gap-4">
+                    <div className="flex items-start gap-6">
                         {gameData.promptImageUrl ? (
                              <img 
                                 src={gameData.promptImageUrl} 
                                 alt="AI generated image for the prompt" 
-                                className="w-24 h-24 object-cover rounded-lg shadow-sm border border-slate-200 flex-shrink-0"
+                                className="w-32 h-32 object-cover rounded-lg shadow-sm border border-slate-200 flex-shrink-0"
                             />
                         ) : (
-                            <div className="w-24 h-24 bg-slate-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <div className="w-32 h-32 bg-slate-100 rounded-lg flex items-center justify-center flex-shrink-0">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8 text-slate-400"><path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" /></svg>
                             </div>
                         )}
@@ -1111,6 +1140,7 @@ const SentenceBuilderScreen = ({ onGoHome }) => {
     const [userSentence, setUserSentence] = useState('');
     const [score, setScore] = useState(null);
     const [activeKeteTab, setActiveKeteTab] = useState(Object.keys(KETE_WORDS)[0]);
+    const [highScore, setHighScore] = useState(0);
     
     const handleNext = () => {
         if (userSentence.trim().length > rootSentence.root.length) {
@@ -1150,12 +1180,24 @@ const SentenceBuilderScreen = ({ onGoHome }) => {
             feedback: geminiResult.feedback,
             finalScore
         });
+
+        if (finalScore > highScore) {
+            setHighScore(finalScore);
+        }
+
         setStage('results');
     };
     
     const handleTryAgain = () => {
         setStage('rewrite');
         setRootSentence(SENTENCE_ROOTS[Math.floor(Math.random() * SENTENCE_ROOTS.length)]);
+        setUserSentence('');
+        setScore(null);
+        setHighScore(0);
+    };
+
+    const handleRetrySameSentence = () => {
+        setStage('rewrite');
         setUserSentence('');
         setScore(null);
     };
@@ -1182,17 +1224,13 @@ const SentenceBuilderScreen = ({ onGoHome }) => {
                     <p className="font-semibold text-sky-900 text-lg">{userSentence}</p>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                     <div className="bg-white p-4 rounded-lg shadow-md border border-slate-200">
-                        <p className="text-sm font-bold text-slate-500">MECHANICAL SCORE</p>
-                        <p className="text-3xl font-bold text-slate-700">{score.mechanicalScore}</p>
-                    </div>
-                    <div className="bg-white p-4 rounded-lg shadow-md border border-slate-200">
-                        <p className="text-sm font-bold text-slate-500">AI QUALITY MULTIPLIER</p>
-                        <p className="text-3xl font-bold text-violet-600">x{score.qualityScore.toFixed(2)}</p>
+                        <p className="text-sm font-bold text-slate-500">HIGH SCORE</p>
+                        <p className="text-3xl font-bold text-amber-500">{highScore}</p>
                     </div>
                     <div className="bg-emerald-600 text-white p-4 rounded-lg shadow-lg">
-                        <p className="text-sm font-bold">FINAL SCORE</p>
+                        <p className="text-sm font-bold">YOUR SCORE</p>
                         <p className="text-3xl font-bold">{score.finalScore}</p>
                     </div>
                 </div>
@@ -1204,7 +1242,8 @@ const SentenceBuilderScreen = ({ onGoHome }) => {
 
                 <div className="flex items-center justify-center gap-4">
                     <Button onClick={onGoHome} variant="secondary" size="large">Back to Home</Button>
-                    <Button onClick={handleTryAgain} size="large">Try Another One!</Button>
+                    <Button onClick={handleRetrySameSentence} variant="secondary" size="large">Try Again</Button>
+                    <Button onClick={handleTryAgain} size="large">New Sentence</Button>
                 </div>
             </div>
         );
@@ -1338,6 +1377,7 @@ const App = () => {
     const [currentUser, setCurrentUser] = useState(null);
     const [viewingGameData, setViewingGameData] = useState(null);
     const [authLoading, setAuthLoading] = useState(true);
+    const [soloHighScore, setSoloHighScore] = useState(0);
 
     useEffect(() => {
       let storedPlayerId = localStorage.getItem('inkxp_playerId');
@@ -1416,14 +1456,24 @@ const App = () => {
     const handleStartSolo = useCallback(async (prompt, criteriaIds, duration) => {
         const promptImageUrl = await generateImageForPrompt(prompt.text);
         setSoloData({ prompt, criteria: criteriaIds, duration, promptImageUrl });
+        setSoloHighScore(0);
+        setGameState(GameState.InGame);
+    }, []);
+    
+    const handleRetrySolo = useCallback(() => {
+        setFinalStory(null);
+        setScoreAnalysis(null);
         setGameState(GameState.InGame);
     }, []);
 
     const handleEndSolo = useCallback((story, analysis) => {
         setFinalStory(story);
         setScoreAnalysis(analysis);
+        if (analysis.totalScore > soloHighScore) {
+            setSoloHighScore(analysis.totalScore);
+        }
         setGameState(GameState.Results);
-    }, []);
+    }, [soloHighScore]);
 
     const handleEndMultiplayerGame = useCallback(async (story, analysis) => {
       await submitResult(gameId, playerId, story, analysis);
@@ -1447,6 +1497,7 @@ const App = () => {
         setFinalStory(null);
         setScoreAnalysis(null);
         setViewingGameData(null);
+        setSoloHighScore(0);
     }, []);
 
     const handleGoToDashboard = useCallback(() => {
@@ -1459,6 +1510,11 @@ const App = () => {
         setGameState(GameState.Home);
     }, [resetGame]);
     
+    const handleGoToSoloSetup = useCallback(() => {
+        resetGame();
+        setGameState(GameState.SoloSetup);
+    }, [resetGame]);
+
     const renderContent = () => {
         if (authLoading) {
           return <div className="flex justify-center p-8"><LoadingSpinner /></div>;
@@ -1524,14 +1580,14 @@ const App = () => {
               }
               if (scoreAnalysis) {
                   const soloGameData = { prompt: soloData.prompt, players: { [playerId]: { nickname: 'You', story: finalStory, analysis: scoreAnalysis } } };
-                  return <ResultsScreen gameData={soloGameData} playerId={playerId} onPlayAgain={handleGoHome} onGoHome={handleGoHome} />;
+                  return <ResultsScreen gameData={soloGameData} playerId={playerId} onPlayAgain={handleGoToSoloSetup} onGoHome={handleGoHome} onRetryPrompt={handleRetrySolo} soloHighScore={soloHighScore}/>;
               }
               if (gameData) {
                   const isHost = playerId === gameData.hostId;
                   if (isHost) {
                     return <HostResultsScreen gameData={gameData} onNewGame={() => setGameState(GameState.CreateGameSetup)} onGoHome={handleGoHome} onBackToDashboard={() => {}} />;
                   }
-                  return <ResultsScreen gameData={gameData} playerId={playerId} onPlayAgain={handleGoHome} onGoHome={handleGoHome} />;
+                  return <ResultsScreen gameData={gameData} playerId={playerId} onPlayAgain={() => setGameState(GameState.JoinGameSetup)} onGoHome={handleGoHome} />;
               }
               return null;
             default: 
