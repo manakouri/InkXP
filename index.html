@@ -995,19 +995,19 @@ const TeacherDashboard = ({ user, onSignOut, onBack }) => {
 
     useEffect(() => {
         if (!user || !user.uid) return;
-        const unsubscribe = getClassesForTeacher(user.uid, (fetchedClasses) => {
-            setClasses(fetchedClasses);
-            if (fetchedClasses.length > 0) {
-                // If no class is selected, or the selected class no longer exists, select the first one.
-                if (!selectedClassId || !fetchedClasses.some(c => c.id === selectedClassId)) {
-                    setSelectedClassId(fetchedClasses[0].id);
-                }
-            } else {
-                setSelectedClassId('');
-            }
-        });
+        const unsubscribe = getClassesForTeacher(user.uid, setClasses);
         return () => unsubscribe();
     }, [user.uid]);
+
+    useEffect(() => {
+        // This effect runs whenever the list of classes changes.
+        // It ensures a class is always selected if one exists, improving UX.
+        if (classes.length > 0 && !classes.some(c => c.id === selectedClassId)) {
+            setSelectedClassId(classes[0].id);
+        } else if (classes.length === 0) {
+            setSelectedClassId('');
+        }
+    }, [classes, selectedClassId]);
 
     useEffect(() => {
         if (!selectedClassId || !user?.uid) { setStudents([]); return; }
