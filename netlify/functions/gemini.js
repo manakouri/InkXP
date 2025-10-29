@@ -10,15 +10,21 @@ const getFeedback = async (payload) => {
     const { rootSentence, userSentence } = payload;
     if (!rootSentence || !userSentence) throw new Error("rootSentence and userSentence are required");
     
-    const prompt = `You are an AI writing tutor for a 10-year-old. The original sentence was '${rootSentence}'. The student created this new sentence: '${userSentence}'.
+    const prompt = `You are an AI writing tutor for a 10-year-old. The original simple sentence was '${rootSentence}'. The student has rewritten it as: '${userSentence}'.
 
-    1. Rate the new sentence's quality on a scale of 0.5 to 2.0, where 1.0 is a good but standard improvement. A score of 2.0 should be reserved for exceptionally creative, clear, and well-structured sentences. A score below 1.0 might be for sentences that are overly long, awkward, or grammatically incorrect. This score will be used as a multiplier.
-    2. Provide one short, positive, and encouraging tip (no more than 20 words) for how they could make it even better next time.
+Your task is to provide a quality score and feedback.
 
-    Respond ONLY with a valid JSON object.`;
+1.  **Scoring (qualityScore):** Provide a score between 0.5 and 2.0. This score will be used as a multiplier. Base the score on the following criteria combined:
+    *   **Creativity & Interest:** Is the new sentence significantly more engaging and interesting than the original?
+    *   **Adjectives & Sensory Details:** Does it use descriptive words effectively to paint a picture?
+    *   **Language Features:** Does it include features like similes, alliteration, or varied sentence structure?
+    *   **Punctuation & Grammar:** Is the sentence grammatically correct with proper punctuation?
+
+2.  **Feedback (feedback):** Provide one short, positive, and encouraging tip (no more than 20 words) that is specific to their sentence on how they could make it even better next time.
+
+Respond ONLY with a valid JSON object.`;
 
     const response = await ai.models.generateContent({
-        // Fix: Use a more advanced model for better feedback quality.
         model: "gemini-2.5-pro",
         contents: prompt,
         config: {

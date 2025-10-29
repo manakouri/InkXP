@@ -888,6 +888,7 @@ const SentenceBuilderScreen = ({ onBack }) => {
     const [highScore, setHighScore] = useState(Number(localStorage.getItem('sentenceBuilderHighScore')) || 0);
     const [isLoading, setIsLoading] = useState(false);
     const [isSubmitted, setIsSubmitted] = useState(false);
+    const [activeKeteTab, setActiveKeteTab] = useState(Object.keys(KETE_WORDS)[0]);
 
     const generateNewChallenge = useCallback(() => {
         setRoot(SENTENCE_ROOTS[Math.floor(Math.random() * SENTENCE_ROOTS.length)]);
@@ -914,7 +915,7 @@ const SentenceBuilderScreen = ({ onBack }) => {
             setFeedback("Please write a new sentence before moving to the next step.");
             return;
         }
-        setFeedback(""); // Clear feedback before moving on
+        setFeedback("");
         setStep(2);
     };
 
@@ -946,48 +947,63 @@ const SentenceBuilderScreen = ({ onBack }) => {
     );
 
     const handleWordSelect = (word) => {
-        setUserSentence(prev => prev ? `${prev} ${word}` : word);
+        setUserSentence(prev => prev.trim() ? `${prev.trim()} ${word}` : word);
     };
 
     return (
         <div className="w-full max-w-4xl mx-auto">
             <div className="bg-gradient-to-br from-white to-sky-100 p-8 rounded-2xl shadow-2xl border border-white/40 text-center">
                 <h2 className="text-3xl font-bold text-slate-800 mb-2">Sentence Lab</h2>
-                <p className="text-slate-600 mb-6">Upgrade the simple sentence below. Make it more interesting!</p>
-                <div className="bg-sky-100 p-4 rounded-lg mb-6"><p className="text-xl font-semibold text-sky-800">{root?.root}</p></div>
+                <div className="bg-sky-100 p-4 rounded-lg my-6"><p className="text-xl font-semibold text-sky-800">{root?.root}</p></div>
                 
-                <form onSubmit={handleSubmit}>
+                {step === 1 && <p className="text-slate-600 mb-4">First, rewrite the sentence above to make it more interesting.</p>}
+                
+                <form onSubmit={handleSubmit} className="w-full">
                     <textarea value={userSentence} onChange={e => setUserSentence(e.target.value)} className="w-full p-3 border border-slate-300 rounded-lg shadow-inner focus:ring-2 focus:ring-sky-500" rows="3" placeholder="Write your new sentence here..."></textarea>
                     
                     {step === 2 && !isSubmitted && (
                          <div className="mt-6 text-left animate-fade-in">
                             <h3 className="text-lg font-bold text-slate-700 mb-2">Inspiration Kete (Basket)</h3>
-                            <p className="text-slate-600 mb-4">Use these words to improve your sentence, then submit it for analysis when you're ready.</p>
-                             <div className="space-y-4">
-                                {Object.entries(KETE_WORDS).map(([category, words]) => (
-                                    <div key={category}>
-                                        <p className="font-semibold mb-2 text-slate-600">{category}:</p>
-                                        <div className="flex flex-wrap gap-2">
-                                            {words.map(word => <KeteWord key={word} word={word} onSelect={handleWordSelect} />)}
-                                        </div>
-                                    </div>
-                                ))}
+                            <p className="text-slate-600 mb-4">Great start! Now use these words to improve your sentence even more, then submit it for analysis.</p>
+                             <div className="border-b border-slate-200 mb-4">
+                                <nav className="-mb-px flex space-x-6" aria-label="Tabs">
+                                    {Object.keys(KETE_WORDS).map((category) => (
+                                        <button
+                                            key={category}
+                                            type="button"
+                                            onClick={() => setActiveKeteTab(category)}
+                                            className={`${
+                                                activeKeteTab === category
+                                                    ? 'border-sky-500 text-sky-600'
+                                                    : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+                                            } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+                                        >
+                                            {category}
+                                        </button>
+                                    ))}
+                                </nav>
+                            </div>
+                             <div className="flex flex-wrap gap-2 p-2 bg-slate-50 rounded-lg min-h-[50px]">
+                                {KETE_WORDS[activeKeteTab].map(word => <KeteWord key={word} word={word} onSelect={handleWordSelect} />)}
                             </div>
                         </div>
                     )}
 
                     {feedback && <p className={`mt-4 ${score > 0 ? 'text-emerald-600' : 'text-amber-600'}`}>{feedback}</p>}
                     
-                    {!isSubmitted && (
+                    {!isSubmitted && step === 2 && (
                         <div className="mt-6">
-                            {step === 1 ? (
-                                <Button type="button" size="large" onClick={handleNextStep}>Next Step</Button>
-                            ) : (
-                                <Button type="submit" size="large" disabled={isLoading}>{isLoading ? <LoadingSpinner/> : 'Submit for Analysis'}</Button>
-                            )}
+                           <Button type="submit" size="large" disabled={isLoading}>{isLoading ? <LoadingSpinner/> : 'Submit for Analysis'}</Button>
                         </div>
                     )}
                 </form>
+
+                {!isSubmitted && step === 1 && (
+                    <div className="mt-6">
+                        <Button type="button" size="large" onClick={handleNextStep}>Next Step</Button>
+                    </div>
+                )}
+
 
                 {isSubmitted && (
                     <div className="mt-6 animate-fade-in">
