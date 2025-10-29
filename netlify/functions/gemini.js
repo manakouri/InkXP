@@ -1,29 +1,10 @@
-import { GoogleGenAI, Type, Modality } from "@google/genai";
+import { GoogleGenAI, Type } from "@google/genai";
 
 if (!process.env.API_KEY) {
     throw new Error("The API_KEY environment variable is not set.");
 }
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-
-const generateImage = async (payload) => {
-    const { promptText } = payload;
-    if (!promptText) throw new Error("promptText is required");
-
-    const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash-image',
-        contents: { parts: [{ text: `A vibrant, child-friendly illustration for a story about: ${promptText}` }] },
-        config: { responseModalities: [Modality.IMAGE] },
-    });
-
-    for (const part of response.candidates[0].content.parts) {
-        if (part.inlineData) {
-            const base64ImageBytes = part.inlineData.data;
-            return { imageUrl: `data:image/png;base64,${base64ImageBytes}` };
-        }
-    }
-    throw new Error("Image data not found in response");
-};
 
 const getFeedback = async (payload) => {
     const { rootSentence, userSentence } = payload;
@@ -69,9 +50,6 @@ export const handler = async (event) => {
         let result;
 
         switch (task) {
-            case 'generateImage':
-                result = await generateImage(payload);
-                break;
             case 'getSentenceFeedback':
                 result = await getFeedback(payload);
                 break;
