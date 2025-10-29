@@ -993,14 +993,21 @@ const TeacherDashboard = ({ user, onSignOut, onBack }) => {
         return () => unsubscribe();
     }, [user.uid]);
 
-     useEffect(() => {
+    useEffect(() => {
         if (!user || !user.uid) return;
         const unsubscribe = getClassesForTeacher(user.uid, (fetchedClasses) => {
             setClasses(fetchedClasses);
-            if (!selectedClassId && fetchedClasses.length > 0) setSelectedClassId(fetchedClasses[0].id);
+            if (fetchedClasses.length > 0) {
+                // If no class is selected, or the selected class no longer exists, select the first one.
+                if (!selectedClassId || !fetchedClasses.some(c => c.id === selectedClassId)) {
+                    setSelectedClassId(fetchedClasses[0].id);
+                }
+            } else {
+                setSelectedClassId('');
+            }
         });
         return () => unsubscribe();
-    }, [user.uid, selectedClassId]);
+    }, [user.uid]);
 
     useEffect(() => {
         if (!selectedClassId || !user?.uid) { setStudents([]); return; }
