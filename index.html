@@ -107,7 +107,7 @@ const KETE_WORDS = {
 
 // Gemini API Service
 const callApi = async (task, payload) => {
-    const response = await fetch('/api/gemini', {
+    const response = await fetch('/.netlify/functions/gemini', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ task, payload }),
@@ -960,7 +960,8 @@ const SentenceBuilderScreen = ({ onBack }) => {
                     
                     {step === 2 && !isSubmitted && (
                          <div className="mt-6 text-left animate-fade-in">
-                            <h3 className="text-lg font-bold text-slate-700 mb-3">Inspiration Kete (Basket)</h3>
+                            <h3 className="text-lg font-bold text-slate-700 mb-2">Inspiration Kete (Basket)</h3>
+                            <p className="text-slate-600 mb-4">Use these words to improve your sentence, then submit it for analysis when you're ready.</p>
                              <div className="space-y-4">
                                 {Object.entries(KETE_WORDS).map(([category, words]) => (
                                     <div key={category}>
@@ -981,7 +982,7 @@ const SentenceBuilderScreen = ({ onBack }) => {
                             {step === 1 ? (
                                 <Button type="button" size="large" onClick={handleNextStep}>Next Step</Button>
                             ) : (
-                                <Button type="submit" size="large" disabled={isLoading}>{isLoading ? 'Analyzing...' : 'Submit Sentence'}</Button>
+                                <Button type="submit" size="large" disabled={isLoading}>{isLoading ? <LoadingSpinner/> : 'Submit for Analysis'}</Button>
                             )}
                         </div>
                     )}
