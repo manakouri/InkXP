@@ -98,47 +98,7 @@ const ONOMATOPOEIA_WORDS = ['zap', 'zing', 'zip', 'zoom', 'bam', 'bang', 'bash',
 const CONJUNCTIONS = ['for', 'and', 'nor', 'but', 'or', 'yet', 'so', 'after', 'although', 'as', 'as if', 'as long as', 'as much as', 'as soon as', 'as though', 'because', 'before', 'by the time', 'even if', 'even though', 'if', 'in case', 'in order that', 'lest', 'now that', 'once', 'only if', 'provided that', 'since', 'so that', 'than', 'that', 'though', 'till', 'unless', 'until', 'when', 'whenever', 'where', 'whereas', 'wherever', 'whether', 'while', 'both...and', 'either...or', 'neither...nor', 'not only...but also', 'whether...or'];
 const TRANSITIONAL_WORDS = ['after', 'afterward', 'all of a sudden', 'as soon as', 'at first', 'at last', 'at that moment', 'before', 'by the time', 'concurrently', 'earlier', 'eventually', 'finally', 'first', 'following', 'from that point on', 'immediately', 'in the beginning', 'in the meantime', 'instantly', 'just then', 'later', 'later on', 'meanwhile', 'next', 'not long after', 'now', 'once', 'presently', 'second', 'shortly after', 'simultaneously', 'since', 'soon', 'suddenly', 'then', 'third', 'until', 'when', 'while', 'above all', 'additionally', 'also', 'and', 'another', 'as well', 'besides', 'especially', 'furthermore', 'in addition', 'in fact', 'indeed', 'more importantly', 'moreover', 'not only... but also', 'of course', 'specifically', 'then again', 'too', 'truly', 'although', 'but', 'despite', 'even so', 'even though', 'however', 'in contrast', 'instead', 'nevertheless', 'nonetheless', 'on the contrary', 'on the other hand', 'otherwise', 'still', 'though', 'unlike', 'whereas', 'yet', 'accordingly', 'as a result', 'because', 'consequently', 'due to', 'for this reason', 'hence', 'so', 'therefore', 'thus', 'above', 'across', 'around', 'behind', 'below', 'beside', 'beyond', 'here', 'nearby', 'opposite', 'over', 'under', 'for example', 'for instance', 'in other words', 'that is', 'to illustrate', 'in conclusion', 'in summary', 'to sum up'];
 const SENTENCE_ROOTS = [
-    { root: "The cat sat.", verb: "sat" },
-    { root: "The dog barked.", verb: "barked" },
-    { root: "The bird flew.", verb: "flew" },
-    { root: "The sun shone.", verb: "shone" },
-    { root: "The car moved.", verb: "moved" },
-    { root: "The girl ran.", verb: "ran" },
-    { root: "The boy jumped.", verb: "jumped" },
-    { root: "The river flowed.", verb: "flowed" },
-    { root: "The tree stood.", verb: "stood" },
-    { root: "The baby cried.", verb: "cried" },
-    { root: "The door opened.", verb: "opened" },
-    { root: "The bell rang.", verb: "rang" },
-    { root: "The horse galloped.", verb: "galloped" },
-    { root: "The man walked.", verb: "walked" },
-    { root: "The flower grew.", verb: "grew" },
-    { root: "The phone rang.", verb: "rang" },
-    { root: "The ball bounced.", verb: "bounced" },
-    { root: "The star twinkled.", verb: "twinkled" },
-    { root: "The train arrived.", verb: "arrived" },
-    { root: "The child laughed.", verb: "laughed" },
-    { root: "The wind blew.", verb: "blew" },
-    { root: "The leaves fell.", verb: "fell" },
-    { root: "The moon glowed.", verb: "glowed" },
-    { root: "The water splashed.", verb: "splashed" },
-    { root: "The fire crackled.", verb: "crackled" },
-    { root: "The light flickered.", verb: "flickered" },
-    { root: "The engine roared.", verb: "roared" },
-    { root: "The ice melted.", verb: "melted" },
-    { root: "The machine hummed.", verb: "hummed" },
-    { root: "The boat sailed.", verb: "sailed" },
-    { root: "The clock ticked.", verb: "ticked" },
-    { root: "The snake slithered.", verb: "slithered" },
-    { root: "The ground shook.", verb: "shook" },
-    { root: "The music played.", verb: "played" },
-    { root: "The crowd cheered.", verb: "cheered" },
-    { root: "The child slept.", verb: "slept" },
-    { root: "The giant stomped.", verb: "stomped" },
-    { root: "The rain dropped.", verb: "dropped" },
-    { root: "The thunder boomed.", verb: "boomed" },
-    { root: "The rocket launched.", verb: "launched" },
-    { root: "The glass broke.", verb: "broke" }
+    { root: "The cat sat.", verb: "sat" }, { root: "The dog barked.", verb: "barked" }, { root: "The bird flew.", verb: "flew" }, { root: "The sun shone.", verb: "shone" }, { root: "The car moved.", verb: "moved" }, { root: "The girl ran.", verb: "ran" }, { root: "The boy jumped.", verb: "jumped" }, { root: "The river flowed.", verb: "flowed" }, { root: "The tree stood.", verb: "stood" }, { root: "The baby cried.", verb: "cried" }, { root: "The door opened.", verb: "opened" }, { root: "The bell rang.", verb: "rang" }, { root: "The horse galloped.", verb: "galloped" }, { root: "The man walked.", verb: "walked" }, { root: "The flower grew.", verb: "grew" }, { root: "The phone rang.", verb: "rang" }, { root: "The ball bounced.", verb: "bounced" }, { root: "The star twinkled.", verb: "twinkled" }, { root: "The train arrived.", verb: "arrived" }, { root: "The child laughed.", verb: "laughed" }, { root: "The wind blew.", verb: "blew" }, { root: "The leaves fell.", verb: "fell" }, { root: "The moon glowed.", verb: "glowed" }, { root: "The water splashed.", verb: "splashed" }, { root: "The fire crackled.", verb: "crackled" }, { root: "The light flickered.", verb: "flickered" }, { root: "The engine roared.", verb: "roared" }, { root: "The ice melted.", verb: "melted" }, { root: "The machine hummed.", verb: "hummed" }, { root: "The boat sailed.", verb: "sailed" }, { root: "The clock ticked.", verb: "ticked" }, { root: "The snake slithered.", verb: "slithered" }, { root: "The ground shook.", verb: "shook" }, { root: "The music played.", verb: "played" }, { root: "The crowd cheered.", verb: "cheered" }, { root: "The child slept.", verb: "slept" }, { root: "The giant stomped.", verb: "stomped" }, { root: "The rain dropped.", verb: "dropped" }, { root: "The thunder boomed.", verb: "boomed" }, { root: "The rocket launched.", verb: "launched" }, { root: "The glass broke.", verb: "broke" }, { root: "The secret was revealed.", verb: "revealed" }, { root: "The ship sank.", verb: "sank" }, { root: "The city slept.", verb: "slept" }, { root: "The volcano erupted.", verb: "erupted" }, { root: "The hero appeared.", verb: "appeared" }, { root: "The shadow moved.", verb: "moved" }, { root: "The path twisted.", verb: "twisted" }, { root: "The room was silent.", verb: "was" }, { root: "The kettle whistled.", verb: "whistled" }, { root: "The audience clapped.", verb: "clapped" }, { root: "The world changed.", verb: "changed" }, { root: "The plan worked.", verb: "worked" }, { root: "The bread baked.", verb: "baked" }, { root: "The seed sprouted.", verb: "sprouted" }, { root: "The voice whispered.", verb: "whispered" }, { root: "The computer crashed.", verb: "crashed" }, { root: "The mystery deepened.", verb: "deepened" }, { root: "The flag waved.", verb: "waved" }, { root: "The tide turned.", verb: "turned" }, { root: "The answer emerged.", verb: "emerged" }
 ];
 const KETE_WORDS = {
     'Describing Words': ['ancient', 'big', 'brave', 'bright', 'calm', 'colourful', 'creepy', 'curious', 'dangerous', 'dark', 'delicious', 'enormous', 'fluffy', 'friendly', 'gentle', 'giant', 'grumpy', 'huge', 'lonely', 'loud', 'massive', 'mysterious', 'quiet', 'shaggy', 'small', 'sparkling', 'strange', 'sunny', 'sweet', 'tiny', 'weary'],
@@ -151,17 +111,13 @@ const KETE_WORDS = {
 const callApi = async (task, payload) => {
     const response = await fetch('/api/gemini', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ task, payload }),
     });
-
     if (!response.ok) {
         const errorBody = await response.json().catch(() => ({ error: `API call failed with status ${response.status}` }));
         throw new Error(errorBody.error || `API call failed with status ${response.status}`);
     }
-
     return response.json();
 };
 
@@ -262,6 +218,13 @@ const updatePlayerAnalysis = async (gameCode, playerId, analysis) => {
   });
 };
 
+const updatePlayerNickname = async (gameCode, playerId, nickname) => {
+    const gameRef = db.collection('games').doc(gameCode);
+    await gameRef.update({
+        [`players.${playerId}.nickname`]: nickname
+    });
+};
+
 const finishGame = async (gameCode) => {
   await db.collection('games').doc(gameCode).update({ status: 'finished' });
 };
@@ -299,12 +262,11 @@ const addStudentToClass = async (username, displayName, classId, teacherId) => {
     const password = generatePassword();
     const email = `${usernameLower}@${STUDENT_EMAIL_DOMAIN}`;
     
-    // Use a temporary auth instance to create the user without signing in
     const tempAuthApp = firebase.initializeApp(firebaseConfig, 'secondary');
     const tempAuth = tempAuthApp.auth();
     const userCredential = await tempAuth.createUserWithEmailAndPassword(email, password);
     await tempAuth.signOut();
-    await tempAuthApp.delete(); // Clean up temporary app instance
+    await tempAuthApp.delete(); 
 
     const userDoc = {
         uid: userCredential.user.uid,
@@ -316,11 +278,11 @@ const addStudentToClass = async (username, displayName, classId, teacherId) => {
     };
     await db.collection('users').doc(userCredential.user.uid).set(userDoc);
     
-    return { ...userDoc, password }; // Return with password for teacher to see
+    return { ...userDoc, password };
 };
 
-const getStudentsInClass = (classId, callback) => {
-    const q = db.collection('users').where('classId', '==', classId);
+const getStudentsInClass = (classId, teacherId, callback) => {
+    const q = db.collection('users').where('classId', '==', classId).where('teacherId', '==', teacherId);
     return q.onSnapshot(querySnapshot => {
         const students = [];
         querySnapshot.forEach(doc => students.push({ id: doc.id, ...doc.data() }));
@@ -363,22 +325,14 @@ const ALL_SCORING_CRITERIA = [
         description: 'Using dialogue with correct punctuation (e.g., "Hello," she said.)', points: 1500,
         check: (text) => {
              if (!text) return 0;
-            const dialoguePatterns = [
-                /"[^"]*," \w+ (said|asked|yelled|whispered|exclaimed|snapped|replied|muttered)\./i,
-                /\w+ (said|asked|yelled|whispered|exclaimed|snapped|replied|muttered), "[^"]*[\.?!]"/i,
-                /"[^"]*," \w+ (said|asked|yelled|whispered|exclaimed|snapped|replied|muttered), "[^"]*[\.?!]"/i,
-                /"[^"]+[\.?!]"/
-            ];
+            const dialoguePatterns = [ /"[^"]*," \w+ (said|asked|yelled|whispered|exclaimed|snapped|replied|muttered)\./i, /\w+ (said|asked|yelled|whispered|exclaimed|snapped|replied|muttered), "[^"]*[\.?!]"/i, /"[^"]*," \w+ (said|asked|yelled|whispered|exclaimed|snapped|replied|muttered), "[^"]*[\.?!]"/i, /"[^"]+[\.?!]"/ ];
             return dialoguePatterns.some(pattern => pattern.test(text)) ? 1 : 0;
         }
     },
     {
         id: 'paragraphs', name: 'Paragraphs', type: 'always',
         description: 'Leaving a blank line to start a new paragraph', points: 1500,
-        check: (text) => {
-            if (!text) return 0;
-            return (/(?:\r\n|\n){2,}/.test(text.trim())) ? 1 : 0;
-        }
+        check: (text) => (text && /(?:\r\n|\n){2,}/.test(text.trim())) ? 1 : 0
     },
     {
         id: 'sentence', name: 'Punctuated Sentences', type: 'always',
@@ -386,18 +340,10 @@ const ALL_SCORING_CRITERIA = [
         check: (text) => {
             if (!text) return 0;
             const potentialSentences = text.split(/(?<=[.!?])\s+/);
-            let count = 0;
-            for (const sentence of potentialSentences) {
-                const trimmed = sentence.trim();
-                if (trimmed) {
-                    const startsWithCapital = /^[A-Z]/.test(trimmed);
-                    const endsWithPunctuation = /[.!?]$/.test(trimmed);
-                    if (startsWithCapital && endsWithPunctuation) {
-                        count++;
-                    }
-                }
-            }
-            return count;
+            return potentialSentences.filter(s => {
+                const trimmed = s.trim();
+                return trimmed && /^[A-Z]/.test(trimmed) && /[.!?]$/.test(trimmed);
+            }).length;
         }
     },
     {
@@ -436,20 +382,14 @@ const ALL_SCORING_CRITERIA = [
         check: (text) => {
             if (!text) return 0;
             const onomatopoeiaCount = countWords(text, ONOMATOPOEIA_WORDS);
-            
             const textWithoutPunctuation = text.toLowerCase().replace(/[.,!?;:"]/g, '');
             const words = textWithoutPunctuation.split(/\s+/).filter(w => w.length > 0);
-            
             let alliterationCount = 0;
             const stopWords = new Set(['a', 'an', 'the', 'in', 'on', 'at', 'is', 'it', 'and', 'or', 'but']);
-            
             for (let i = 0; i < words.length - 1; i++) {
-                const word1 = words[i];
-                const word2 = words[i+1];
+                const word1 = words[i]; const word2 = words[i+1];
                 if (!stopWords.has(word1) && !stopWords.has(word2) && word1.length > 1 && word2.length > 1 && word1.charAt(0) === word2.charAt(0)) {
-                    alliterationCount++;
-                    // Skip the next word to avoid counting "big bad bear" as two pairs
-                    i++; 
+                    alliterationCount++; i++; 
                 }
             }
             return onomatopoeiaCount + alliterationCount;
@@ -465,43 +405,23 @@ const analyzeScore = (text, criteria) => {
         totalScore += score;
         return { id: criterion.id, name: criterion.name, count, score };
     });
-    if (breakdown.length === 0) {
-        return { totalScore: 0, breakdown: [], highestScoring: { name: 'N/A', score: 0}, lowestScoring: { name: 'N/A', score: 0}};
-    }
+    if (breakdown.length === 0) return { totalScore: 0, breakdown: [], highestScoring: { name: 'N/A', score: 0}, lowestScoring: { name: 'N/A', score: 0}};
     const sortedByScore = [...breakdown].sort((a, b) => b.score - a.score);
-    const highestScoring = { name: sortedByScore[0].name, score: sortedByScore[0].score };
-    const lowestScoring = { name: sortedByScore[sortedByScore.length - 1].name, score: sortedByScore[sortedByScore.length - 1].score };
-    return { totalScore, breakdown, highestScoring, lowestScoring };
+    return { totalScore, breakdown, highestScoring: sortedByScore[0], lowestScoring: sortedByScore[sortedByScore.length - 1] };
 };
 
 // PDF Utility
 const downloadPDF = (nickname, story, prompt) => {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
-    
     const title = story?.title || 'Untitled Story';
     const text = story?.text || 'No text submitted.';
 
-    doc.setFontSize(22);
-    doc.setFont('helvetica', 'bold');
-    doc.text(title, 105, 20, { align: 'center' });
-
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`By: ${nickname}`, 105, 30, { align: 'center' });
-    
-    doc.setFontSize(10);
-    doc.setTextColor(150);
-    doc.text(`Prompt: ${prompt.text}`, 10, 45, { maxWidth: 190 });
-
-    doc.setLineWidth(0.5);
-    doc.line(10, 55, 200, 55);
-
-    doc.setFontSize(12);
-    doc.setTextColor(0);
-    const storyLines = doc.splitTextToSize(text, 190);
-    doc.text(storyLines, 10, 65);
-
+    doc.setFontSize(22); doc.setFont('helvetica', 'bold'); doc.text(title, 105, 20, { align: 'center' });
+    doc.setFontSize(14); doc.setFont('helvetica', 'normal'); doc.text(`By: ${nickname}`, 105, 30, { align: 'center' });
+    doc.setFontSize(10); doc.setTextColor(150); doc.text(`Prompt: ${prompt.text}`, 10, 45, { maxWidth: 190 });
+    doc.setLineWidth(0.5); doc.line(10, 55, 200, 55);
+    doc.setFontSize(12); doc.setTextColor(0); doc.text(doc.splitTextToSize(text, 190), 10, 65);
     doc.save(`InkXP_Story_${nickname.replace(/\s/g, '_')}.pdf`);
 };
 
@@ -510,34 +430,18 @@ const LoadingSpinner = () => <div className="w-8 h-8 border-4 border-sky-200 bor
 
 const Timer = ({ startTime, duration, onTimeUp, onTick }) => {
     const [secondsLeft, setSecondsLeft] = useState(Number(duration));
-    const onTimeUpRef = useRef(onTimeUp);
-    onTimeUpRef.current = onTimeUp;
-    const onTickRef = useRef(onTick);
-    onTickRef.current = onTick;
+    const onTimeUpRef = useRef(onTimeUp); onTimeUpRef.current = onTimeUp;
+    const onTickRef = useRef(onTick); onTickRef.current = onTick;
 
     useEffect(() => {
-        if (!startTime) {
-            setSecondsLeft(Number(duration));
-            return;
-        }
-
+        if (!startTime) { setSecondsLeft(Number(duration)); return; }
         const intervalId = setInterval(() => {
             const gameStartTime = (startTime.toDate ? startTime.toDate() : startTime).getTime();
             const elapsed = Math.floor((Date.now() - gameStartTime) / 1000);
             const remaining = Number(duration) - elapsed;
-
-            if (remaining <= 0) {
-                setSecondsLeft(0);
-                onTimeUpRef.current();
-                clearInterval(intervalId);
-            } else {
-                setSecondsLeft(remaining);
-                if (onTickRef.current) {
-                    onTickRef.current(remaining);
-                }
-            }
+            if (remaining <= 0) { setSecondsLeft(0); onTimeUpRef.current(); clearInterval(intervalId); } 
+            else { setSecondsLeft(remaining); if (onTickRef.current) onTickRef.current(remaining); }
         }, 1000);
-
         return () => clearInterval(intervalId);
     }, [startTime, duration]);
 
@@ -576,27 +480,22 @@ const AuthorSelectionPrompt = ({ student, onAuthorsSubmit }) => {
     const [showClassmates, setShowClassmates] = useState(false);
 
     useEffect(() => {
-        const unsubscribe = getStudentsInClass(student.classId, (students) => {
+        const unsubscribe = getStudentsInClass(student.classId, student.teacherId, (students) => {
             setClassmates(students.filter(s => s.id !== student.id));
         });
         return () => unsubscribe();
-    }, [student.classId, student.id]);
+    }, [student.classId, student.id, student.teacherId]);
     
     const handleAddAuthor = (classmate) => {
-        if (!authors.find(a => a.id === classmate.id)) {
-            setAuthors(prev => [...prev, classmate]);
-        }
+        if (!authors.find(a => a.id === classmate.id)) setAuthors(prev => [...prev, classmate]);
         setShowClassmates(false);
     };
     
-    const handleRemoveAuthor = (authorToRemove) => {
-        setAuthors(prev => prev.filter(a => a.id !== authorToRemove.id));
-    };
+    const handleRemoveAuthor = (authorToRemove) => setAuthors(prev => prev.filter(a => a.id !== authorToRemove.id));
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        const authorNames = authors.map(a => a.displayName).join(', ');
-        onAuthorsSubmit(authorNames);
+        onAuthorsSubmit(authors.map(a => a.displayName).join(', '));
     };
     
     const availableClassmates = classmates.filter(c => !authors.find(a => a.id === c.id));
@@ -606,36 +505,26 @@ const AuthorSelectionPrompt = ({ student, onAuthorsSubmit }) => {
             <div className="bg-white p-8 rounded-xl shadow-2xl w-full max-w-lg text-center">
                 <h2 className="text-2xl font-bold text-slate-800 mb-4">Who is Writing?</h2>
                 <p className="text-slate-600 mb-6">Your name is already added. Add any classmates who are writing with you on this device.</p>
-                
                 <div className="flex flex-wrap items-center justify-center gap-2 mb-6 min-h-[44px] bg-slate-100 p-3 rounded-lg">
                     {authors.map(author => (
                         <div key={author.id} className="bg-sky-200 text-sky-800 font-semibold px-3 py-1 rounded-full flex items-center gap-2">
                             {author.displayName}
-                            {author.id !== student.id && (
-                                <button onClick={() => handleRemoveAuthor(author)} className="w-4 h-4 rounded-full bg-sky-600 text-white flex items-center justify-center text-xs font-bold">&times;</button>
-                            )}
+                            {author.id !== student.id && ( <button onClick={() => handleRemoveAuthor(author)} className="w-4 h-4 rounded-full bg-sky-600 text-white flex items-center justify-center text-xs font-bold">&times;</button> )}
                         </div>
                     ))}
                 </div>
-                
                 <div className="relative">
                     <Button type="button" variant="secondary" onClick={() => setShowClassmates(prev => !prev)} disabled={availableClassmates.length === 0}>
                         {availableClassmates.length > 0 ? "Add Classmate" : "All classmates added"}
                     </Button>
-                    
                     {showClassmates && availableClassmates.length > 0 && (
                         <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 bg-white border border-slate-200 rounded-lg shadow-lg z-10">
                             <ul className="max-h-40 overflow-y-auto">
-                                {availableClassmates.map(c => (
-                                    <li key={c.id}>
-                                        <button onClick={() => handleAddAuthor(c)} className="w-full text-left px-4 py-2 hover:bg-slate-100">{c.displayName}</button>
-                                    </li>
-                                ))}
+                                {availableClassmates.map(c => <li key={c.id}><button onClick={() => handleAddAuthor(c)} className="w-full text-left px-4 py-2 hover:bg-slate-100">{c.displayName}</button></li>)}
                             </ul>
                         </div>
                     )}
                 </div>
-
                 <Button type="button" size="large" className="mt-6 w-full" onClick={handleSubmit}>Confirm Authors & Join</Button>
             </div>
         </div>
@@ -748,9 +637,7 @@ const ResultsScreen = ({ gameData, playerId, onPlayAgain, onGoHome, onRetryPromp
 const GameScreen = ({ gameData, playerId, onTimeUp, onGoHome, onScoreUpdate }) => {
     const fullCriteria = useMemo(() => {
       if (!gameData || !gameData.criteria) return [];
-      return gameData.criteria
-          .map(id => ALL_SCORING_CRITERIA.find(c => c.id === id))
-          .filter(Boolean);
+      return gameData.criteria.map(id => ALL_SCORING_CRITERIA.find(c => c.id === id)).filter(Boolean);
     }, [gameData]);
 
     const [title, setTitle] = useState('');
@@ -761,37 +648,27 @@ const GameScreen = ({ gameData, playerId, onTimeUp, onGoHome, onScoreUpdate }) =
     const hasFired = useRef(false);
     const prevScoreRef = useRef(0);
     const [timeAlert, setTimeAlert] = useState('');
-    const wordCount = useMemo(() => { if (!text.trim()) return 0; return text.trim().split(/\s+/).length; }, [text]);
+    const wordCount = useMemo(() => text.trim().split(/\s+/).filter(Boolean).length, [text]);
     
-    const onScoreUpdateRef = useRef(onScoreUpdate);
-    onScoreUpdateRef.current = onScoreUpdate;
+    const onScoreUpdateRef = useRef(onScoreUpdate); onScoreUpdateRef.current = onScoreUpdate;
 
     const showAlert = useCallback((message) => {
         setTimeAlert(message);
-        setTimeout(() => setTimeAlert(''), 4000); // Alert disappears after 4 seconds
+        setTimeout(() => setTimeAlert(''), 4000);
     }, []);
 
     const handleTick = useCallback((secondsLeft) => {
         const totalDuration = Number(gameData.duration);
-        const fiveMinMark = 5 * 60;
-        const twoMinMark = 2 * 60;
-
-        if (totalDuration >= 10 * 60 && secondsLeft === fiveMinMark) {
-            showAlert('5 minutes remaining!');
-        }
-        if (secondsLeft === twoMinMark) {
-            showAlert('2 minutes to go!');
-        }
+        const fiveMinMark = 5 * 60; const twoMinMark = 2 * 60;
+        if (totalDuration >= 10 * 60 && secondsLeft === fiveMinMark) showAlert('5 minutes remaining!');
+        if (secondsLeft === twoMinMark) showAlert('2 minutes to go!');
     }, [gameData.duration, showAlert]);
-
 
     useEffect(() => {
         const handler = setTimeout(() => {
             const analysis = analyzeScore(text, fullCriteria);
             setScoreAnalysis(analysis);
-            if (onScoreUpdateRef.current) {
-                onScoreUpdateRef.current(analysis);
-            }
+            if (onScoreUpdateRef.current) onScoreUpdateRef.current(analysis);
             if (analysis.totalScore > prevScoreRef.current) {
                 setIsScoreAnimating(true);
                 setTimeout(() => setIsScoreAnimating(false), 300);
@@ -801,23 +678,21 @@ const GameScreen = ({ gameData, playerId, onTimeUp, onGoHome, onScoreUpdate }) =
         return () => clearTimeout(handler);
     }, [text, fullCriteria]);
 
-    const onTimeUpRef = useRef(onTimeUp);
-    onTimeUpRef.current = onTimeUp;
-
-    const handleTimeUp = useCallback(() => {
+    const handleEndMultiplayerGame = useCallback(async (story, analysis) => {
         if (!hasFired.current) {
             hasFired.current = true;
-            const finalAnalysis = analyzeScore(text, fullCriteria);
-            onTimeUpRef.current({ title, text }, finalAnalysis);
+            await submitResult(gameData.id, playerId, story, analysis);
         }
-    }, [title, text, fullCriteria]);
+    }, [gameData.id, playerId]);
 
     useEffect(() => {
-      if (gameData && gameData.status === 'finished' && !hasFired.current) {
-          handleTimeUp();
-      }
-    }, [gameData, handleTimeUp]);
+        if (gameData.status === 'finished' && !hasFired.current) {
+             handleEndMultiplayerGame({ title, text }, analyzeScore(text, fullCriteria));
+        }
+    }, [gameData.status, title, text, fullCriteria, handleEndMultiplayerGame]);
 
+    const onTimeUpRef = useRef(onTimeUp); onTimeUpRef.current = onTimeUp;
+    const handleTimeUp = useCallback(() => onTimeUpRef.current({ title, text }, analyzeScore(text, fullCriteria)), [title, text, fullCriteria]);
     const planningPlaceholder = "Jot down your ideas...\n- Beginning: \n- Middle (The Problem): \n- End (The Solution): \n- Senses to include: ";
 
     return (
@@ -871,9 +746,7 @@ const HostScreen = ({ gameId, gameData, onEndGame }) => {
     .map(([id, data]) => ({ id, ...data, totalScore: data.analysis?.totalScore || 0 }))
     .sort((a, b) => b.totalScore - a.totalScore);
 
-  const handleCopyCode = () => {
-      navigator.clipboard.writeText(gameId);
-  };
+  const handleCopyCode = () => navigator.clipboard.writeText(gameId);
 
   return (
       <div className="flex flex-col items-center">
@@ -883,1199 +756,566 @@ const HostScreen = ({ gameId, gameData, onEndGame }) => {
                   <p className="text-slate-500">Game Code:</p>
                   <p className="text-lg font-bold tracking-widest text-sky-600 bg-sky-100 px-3 py-1 rounded-lg">{gameId}</p>
                   <Button onClick={handleCopyCode} variant="secondary" size="small" title="Copy Code">
-                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 011.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 00-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 01-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5a3.375 3.375 0 00-3.375-3.375H9.75" /></svg>
+                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375-3.375-3.375m0 0A9.06 9.06 0 0 1 12 2.25c-5.006 0-9 4.044-9 9s4.044 9 9 9c.54 0 1.06-.053 1.557-.15l3.375 3.375Z" /></svg>
                   </Button>
               </div>
           </div>
-          
-          <div className="w-full grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <div className="lg:col-span-2">
-                  <div className="bg-white p-6 rounded-lg shadow-md border border-slate-200 mb-6">
-                      <h3 className="text-xl font-bold mb-4 text-slate-800">Live Leaderboard</h3>
-                      {sortedPlayers.length > 0 ? (
-                          <ol className="space-y-2">
-                              {sortedPlayers.map((player, index) => (
-                                  <li key={player.id} className="p-3 rounded-md flex justify-between items-center bg-slate-50 transition-all">
-                                      <span className="font-semibold text-slate-700">{index + 1}. {player.nickname}</span>
-                                      <span className="font-bold text-sky-600">{player.totalScore.toLocaleString()}</span>
-                                  </li>
-                              ))}
-                          </ol>
-                      ) : (
-                          <p className="text-slate-500 text-center py-4">Waiting for players to score...</p>
-                      )}
+          <div className="w-full max-w-4xl bg-white p-6 rounded-lg shadow-md border border-slate-200">
+              <div className="flex justify-between items-center border-b pb-3 mb-3">
+                  <h3 className="text-xl font-bold text-slate-800">Live Leaderboard</h3>
+                  <div className="text-center">
+                     <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Time Remaining</p>
+                      <Timer startTime={gameData.startTime} duration={gameData.duration} onTimeUp={onEndGame} />
                   </div>
               </div>
-              <div className="lg:col-span-1 space-y-6">
-                   <div className="sticky top-8">
-                      <div className="bg-sky-600 text-white p-4 rounded-lg shadow-lg text-center mb-6">
-                          <p className="text-lg font-semibold">Time Remaining</p>
-                          <Timer startTime={gameData.startTime} duration={gameData.duration} onTimeUp={onEndGame} onTick={() => {}} />
-                      </div>
-                      <Button onClick={onEndGame} size="large" className="w-full bg-red-600 hover:bg-red-700 focus:ring-red-500">End Game Now</Button>
-                  </div>
-              </div>
+              <ol className="space-y-2">
+                {sortedPlayers.map((player, index) => (
+                   <li key={player.id} className="p-3 rounded-md flex justify-between items-center bg-slate-50">
+                     <span className="font-semibold text-slate-700">{index + 1}. {player.nickname}</span>
+                     <span className="font-bold text-sky-600">{player.totalScore.toLocaleString()}</span>
+                   </li>
+                ))}
+               </ol>
           </div>
+          <Button onClick={onEndGame} variant="danger" size="large" className="mt-8">End Game for All Players</Button>
       </div>
   );
 };
 
-const PlayerDetailModal = ({ player, gamePrompt, onClose }) => {
-    if (!player) return null;
-    const analysis = player.analysis || { breakdown: [], totalScore: 0 };
+const LobbyScreen = ({ gameId, gameData, playerId, onStartGame, onLeaveGame, user }) => {
+    const isHost = gameData.hostId === playerId;
+    const [playerNickname, setPlayerNickname] = useState(gameData.players[playerId]?.nickname || '');
+    const [showAuthorPrompt, setShowAuthorPrompt] = useState(user && user.student && !gameData.players[playerId]?.nickname);
+
+    const handleSetAuthors = async (authors) => {
+        await updatePlayerNickname(gameId, playerId, authors);
+        setShowAuthorPrompt(false);
+    };
+
+    const handleRemovePlayer = async (playerIdToRemove) => {
+        if (isHost) await removePlayerFromGame(gameId, playerIdToRemove);
+    };
+    
+    const handleCopyCode = () => navigator.clipboard.writeText(gameId);
+
     return (
-        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={onClose}>
-            <div className="bg-white p-6 rounded-xl shadow-2xl w-full max-w-3xl text-left relative" onClick={(e) => e.stopPropagation()}>
-                <button onClick={onClose} className="absolute top-3 right-4 text-slate-500 hover:text-slate-800 text-3xl font-bold">&times;</button>
-                <h3 className="text-2xl font-bold text-slate-800 mb-4">{player.story?.title || 'Untitled Story'}</h3>
-                <p className="text-slate-600 mb-4 -mt-2">by: {player.nickname}</p>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-h-[70vh]">
-                    <div className="md:col-span-2 overflow-y-auto pr-2">
-                         <h4 className="text-lg font-bold text-slate-800 mb-2">Full Story</h4>
-                         <p className="text-sm font-semibold text-sky-600 mb-2">{gamePrompt.text}</p>
-                         <div className="prose max-w-none text-slate-700 whitespace-pre-wrap bg-slate-50 p-4 rounded-md">{player.story?.text || "No text submitted."}</div>
-                    </div>
-                    <div className="overflow-y-auto">
-                        <h4 className="text-lg font-bold text-slate-800 mb-2">Score Breakdown</h4>
-                        <ul className="space-y-2">
-                           {analysis.breakdown.map((item) => {
-                               const criterion = ALL_SCORING_CRITERIA.find(c => c.id === item.id);
-                               return (
-                                   <li key={item.id} className="flex justify-between items-center text-sm p-2 bg-slate-50 rounded-md">
-                                       <Tooltip text={criterion?.description || 'No description available.'}>
-                                           <div className="flex items-center gap-1.5 cursor-help">
-                                               <span className="text-slate-700">{item.name} ({item.count})</span>
-                                               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-slate-400"><path strokeLinecap="round" strokeLinejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" /></svg>
-                                           </div>
-                                       </Tooltip>
-                                       <span className="font-semibold text-emerald-600">+{item.score.toLocaleString()}</span>
-                                   </li>
-                               );
-                           })}
-                            <li className="flex justify-between items-center text-base font-bold p-2 bg-sky-100 rounded-md mt-4">
-                                   <span className="text-sky-800">Total Score</span>
-                                   <span className="text-sky-800">{analysis.totalScore.toLocaleString()}</span>
-                               </li>
-                       </ul>
-                       <Button onClick={() => downloadPDF(player.nickname, player.story, gamePrompt)} size="medium" className="mt-6 w-full">Download as PDF</Button>
-                    </div>
+        <div className="w-full max-w-2xl mx-auto">
+            {showAuthorPrompt && user && user.student && <AuthorSelectionPrompt student={user.student} onAuthorsSubmit={handleSetAuthors} />}
+            <div className="bg-white p-8 rounded-xl shadow-2xl text-center">
+                <h2 className="text-3xl font-bold text-slate-800 mb-2">Game Lobby</h2>
+                <p className="text-slate-600 mb-6">Waiting for the host to start the game...</p>
+                <div className="flex items-center justify-center gap-2 mb-8">
+                  <p className="text-slate-500">Game Code:</p>
+                  <p className="text-2xl font-bold tracking-widest text-sky-600 bg-sky-100 px-4 py-2 rounded-lg">{gameId}</p>
+                   <Button onClick={handleCopyCode} variant="secondary" size="small" title="Copy Code"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375-3.375-3.375m0 0A9.06 9.06 0 0 1 12 2.25c-5.006 0-9 4.044-9 9s4.044 9 9 9c.54 0 1.06-.053 1.557-.15l3.375 3.375Z" /></svg></Button>
+                </div>
+                
+                <h3 className="text-xl font-semibold text-slate-700 mb-4">Players Joined ({Object.keys(gameData.players).length})</h3>
+                <div className="space-y-3 max-h-60 overflow-y-auto bg-slate-50 p-4 rounded-lg border">
+                    {Object.entries(gameData.players).map(([id, player]) => (
+                        <div key={id} className={`flex items-center justify-between p-3 rounded-md ${id === playerId ? 'bg-sky-100' : 'bg-white'}`}>
+                            <p className="font-semibold text-slate-800">{player.nickname || 'Joining...'}</p>
+                             {isHost && id !== playerId && ( <Button onClick={() => handleRemovePlayer(id)} variant="danger" size="small">Remove</Button> )}
+                        </div>
+                    ))}
+                </div>
+                
+                <div className="mt-8 flex flex-col sm:flex-row gap-4">
+                    <Button onClick={onLeaveGame} variant="secondary" size="large" className="w-full">Leave Game</Button>
+                    {isHost && <Button onClick={onStartGame} size="large" className="w-full">Start Game</Button>}
                 </div>
             </div>
         </div>
     );
 };
 
-const HostResultsScreen = ({ gameData, onNewGame, onGoHome, isHistoryView = false, onBackToDashboard }) => {
-  const [selectedPlayer, setSelectedPlayer] = useState(null);
+const PracticeSetupScreen = ({ onStart, onBack }) => {
+    const [duration, setDuration] = useState(600);
+    const [numCriteria, setNumCriteria] = useState(3);
+    const [selectedCriteria, setSelectedCriteria] = useState([]);
 
-  const sortedPlayers = Object.entries(gameData.players)
-    .map(([id, data]) => ({ id, ...data, totalScore: data.analysis?.totalScore || 0 }))
-    .sort((a, b) => b.totalScore - a.totalScore);
-
-  return (
-      <div className="flex flex-col items-center">
-          <h2 className="text-3xl font-bold text-emerald-600 mb-2">{isHistoryView ? "Game Results" : "Game Over!"}</h2>
-          <p className="text-slate-600 mb-6">{isHistoryView ? "Here are the results for this game session." : "Here are the final results and all the amazing stories written."}</p>
-          <div className="w-full max-w-2xl bg-white p-6 rounded-lg shadow-md border border-slate-200">
-               <h3 className="text-xl font-bold text-slate-500 uppercase tracking-wider mb-3">Final Leaderboard</h3>
-               {sortedPlayers.length > 0 ? (
-                  <ol className="space-y-2">
-                   {sortedPlayers.map((player, index) => (
-                      <li key={player.id} className="p-3 rounded-md flex justify-between items-center bg-slate-50">
-                        <div className="flex items-center gap-4">
-                         <span className="font-bold text-slate-600 text-lg w-6">{index + 1}.</span>
-                         <span className="font-semibold text-slate-800 text-lg">{player.nickname}</span>
-                         <span className="font-bold text-sky-600">{player.totalScore.toLocaleString()}</span>
-                        </div>
-                        <Button onClick={() => setSelectedPlayer(player)} size="small">View Writing</Button>
-                      </li>
-                   ))}
-                  </ol>
-               ) : (
-                  <p className="text-slate-500 text-center py-4">No players submitted a score.</p>
-               )}
-          </div>
-           <div className="flex items-center gap-4 mt-8">
-              {isHistoryView ? (
-                  <Button onClick={onBackToDashboard} variant="secondary" size="large">Back to Dashboard</Button>
-              ) : (
-                  <>
-                      <Button onClick={onNewGame} size="large">Create New Game</Button>
-                      <Button onClick={onGoHome} variant="secondary" size="large">Back to Home</Button>
-                  </>
-              )}
-          </div>
-          {selectedPlayer && <PlayerDetailModal player={selectedPlayer} gamePrompt={gameData.prompt} onClose={() => setSelectedPlayer(null)} />}
-      </div>
-  );
-};
-
-const LobbyScreen = ({ gameId, gameData, playerId, onStartGame, onRemovePlayer }) => {
-  const isHost = gameData.hostId === playerId;
-  const playerList = Object.entries(gameData.players);
-
-  const handleCopyCode = () => {
-      navigator.clipboard.writeText(gameId);
-  };
-
-  return (
-      <div className="flex flex-col items-center">
-          <h2 className="text-2xl font-bold text-slate-800 mb-2">Game Lobby</h2>
-          <p className="text-slate-600 mb-6">Share the code with your friends! The game will begin when the host starts.</p>
-          <div className="mb-6">
-              <p className="text-sm text-slate-500">GAME CODE</p>
-              <div className="flex items-center gap-2 mt-1">
-                  <p className="text-4xl font-bold tracking-widest text-sky-600 bg-sky-100 p-3 rounded-lg">{gameId}</p>
-                  <Button onClick={handleCopyCode} variant="secondary" title="Copy Code">
-                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 011.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 00-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 01-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5a3.375 3.375 0 00-3.375-3.375H9.75" /></svg>
-                  </Button>
-              </div>
-          </div>
-
-          <div className="w-full max-w-md bg-white p-6 rounded-lg shadow-md border border-slate-200 mb-8">
-              <h3 className="text-xl font-bold mb-4 text-slate-800">Players ({playerList.length})</h3>
-              <ul className="space-y-2">
-                  {playerList.map(([id, player]) => (
-                      <li key={id} className="flex items-center justify-between gap-3 p-2 bg-slate-100 rounded-md">
-                        <div className="flex items-center gap-3">
-                           <span className="font-bold text-slate-700">{player.nickname}</span>
-                           {gameData.hostId === id && <span className="text-xs font-bold text-sky-700 bg-sky-200 px-2 py-0.5 rounded-full">HOST (Not Playing)</span>}
-                        </div>
-                        {isHost && gameData.hostId !== id && (
-                           <Button onClick={() => onRemovePlayer(id)} variant="danger" size="small">Remove</Button>
-                        )}
-                      </li>
-                  ))}
-                  {playerList.length === 0 && <p className="text-slate-500 text-center py-2">Waiting for players to join...</p>}
-              </ul>
-          </div>
-
-          {isHost ? (
-              <Button onClick={onStartGame} size="large" disabled={playerList.length === 0}>Start Game for Everyone!</Button>
-          ) : (
-              <p className="text-lg text-slate-600 animate-pulse">Waiting for host to start the game...</p>
-          )}
-      </div>
-  );
-};
-
-const JoinGameScreen = ({ onJoin, onGoHome, isStudent }) => {
-    const [gameCode, setGameCode] = useState('');
-    const [error, setError] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
-
-    const handleJoin = async (e) => {
-      e.preventDefault();
-      if (!gameCode.trim()) return;
-      setError('');
-      setIsLoading(true);
-      try {
-          await onJoin(gameCode.trim().toUpperCase());
-      } catch (err) {
-          setError(err.message);
-      } finally {
-          setIsLoading(false);
-      }
+    const handleStart = () => {
+        const alwaysCriteria = ALL_SCORING_CRITERIA.filter(c => c.type === 'always').map(c => c.id);
+        const randomCriteria = ALL_SCORING_CRITERIA.filter(c => c.type === 'random').sort(() => 0.5 - Math.random()).slice(0, numCriteria).map(c => c.id);
+        const criteria = [...alwaysCriteria, ...randomCriteria];
+        const prompt = NARRATIVE_PROMPTS[Math.floor(Math.random() * NARRATIVE_PROMPTS.length)];
+        onStart(prompt, criteria, duration);
     };
 
     return (
-        <div className="flex flex-col items-center">
-            <h2 className="text-2xl font-bold text-slate-800 mb-2">Join a Game</h2>
-            <p className="text-slate-600 mb-6">Enter the 6-character code from your teacher.</p>
-            <form onSubmit={handleJoin} className="w-full max-w-sm flex flex-col items-center">
-                <input
-                  type="text"
-                  value={gameCode}
-                  onChange={(e) => setGameCode(e.target.value)}
-                  className="w-full p-3 border border-slate-300 rounded-lg shadow-inner focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-shadow duration-200 text-2xl text-center tracking-[0.5em] uppercase"
-                  placeholder="ABCXYZ"
-                  maxLength={6}
-                  required
-                />
-                {error && <p className="text-red-500 mt-2">{error}</p>}
-                <div className="flex items-center gap-4 mt-8">
-                  <Button onClick={onGoHome} variant="secondary" size="large" type="button">Back</Button>
-                  <Button type="submit" size="large" disabled={isLoading}>{isLoading ? 'Joining...' : 'Join Game'}</Button>
+        <div className="w-full max-w-xl mx-auto">
+            <div className="bg-white p-8 rounded-xl shadow-2xl text-center">
+                <h2 className="text-3xl font-bold text-slate-800 mb-2">Solo Practice Setup</h2>
+                <p className="text-slate-600 mb-8">Set up your writing challenge.</p>
+                <div className="space-y-6 text-left">
+                    <div>
+                        <label htmlFor="duration" className="block text-lg font-semibold text-slate-700 mb-2">Writing Time: <span className="text-sky-600 font-bold">{duration / 60} minutes</span></label>
+                        <input id="duration" type="range" min="120" max="1800" step="60" value={duration} onChange={(e) => setDuration(Number(e.target.value))} className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-sky-600" />
+                    </div>
+                    <div>
+                        <label htmlFor="criteria" className="block text-lg font-semibold text-slate-700 mb-2">Random Scoring Goals: <span className="text-sky-600 font-bold">{numCriteria} goals</span></label>
+                        <input id="criteria" type="range" min="1" max="5" step="1" value={numCriteria} onChange={(e) => setNumCriteria(Number(e.target.value))} className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-sky-600" />
+                    </div>
                 </div>
-            </form>
+                <div className="mt-10 flex flex-col sm:flex-row gap-4">
+                    <Button onClick={onBack} variant="secondary" size="large" className="w-full">Back</Button>
+                    <Button onClick={handleStart} size="large" className="w-full">Start Writing</Button>
+                </div>
+            </div>
         </div>
     );
 };
 
-const StudentLoginScreen = ({ onLogin, onGoHome }) => {
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
+const CreateGameSetupScreen = ({ onCreate, onBack, user }) => {
+    const [duration, setDuration] = useState(600);
+    const [numCriteria, setNumCriteria] = useState(3);
+    
+    const handleCreate = () => {
+        const alwaysCriteria = ALL_SCORING_CRITERIA.filter(c => c.type === 'always').map(c => c.id);
+        const randomCriteria = ALL_SCORING_CRITERIA.filter(c => c.type === 'random').sort(() => 0.5 - Math.random()).slice(0, numCriteria).map(c => c.id);
+        const criteria = [...alwaysCriteria, ...randomCriteria];
+        const prompt = NARRATIVE_PROMPTS[Math.floor(Math.random() * NARRATIVE_PROMPTS.length)];
+        onCreate(prompt, criteria, duration, user.uid);
+    };
+
+    return (
+        <div className="w-full max-w-xl mx-auto">
+            <div className="bg-white p-8 rounded-xl shadow-2xl text-center">
+                <h2 className="text-3xl font-bold text-slate-800 mb-2">Create Multiplayer Game</h2>
+                <p className="text-slate-600 mb-8">Set the rules for this game.</p>
+                <div className="space-y-6 text-left">
+                    <div>
+                        <label htmlFor="duration-multi" className="block text-lg font-semibold text-slate-700 mb-2">Writing Time: <span className="text-sky-600 font-bold">{duration / 60} minutes</span></label>
+                        <input id="duration-multi" type="range" min="120" max="1800" step="60" value={duration} onChange={(e) => setDuration(Number(e.target.value))} className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-sky-600" />
+                    </div>
+                    <div>
+                        <label htmlFor="criteria-multi" className="block text-lg font-semibold text-slate-700 mb-2">Random Scoring Goals: <span className="text-sky-600 font-bold">{numCriteria} goals</span></label>
+                        <input id="criteria-multi" type="range" min="1" max="5" step="1" value={numCriteria} onChange={(e) => setNumCriteria(Number(e.target.value))} className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-sky-600" />
+                    </div>
+                </div>
+                 <div className="mt-10 flex flex-col sm:flex-row gap-4">
+                    <Button onClick={onBack} variant="secondary" size="large" className="w-full">Back</Button>
+                    <Button onClick={handleCreate} size="large" className="w-full">Create Game</Button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const JoinGameScreen = ({ onJoin, onBack, user }) => {
+    const [gameCode, setGameCode] = useState('');
+    const [error, setError] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+    
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setError(''); setIsLoading(true);
+        if (gameCode.trim()) {
+            try { await onJoin(gameCode.trim().toUpperCase(), user.student); } 
+            catch (err) { setError(err.message); setIsLoading(false); }
+        } else { setIsLoading(false); }
+    };
+
+    return (
+        <div className="w-full max-w-md mx-auto">
+            <div className="bg-white p-8 rounded-xl shadow-2xl text-center">
+                <h2 className="text-3xl font-bold text-slate-800 mb-2">Join Game</h2>
+                <p className="text-slate-600 mb-6">Enter the 6-character code from your teacher.</p>
+                <form onSubmit={handleSubmit}>
+                    <input type="text" value={gameCode} onChange={(e) => setGameCode(e.target.value)} className="w-full p-3 border border-slate-300 rounded-lg shadow-inner focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-shadow duration-200 text-lg text-center uppercase tracking-widest" placeholder="GAME CODE" maxLength={6} required style={{textTransform: "uppercase"}} />
+                    {error && <p className="text-red-500 mt-4">{error}</p>}
+                    <div className="mt-6 flex flex-col sm:flex-row gap-4">
+                        <Button type="button" variant="secondary" size="large" onClick={onBack} className="w-full">Back</Button>
+                        <Button type="submit" size="large" className="w-full" disabled={isLoading}>{isLoading ? <LoadingSpinner /> : 'Join'}</Button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+};
+
+const GuestJoinScreen = ({ onJoin, onBack }) => {
+    const [nickname, setNickname] = useState('');
+    const [gameCode, setGameCode] = useState('');
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setError('');
-        setIsLoading(true);
-        try {
-            await onLogin(username.trim(), password);
-        } catch (err) {
-            setError("Incorrect username or password. Please try again.");
-            console.error(err);
-        } finally {
-            setIsLoading(false);
-        }
+        setError(''); setIsLoading(true);
+        if (nickname.trim() && gameCode.trim()) {
+            try { await onJoin(gameCode.trim().toUpperCase(), nickname.trim()); } 
+            catch (err) { setError(err.message); setIsLoading(false); }
+        } else { setError("Please enter a name and a game code."); setIsLoading(false); }
     };
 
     return (
-        <div className="flex flex-col items-center">
-            <h2 className="text-2xl font-bold text-slate-800 mb-2">Student Login</h2>
-            <p className="text-slate-600 mb-6">Enter your username and password.</p>
-            <form onSubmit={handleSubmit} className="w-full max-w-sm flex flex-col items-center">
-                <div className="w-full mb-4">
-                    <label className="block text-sm font-medium text-slate-700 mb-1" htmlFor="username">Username</label>
-                    <input id="username" type="text" value={username} onChange={e => setUsername(e.target.value)} className="w-full p-2 border border-slate-300 rounded-lg shadow-inner" required />
-                </div>
-                <div className="w-full mb-4">
-                    <label className="block text-sm font-medium text-slate-700 mb-1" htmlFor="password">Password</label>
-                    <input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} className="w-full p-2 border border-slate-300 rounded-lg shadow-inner" required />
-                </div>
-                {error && <p className="text-red-500 mt-2">{error}</p>}
-                <div className="flex items-center gap-4 mt-8">
-                    <Button onClick={onGoHome} variant="secondary" size="large" type="button">Back</Button>
-                    <Button type="submit" size="large" disabled={isLoading}>{isLoading ? <LoadingSpinner /> : 'Login'}</Button>
-                </div>
-            </form>
-        </div>
-    );
-};
-
-const SetupScreen = ({ onStart, onGoHome, onBackToDashboard, isSolo = false, isTeacher = false }) => {
-    const [currentPrompt, setCurrentPrompt] = useState(() => NARRATIVE_PROMPTS[Math.floor(Math.random() * NARRATIVE_PROMPTS.length)]);
-    const [duration, setDuration] = useState(10);
-    const [useCustomPrompt, setUseCustomPrompt] = useState(false);
-    const [customPromptText, setCustomPromptText] = useState('');
-
-    const generateNewPrompt = useCallback(() => {
-        const newPrompt = NARRATIVE_PROMPTS[Math.floor(Math.random() * NARRATIVE_PROMPTS.length)];
-        setCurrentPrompt(newPrompt);
-    }, []);
-
-    const selectedCriteria = useMemo(() => {
-        const alwaysGoals = ALL_SCORING_CRITERIA.filter(c => c.type === 'always');
-        const randomGoalsPool = ALL_SCORING_CRITERIA.filter(c => c.type === 'random');
-        const shuffled = [...randomGoalsPool].sort(() => 0.5 - Math.random());
-        const selectedRandomGoals = shuffled.slice(0, 3);
-        return [...alwaysGoals, ...selectedRandomGoals];
-    }, [currentPrompt]);
-
-    const handleStart = async () => {
-        const criteriaIds = selectedCriteria.map(c => c.id);
-        const promptToUse = useCustomPrompt && isTeacher 
-            ? { category: "Teacher's Choice", text: customPromptText.trim() }
-            : currentPrompt;
-
-        if (useCustomPrompt && isTeacher && !customPromptText.trim()) {
-            alert("Please enter your custom prompt before starting the game.");
-            return;
-        }
-        
-        await onStart(promptToUse, criteriaIds, duration * 60);
-    };
-    
-    return (
-        <div className="flex flex-col items-center">
-            <h2 className="text-2xl font-bold text-slate-800 mb-2">{isSolo ? "Solo Mode" : "Create a Game"}</h2>
-            <p className="text-slate-600 mb-6">Generate a story idea and choose the writing time.</p>
-            <div className="w-full max-w-3xl bg-white p-6 rounded-lg shadow-md border border-slate-200 mb-6">
-              {isTeacher && !isSolo && useCustomPrompt ? (
-                  <div>
-                      <label htmlFor="custom-prompt" className="block text-sm font-semibold text-sky-600 mb-2">Enter Your Custom Prompt</label>
-                      <textarea 
-                          id="custom-prompt"
-                          value={customPromptText}
-                          onChange={(e) => setCustomPromptText(e.target.value)}
-                          className="w-full p-2 border border-slate-300 rounded-lg shadow-inner focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-all duration-200"
-                          rows="3"
-                          placeholder="e.g., A friendly dragon has lost its roar. Write a story about how it gets it back."
-                      />
-                  </div>
-              ) : (
-                  <>
-                      <p className="text-sm font-semibold text-sky-600 mb-2">{currentPrompt.category}</p>
-                      <p className="text-lg text-slate-700">{currentPrompt.text}</p>
-                  </>
-              )}
-            </div>
-            <div className="flex items-center gap-4 mb-6">
-              {!(isTeacher && useCustomPrompt) && (
-                  <Button onClick={generateNewPrompt} variant="secondary">
-                      Generate New Prompt
-                  </Button>
-              )}
-              {isTeacher && !isSolo && (
-                  <Button onClick={() => setUseCustomPrompt(prev => !prev)} variant="secondary">
-                      {useCustomPrompt ? "Use a Random Prompt" : "Write My Own Prompt"}
-                  </Button>
-              )}
-            </div>
-            <div className="w-full max-w-sm mb-8">
-                <label htmlFor="duration" className="block text-center text-sm font-medium text-slate-700 mb-2">Set Timer (minutes)</label>
-                <div className="flex items-center justify-center gap-4">
-                    <input type="range" id="duration" min={5} max={45} step={5} value={duration} onChange={(e) => setDuration(parseInt(e.target.value))} className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer dark:bg-slate-700" />
-                    <span className="font-bold text-sky-600 text-lg w-12 text-center">{duration}</span>
-                </div>
-            </div>
-            <div className="flex items-center gap-4">
-              <Button onClick={isTeacher ? onBackToDashboard : onGoHome} variant="secondary" size="large">{isTeacher ? "Back to Dashboard" : "Back to Home"}</Button>
-              <Button onClick={handleStart} size="large">
-                  {isSolo ? "Start Writing!" : "Create Game Lobby"}
-              </Button>
+        <div className="w-full max-w-md mx-auto">
+            <div className="bg-white p-8 rounded-xl shadow-2xl text-center">
+                <h2 className="text-3xl font-bold text-slate-800 mb-2">Join a Game as a Guest</h2>
+                <p className="text-slate-600 mb-6">Enter your name and the 6-character game code.</p>
+                <form onSubmit={handleSubmit}>
+                    <div className="space-y-4">
+                        <input type="text" value={nickname} onChange={(e) => setNickname(e.target.value)} className="w-full p-3 border border-slate-300 rounded-lg shadow-inner focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-shadow duration-200 text-lg text-center" placeholder="Your Name" maxLength={25} required />
+                        <input type="text" value={gameCode} onChange={(e) => setGameCode(e.target.value)} className="w-full p-3 border border-slate-300 rounded-lg shadow-inner focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-shadow duration-200 text-lg text-center uppercase" placeholder="GAME CODE" maxLength={6} required style={{ textTransform: 'uppercase' }} />
+                    </div>
+                    {error && <p className="text-red-500 mt-4">{error}</p>}
+                    <div className="mt-6 flex flex-col sm:flex-row gap-4">
+                        <Button type="button" variant="secondary" size="large" onClick={onBack} className="w-full">Back</Button>
+                        <Button type="submit" size="large" className="w-full" disabled={isLoading}>{isLoading ? <LoadingSpinner /> : 'Join Game'}</Button>
+                    </div>
+                </form>
             </div>
         </div>
     );
 };
 
-const PlayerHistoryModal = ({ player, onClose }) => {
-    const [viewingWriting, setViewingWriting] = useState(null);
-    if (!player) return null;
+const TeacherDashboard = ({ user, onSignOut, onBack }) => {
+    const [activeTab, setActiveTab] = useState('history');
+    const [games, setGames] = useState([]);
+    const [selectedGame, setSelectedGame] = useState(null);
+    const [classes, setClasses] = useState([]);
+    const [students, setStudents] = useState([]);
+    const [selectedClassId, setSelectedClassId] = useState('');
+    const [newClassName, setNewClassName] = useState('');
+    const [newStudentName, setNewStudentName] = useState('');
+    const [newStudentUsername, setNewStudentUsername] = useState('');
+    const [error, setError] = useState('');
+    const [lastAddedStudent, setLastAddedStudent] = useState(null);
 
-    const formatDate = (timestamp) => {
-        if (!timestamp) return 'N/A';
-        return timestamp.toDate().toLocaleDateString('en-US', {
-            month: 'short', day: 'numeric', year: 'numeric'
+    useEffect(() => {
+        const unsubscribe = getGamesForTeacher(user.uid, setGames);
+        return () => unsubscribe();
+    }, [user.uid]);
+
+     useEffect(() => {
+        const unsubscribe = getClassesForTeacher(user.uid, (fetchedClasses) => {
+            setClasses(fetchedClasses);
+            if (!selectedClassId && fetchedClasses.length > 0) setSelectedClassId(fetchedClasses[0].id);
         });
-    }
-    
-    const playerName = player.displayName || player.nickname;
+        return () => unsubscribe();
+    }, [user.uid, selectedClassId]);
 
+    useEffect(() => {
+        if (!selectedClassId || !user?.uid) { setStudents([]); return; }
+        const unsubscribe = getStudentsInClass(selectedClassId, user.uid, setStudents);
+        return () => unsubscribe();
+    }, [selectedClassId, user?.uid]);
+
+    const handleCreateClass = async (e) => {
+        e.preventDefault();
+        if (!newClassName.trim()) return;
+        setError('');
+        try {
+            await createClass(newClassName, user.uid);
+            setNewClassName('');
+        } catch (err) { setError(`Error creating class: ${err.message}`); console.error(err); }
+    };
+    
+    const handleAddStudent = async (e) => {
+        e.preventDefault();
+        if (!newStudentName.trim() || !newStudentUsername.trim() || !selectedClassId) return;
+        setError(''); setLastAddedStudent(null);
+        try {
+            const newStudent = await addStudentToClass(newStudentUsername, newStudentName, selectedClassId, user.uid);
+            setLastAddedStudent(newStudent);
+            setNewStudentName(''); setNewStudentUsername('');
+        } catch (err) { setError(`Error adding student: ${err.message}`); }
+    };
+
+    const playerHistory = useMemo(() => {
+        const allPlayers = {};
+        games.forEach(game => {
+            Object.entries(game.players).forEach(([id, player]) => {
+                 if (player.studentId && !allPlayers[player.studentId]) allPlayers[player.studentId] = { displayName: player.nickname, studentId: player.studentId, writings: [] };
+                 if (player.studentId) allPlayers[player.studentId].writings.push({ gameId: game.id, prompt: game.prompt, story: player.story, analysis: player.analysis, date: game.createdAt?.toDate() });
+            });
+        });
+        return Object.values(allPlayers);
+    }, [games]);
+    
     return (
-        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={onClose}>
-            <div className="bg-white p-6 rounded-xl shadow-2xl w-full max-w-3xl text-left relative" onClick={(e) => e.stopPropagation()}>
-                <button onClick={onClose} className="absolute top-3 right-4 text-slate-500 hover:text-slate-800 text-3xl font-bold">&times;</button>
-                <h3 className="text-2xl font-bold text-slate-800 mb-4">Writing History for <span className="text-sky-600">{playerName}</span></h3>
-                <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-2">
-                    {player.writings.length > 0 ? player.writings.map((writing, index) => (
-                        <div key={`${player.id}-${index}`} className="bg-slate-50 p-3 rounded-lg border border-slate-200 flex justify-between items-center">
-                            <div>
-                                <p className="font-semibold text-slate-700 truncate" title={writing.prompt?.text}>{writing.story?.title || 'Untitled Story'}</p>
-                                <p className="text-sm text-slate-500">{formatDate(writing.createdAt)} &bull; Score: <span className="font-bold">{(writing.analysis?.totalScore || 0).toLocaleString()}</span></p>
-                                <p className="text-xs text-slate-500 mt-1">Authors: {writing.authors}</p>
-                            </div>
-                            <Button onClick={() => setViewingWriting(writing)} size="small" variant="secondary">View Writing</Button>
-                        </div>
-                    )) : <p className="text-slate-500 text-center py-4">This student has not submitted any writing yet.</p>}
-                </div>
+        <div className="w-full max-w-7xl mx-auto">
+            <div className="flex justify-between items-center mb-6">
+                <h2 className="text-3xl font-bold text-slate-800">Teacher Dashboard</h2>
+                <div><Button onClick={onBack} variant="secondary">Home</Button> <Button onClick={onSignOut}>Sign Out</Button></div>
             </div>
-            {viewingWriting && (
-                <PlayerDetailModal 
-                    player={{ nickname: viewingWriting.authors, story: viewingWriting.story, analysis: viewingWriting.analysis }}
-                    gamePrompt={viewingWriting.prompt}
-                    onClose={() => setViewingWriting(null)}
-                />
+            <div className="flex border-b border-slate-200 mb-6"><button onClick={() => setActiveTab('history')} className={`px-4 py-2 font-semibold ${activeTab === 'history' ? 'border-b-2 border-sky-600 text-sky-600' : 'text-slate-500'}`}>Student History</button><button onClick={() => setActiveTab('classes')} className={`px-4 py-2 font-semibold ${activeTab === 'classes' ? 'border-b-2 border-sky-600 text-sky-600' : 'text-slate-500'}`}>Class Management</button></div>
+            {activeTab === 'history' && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="md:col-span-1 bg-white p-4 rounded-lg shadow-md border border-slate-200 max-h-[70vh] overflow-y-auto">
+                        <h3 className="text-lg font-bold p-2">All Games ({games.length})</h3>
+                        <ul>{games.map(game => <li key={game.id}><button onClick={() => setSelectedGame(game)} className={`w-full text-left p-2 rounded-md ${selectedGame?.id === game.id ? 'bg-sky-100' : 'hover:bg-slate-50'}`}>Game: {game.id}</button></li>)}</ul>
+                    </div>
+                    <div className="md:col-span-2 bg-white p-6 rounded-lg shadow-md border border-slate-200 max-h-[70vh] overflow-y-auto">
+                        {selectedGame ? (
+                            <div>
+                                <h3 className="text-xl font-bold mb-4">Results for Game {selectedGame.id}</h3>
+                                {Object.values(selectedGame.players).map((p, i) => <div key={i} className="mb-4 p-4 border rounded-lg"><p className="font-bold">{p.nickname}</p><p className="whitespace-pre-wrap">{p.story?.text}</p></div>)}
+                            </div>
+                        ) : <p>Select a game to view results.</p>}
+                    </div>
+                </div>
+            )}
+            {activeTab === 'classes' && (
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                     <div className="bg-white p-6 rounded-lg shadow-md border border-slate-200">
+                         <h3 className="text-xl font-bold mb-4">Your Classes</h3>
+                         <form onSubmit={handleCreateClass} className="flex gap-2 mb-4"><input type="text" value={newClassName} onChange={e => setNewClassName(e.target.value)} placeholder="New class name" className="flex-grow p-2 border rounded-lg" /><Button type="submit">Create</Button></form>
+                         <select value={selectedClassId} onChange={e => setSelectedClassId(e.target.value)} className="w-full p-2 border rounded-lg mb-4">{classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select>
+                         <div className="max-h-60 overflow-y-auto"><ul>{students.map(s => <li key={s.id} className="p-2 bg-slate-50 rounded-md mb-1">{s.displayName} ({s.username})</li>)}</ul></div>
+                     </div>
+                      <div className="bg-white p-6 rounded-lg shadow-md border border-slate-200">
+                          <h3 className="text-xl font-bold mb-4">Add Student</h3>
+                          <form onSubmit={handleAddStudent} className="space-y-3"><input type="text" value={newStudentName} onChange={e => setNewStudentName(e.target.value)} placeholder="Student's Display Name" className="w-full p-2 border rounded-lg" required /><input type="text" value={newStudentUsername} onChange={e => setNewStudentUsername(e.target.value.toLowerCase().replace(/\s/g, ''))} placeholder="Create a username (no spaces)" className="w-full p-2 border rounded-lg" required /><Button type="submit" className="w-full">Add Student to Class</Button></form>
+                          {error && <p className="text-red-500 mt-4">{error}</p>}
+                          {lastAddedStudent && <div className="mt-4 p-3 bg-emerald-50 text-emerald-800 rounded-lg">Student Added! <strong>Username:</strong> {lastAddedStudent.username}, <strong>Password:</strong> {lastAddedStudent.password}</div>}
+                      </div>
+                 </div>
             )}
         </div>
     );
 };
 
-const TeacherDashboard = ({ currentUser, onCreateNewGame, onViewGame, onSignOut }) => {
-  const [games, setGames] = useState([]);
-  const [studentsData, setStudentsData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('games');
-  const [viewingPlayer, setViewingPlayer] = useState(null);
-
-  // Class Management State
-  const [classes, setClasses] = useState([]);
-  const [selectedClassId, setSelectedClassId] = useState('');
-  const [studentsInClass, setStudentsInClass] = useState([]);
-  const [newClassName, setNewClassName] = useState('');
-  const [newStudentUsername, setNewStudentUsername] = useState('');
-  const [newStudentDisplayName, setNewStudentDisplayName] = useState('');
-  const [newlyCreatedStudent, setNewlyCreatedStudent] = useState(null);
-  const [classMgmtLoading, setClassMgmtLoading] = useState(false);
-  const [error, setError] = useState('');
-  
-  // Fetch classes
-  useEffect(() => {
-    if (!currentUser) return;
-    const unsubscribe = getClassesForTeacher(currentUser.uid, setClasses);
-    return () => unsubscribe();
-  }, [currentUser]);
-
-  // Fetch students when a class is selected
-  useEffect(() => {
-    if (selectedClassId) {
-        setStudentsInClass([]);
-        const unsubscribe = getStudentsInClass(selectedClassId, setStudentsInClass);
-        return () => unsubscribe();
-    }
-  }, [selectedClassId]);
-
-  // Fetch games and aggregate student history
-  useEffect(() => {
-      if (!currentUser) return;
-      const unsubscribeGames = getGamesForTeacher(currentUser.uid, (fetchedGames) => {
-          setGames(fetchedGames);
-          
-          const aggregatedStudents = {};
-          fetchedGames.forEach(game => {
-              Object.entries(game.players).forEach(([playerId, playerData]) => {
-                  // Only process players who are logged-in students
-                  if (playerData.studentId && playerData.analysis) {
-                      if (!aggregatedStudents[playerData.studentId]) {
-                          aggregatedStudents[playerData.studentId] = {
-                              id: playerData.studentId,
-                              displayName: playerData.nickname.split(',')[0].trim(), // Best guess for display name
-                              writings: []
-                          };
-                      }
-                      
-                      aggregatedStudents[playerData.studentId].writings.push({
-                          gameId: game.id,
-                          prompt: game.prompt,
-                          createdAt: game.createdAt,
-                          story: playerData.story || { title: '', text: '' },
-                          analysis: playerData.analysis,
-                          authors: playerData.nickname 
-                      });
-                  }
-              });
-          });
-          
-          Object.values(aggregatedStudents).forEach((p) => {
-              p.writings.sort((a, b) => (b.createdAt?.toDate() || 0) - (a.createdAt?.toDate() || 0));
-          });
-
-          setStudentsData(aggregatedStudents);
-          setLoading(false);
-      });
-      return () => unsubscribeGames();
-  }, [currentUser]);
-  
-  const handleCreateClass = async (e) => {
-      e.preventDefault();
-      if (!newClassName.trim()) return;
-      setClassMgmtLoading(true);
-      setError('');
-      try {
-          await createClass(newClassName, currentUser.uid);
-          setNewClassName('');
-      } catch (err) {
-          setError(err.message);
-      } finally {
-          setClassMgmtLoading(false);
-      }
-  };
-
-  const handleAddStudent = async (e) => {
-      e.preventDefault();
-      if (!newStudentUsername.trim() || !newStudentDisplayName.trim() || !selectedClassId) return;
-      setClassMgmtLoading(true);
-      setError('');
-      setNewlyCreatedStudent(null);
-      try {
-          const studentWithPassword = await addStudentToClass(newStudentUsername, newStudentDisplayName, selectedClassId, currentUser.uid);
-          setNewlyCreatedStudent(studentWithPassword);
-          setNewStudentUsername('');
-          setNewStudentDisplayName('');
-      } catch (err) {
-          setError(err.message);
-      } finally {
-          setClassMgmtLoading(false);
-      }
-  };
-
-  const sortedStudents = useMemo(() => {
-      if (!studentsData) return [];
-      const studentList = Object.values(studentsData);
-      
-      // We need a list of all students from classes, even if they haven't written anything
-      const allKnownStudents = {};
-      classes.forEach(c => {
-        const students = studentsInClass.filter(s => s.classId === c.id);
-      });
-
-      // This part is complex. Let's simplify for now and just show students who have written something.
-      return studentList.sort((a, b) => a.displayName.localeCompare(b.displayName));
-
-  }, [studentsData]);
-
-  const formatDate = (timestamp) => {
-      if (!timestamp) return 'Just now';
-      return timestamp.toDate().toLocaleDateString('en-US', {
-          year: 'numeric', month: 'long', day: 'numeric'
-      });
-  }
-
-  const TabButton = ({ isActive, onClick, children }) => (
-      <button 
-        onClick={onClick}
-        className={`px-4 py-2 text-sm font-semibold rounded-md transition-colors ${isActive ? 'bg-sky-600 text-white' : 'text-slate-600 hover:bg-slate-200'}`}
-      >
-        {children}
-      </button>
-  );
-
-  return (
-      <div>
-          <div className="flex justify-between items-start mb-6">
-              <div>
-                  <h2 className="text-2xl font-bold text-slate-800">Teacher Dashboard</h2>
-                  <p className="text-slate-600">Welcome, {currentUser.displayName || 'Teacher'}!</p>
-              </div>
-              <Button onClick={onSignOut} variant="secondary">Sign Out</Button>
-          </div>
-          <div className="text-center mb-8">
-              <Button onClick={onCreateNewGame} size="large">
-                  <span className="flex items-center gap-2">
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
-                      Create New Game
-                  </span>
-              </Button>
-          </div>
-          
-          <div className="mb-4 flex items-center gap-2 p-1 bg-slate-100 rounded-lg max-w-md mx-auto">
-              <TabButton isActive={activeTab === 'games'} onClick={() => setActiveTab('games')}>Game History</TabButton>
-              <TabButton isActive={activeTab === 'students'} onClick={() => setActiveTab('students')}>Student History</TabButton>
-              <TabButton isActive={activeTab === 'classes'} onClick={() => setActiveTab('classes')}>Class Management</TabButton>
-          </div>
-
-          <div>
-              {loading ? (
-                  <div className="flex justify-center p-8"><LoadingSpinner /></div>
-              ) : activeTab === 'games' ? (
-                  games.length > 0 ? (
-                      <div className="space-y-4">
-                          {games.map(game => (
-                              <div key={game.id} className="bg-white p-4 rounded-lg shadow-md border border-slate-200 flex justify-between items-center">
-                                  <div>
-                                      <p className="font-semibold text-sky-700">{game.prompt.text}</p>
-                                      <p className="text-sm text-slate-500">{formatDate(game.createdAt)} &bull; {Object.keys(game.players).length} players</p>
-                                  </div>
-                                  <Button onClick={() => onViewGame(game)} size="small" variant="secondary">View Results</Button>
-                              </div>
-                          ))}
-                      </div>
-                  ) : (
-                      <div className="text-center bg-slate-100 p-8 rounded-lg">
-                          <p className="text-slate-600">You haven't hosted any games yet.</p>
-                          <p className="text-slate-500 text-sm mt-1">Click "Create New Game" to get started!</p>
-                      </div>
-                  )
-              ) : activeTab === 'students' ? (
-                  sortedStudents.length > 0 ? (
-                      <div className="space-y-4">
-                          {sortedStudents.map((student) => (
-                              <div key={student.id} className="bg-white p-4 rounded-lg shadow-md border border-slate-200 flex justify-between items-center">
-                                  <div>
-                                      <p className="font-semibold text-sky-700">{student.displayName}</p>
-                                      <p className="text-sm text-slate-500">{student.writings.length} stories written</p>
-                                  </div>
-                                  <Button onClick={() => setViewingPlayer(student)} size="small" variant="secondary">View History</Button>
-                              </div>
-                          ))}
-                      </div>
-                  ) : (
-                      <div className="text-center bg-slate-100 p-8 rounded-lg">
-                          <p className="text-slate-600">No student data found yet.</p>
-                          <p className="text-slate-500 text-sm mt-1">Student history will appear here after they log in and complete a game.</p>
-                      </div>
-                  )
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    {/* Create Class Section */}
-                    <div className="bg-white p-6 rounded-lg shadow-md border border-slate-200">
-                        <h3 className="text-xl font-bold mb-4 text-slate-800">Create a New Class</h3>
-                        <form onSubmit={handleCreateClass} className="space-y-3">
-                            <input type="text" value={newClassName} onChange={e => setNewClassName(e.target.value)} placeholder="e.g., Room 4 Writing Stars" className="w-full p-2 border border-slate-300 rounded-lg shadow-inner" required />
-                            <Button type="submit" className="w-full" disabled={classMgmtLoading}>Create Class</Button>
-                        </form>
-                    </div>
-
-                    {/* Add Student Section */}
-                    <div className="bg-white p-6 rounded-lg shadow-md border border-slate-200">
-                        <h3 className="text-xl font-bold mb-4 text-slate-800">Add a Student</h3>
-                        {classes.length > 0 ? (
-                            <form onSubmit={handleAddStudent} className="space-y-3">
-                                <select value={selectedClassId} onChange={e => setSelectedClassId(e.target.value)} className="w-full p-2 border border-slate-300 rounded-lg shadow-inner bg-white" required>
-                                    <option value="" disabled>Select a class...</option>
-                                    {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                                </select>
-                                <input type="text" value={newStudentUsername} onChange={e => setNewStudentUsername(e.target.value.toLowerCase().replace(/\s/g, ''))} placeholder="Username (e.g., samc)" className="w-full p-2 border border-slate-300 rounded-lg shadow-inner" required />
-                                <input type="text" value={newStudentDisplayName} onChange={e => setNewStudentDisplayName(e.target.value)} placeholder="Display Name (e.g., Sam C)" className="w-full p-2 border border-slate-300 rounded-lg shadow-inner" required />
-                                <Button type="submit" className="w-full" disabled={classMgmtLoading || !selectedClassId}>Add Student</Button>
-                            </form>
-                        ) : <p className="text-slate-500">Create a class first before adding students.</p>}
-
-                        {newlyCreatedStudent && (
-                            <div className="mt-4 p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-center">
-                                <p className="font-semibold text-emerald-800">Student Created!</p>
-                                <p className="text-sm text-emerald-700">Username: <span className="font-bold">{newlyCreatedStudent.username}</span></p>
-                                <p className="text-sm text-emerald-700">Password: <span className="font-bold">{newlyCreatedStudent.password}</span></p>
-                                <p className="text-xs text-slate-500 mt-1">Share this password with the student.</p>
-                            </div>
-                        )}
-                    </div>
-                    
-                    {/* Class Roster */}
-                    <div className="md:col-span-2 bg-white p-6 rounded-lg shadow-md border border-slate-200">
-                        <h3 className="text-xl font-bold mb-4 text-slate-800">Class Roster</h3>
-                        <select onChange={e => setSelectedClassId(e.target.value)} className="w-full p-2 border border-slate-300 rounded-lg shadow-inner bg-white mb-4" defaultValue="">
-                            <option value="" disabled>Select a class to view roster...</option>
-                            {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                        </select>
-                        {selectedClassId && (
-                            <ul className="space-y-2 max-h-60 overflow-y-auto">
-                                {studentsInClass.length > 0 ? studentsInClass.map(s => (
-                                    <li key={s.id} className="p-2 bg-slate-50 rounded-md">
-                                        <span className="font-semibold">{s.displayName}</span> <span className="text-slate-500">({s.username})</span>
-                                    </li>
-                                )) : <p className="text-slate-500 text-center py-2">No students in this class yet.</p>}
-                            </ul>
-                        )}
-                    </div>
-                </div>
-              )}
-          </div>
-          {error && <p className="text-red-500 text-center mt-4">{error}</p>}
-          {viewingPlayer && <PlayerHistoryModal player={viewingPlayer} onClose={() => setViewingPlayer(null)} />}
-      </div>
-  );
-};
-
-const SentenceBuilderScreen = ({ onGoHome }) => {
-    const [stage, setStage] = useState('rewrite');
-    const [rootSentence, setRootSentence] = useState(() => SENTENCE_ROOTS[Math.floor(Math.random() * SENTENCE_ROOTS.length)]);
+const SentenceBuilderScreen = ({ onBack }) => {
+    const [root, setRoot] = useState(null);
     const [userSentence, setUserSentence] = useState('');
-    const [score, setScore] = useState(null);
-    const [activeKeteTab, setActiveKeteTab] = useState(Object.keys(KETE_WORDS)[0]);
-    const [highScore, setHighScore] = useState(0);
+    const [feedback, setFeedback] = useState('');
+    const [score, setScore] = useState(0);
+    const [highScore, setHighScore] = useState(Number(localStorage.getItem('sentenceBuilderHighScore')) || 0);
+    const [isLoading, setIsLoading] = useState(false);
+    const [keteWords, setKeteWords] = useState([]);
     
-    const handleNext = () => {
-        if (userSentence.trim().length > rootSentence.root.length) {
-            setStage('kete');
-        } else {
-            alert("Try adding a bit more to your sentence before moving on!");
-        }
-    };
-    
-    const calculateMechanicalScore = (baseSentence, newSentence, baseVerb) => {
-        let score = 0;
-        const baseWords = new Set(baseSentence.toLowerCase().match(/\b\w+\b/g));
-        const newWords = newSentence.toLowerCase().match(/\b\w+\b/g) || [];
-
-        const addedWords = newWords.filter(word => !baseWords.has(word));
-
-        score += countWords(addedWords.join(' '), ADJECTIVES) * 10;
-        score += countWords(addedWords.join(' '), Object.values(KETE_WORDS).flat()) * 5;
-        
-        if (!newSentence.toLowerCase().includes(baseVerb)) {
-            score += 25;
-        }
-
-        return score;
-    };
-
-    const handleGetScore = async () => {
-        setStage('scoring');
-        const mechanicalScore = calculateMechanicalScore(rootSentence.root, userSentence, rootSentence.verb);
-        const geminiResult = await getSentenceFeedback(rootSentence.root, userSentence);
-        
-        const finalScore = Math.round(mechanicalScore * geminiResult.qualityScore);
-
-        setScore({
-            mechanicalScore,
-            qualityScore: geminiResult.qualityScore,
-            feedback: geminiResult.feedback,
-            finalScore
-        });
-
-        if (finalScore > highScore) {
-            setHighScore(finalScore);
-        }
-
-        setStage('results');
-    };
-    
-    const handleTryAgain = () => {
-        setStage('rewrite');
-        setRootSentence(SENTENCE_ROOTS[Math.floor(Math.random() * SENTENCE_ROOTS.length)]);
+    const generateNewChallenge = useCallback(() => {
+        setRoot(SENTENCE_ROOTS[Math.floor(Math.random() * SENTENCE_ROOTS.length)]);
         setUserSentence('');
-        setScore(null);
-        setHighScore(0);
-    };
+        setFeedback('');
+        setScore(0);
+        const randomKete = Object.entries(KETE_WORDS).sort(() => 0.5 - Math.random()).slice(0, 3);
+        setKeteWords(randomKete.map(([category, words]) => ({ category, word: words[Math.floor(Math.random() * words.length)] })));
+    }, []);
 
-    const handleRetrySameSentence = () => {
-        setStage('rewrite');
-        setUserSentence('');
-        setScore(null);
-    };
-
-    if (stage === 'scoring') {
-        return (
-            <div className="flex flex-col items-center justify-center text-center p-8 min-h-[300px]">
-                <LoadingSpinner />
-                <p className="text-slate-600 mt-4 font-semibold text-lg animate-pulse">Our AI is reading your sentence...</p>
-            </div>
-        );
-    }
+    useEffect(() => generateNewChallenge(), [generateNewChallenge]);
     
-    if (stage === 'results') {
-        return (
-            <div className="text-center">
-                <h2 className="text-2xl font-bold text-slate-800 mb-4">Your Results!</h2>
-                <div className="bg-slate-100 p-4 rounded-lg mb-4">
-                    <p className="text-sm text-slate-500">Original Sentence</p>
-                    <p className="font-semibold">{rootSentence.root}</p>
-                </div>
-                <div className="bg-sky-100 p-4 rounded-lg mb-6">
-                    <p className="text-sm text-sky-700">Your Awesome Sentence</p>
-                    <p className="font-semibold text-sky-900 text-lg">{userSentence}</p>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                    <div className="bg-white p-4 rounded-lg shadow-md border border-slate-200">
-                        <p className="text-sm font-bold text-slate-500">HIGH SCORE</p>
-                        <p className="text-3xl font-bold text-amber-500">{highScore}</p>
-                    </div>
-                    <div className="bg-emerald-600 text-white p-4 rounded-lg shadow-lg">
-                        <p className="text-sm font-bold">YOUR SCORE</p>
-                        <p className="text-3xl font-bold">{score.finalScore}</p>
-                    </div>
-                </div>
+    useEffect(() => localStorage.setItem('sentenceBuilderHighScore', highScore), [highScore]);
 
-                <div className="bg-amber-100 border-l-4 border-amber-500 text-amber-800 p-4 rounded-r-lg mb-8">
-                    <p className="font-bold">AI Feedback:</p>
-                    <p>"{score.feedback}"</p>
-                </div>
-
-                <div className="flex items-center justify-center gap-4">
-                    <Button onClick={onGoHome} variant="secondary" size="large">Back to Home</Button>
-                    <Button onClick={handleRetrySameSentence} variant="secondary" size="large">Try Again</Button>
-                    <Button onClick={handleTryAgain} size="large">New Sentence</Button>
-                </div>
-            </div>
-        );
-    }
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        if (!userSentence.toLowerCase().includes(root.verb)) { setFeedback(`Your sentence must still contain the verb "${root.verb}".`); return; }
+        setIsLoading(true);
+        const fb = await getSentenceFeedback(root.root, userSentence);
+        const wordCount = userSentence.trim().split(/\s+/).length;
+        const newScore = Math.round(wordCount * 10 * fb.qualityScore);
+        setScore(newScore);
+        setFeedback(fb.feedback);
+        if (newScore > highScore) setHighScore(newScore);
+        setIsLoading(false);
+    };
 
     return (
-        <div className="flex flex-col items-center">
-             <h2 className="text-2xl font-bold text-slate-800 mb-2">Sentence Lab</h2>
-             <p className="text-slate-600 mb-6 max-w-2xl text-center">Let's turn a simple sentence into something amazing. {stage === 'rewrite' ? 'First, rewrite it on your own!' : 'Now, use the Kete for inspiration!'}</p>
-
-             <div className="w-full max-w-3xl">
-                 <div className="bg-slate-100 p-4 rounded-lg mb-4 text-center">
-                    <p className="text-sm text-slate-500">Your starting sentence:</p>
-                    <p className="text-xl font-semibold text-slate-800">{rootSentence.root}</p>
-                 </div>
-                 
-                 <textarea 
-                     value={userSentence}
-                     onChange={(e) => setUserSentence(e.target.value)}
-                     className="w-full p-4 border border-slate-300 rounded-lg shadow-inner focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-shadow duration-200 text-lg"
-                     rows="3"
-                     placeholder={stage === 'rewrite' ? "Rewrite the sentence here..." : "Refine your sentence..."}
-                 />
-                 
-                 {stage === 'kete' && (
-                     <div className="mt-6 bg-white p-4 rounded-lg shadow-md border border-slate-200">
-                         <h3 className="text-lg font-bold text-slate-700 mb-2">The Kete (Word Bank)</h3>
-                         <div className="flex flex-wrap gap-2 border-b border-slate-200 mb-3 pb-2">
-                             {Object.keys(KETE_WORDS).map(tabName => (
-                                 <button key={tabName} onClick={() => setActiveKeteTab(tabName)} className={`px-3 py-1 text-sm font-semibold rounded-full ${activeKeteTab === tabName ? 'bg-sky-600 text-white' : 'bg-slate-200 text-slate-700 hover:bg-slate-300'}`}>
-                                     {tabName}
-                                 </button>
-                             ))}
-                         </div>
-                         <div className="flex flex-wrap gap-2">
-                             {KETE_WORDS[activeKeteTab].map(word => (
-                                 <span key={word} className="bg-slate-100 text-slate-800 px-2 py-1 rounded-md text-sm cursor-default">
-                                     {word}
-                                 </span>
-                             ))}
-                         </div>
-                     </div>
-                 )}
-
-                <div className="flex items-center justify-center gap-4 mt-8">
-                    <Button onClick={onGoHome} variant="secondary" size="large">Back to Home</Button>
-                    {stage === 'rewrite' ? (
-                        <Button onClick={handleNext} size="large" disabled={!userSentence.trim()}>Next Step</Button>
-                    ) : (
-                        <Button onClick={handleGetScore} size="large" disabled={!userSentence.trim()}>Get My Score!</Button>
-                    )}
-                </div>
-             </div>
+        <div className="w-full max-w-3xl mx-auto">
+            <div className="bg-white p-8 rounded-xl shadow-2xl text-center">
+                <h2 className="text-3xl font-bold text-slate-800 mb-2">Sentence Lab</h2>
+                <p className="text-slate-600 mb-6">Upgrade the simple sentence below. Make it more interesting!</p>
+                <div className="bg-sky-100 p-4 rounded-lg mb-6"><p className="text-xl font-semibold text-sky-800">{root?.root}</p></div>
+                <div className="mb-4 text-left"><p className="font-semibold mb-2">Inspiration Kete (Basket):</p><div className="flex flex-wrap gap-2">{keteWords.map(k => <span key={k.word} className="bg-amber-100 text-amber-800 px-2 py-1 rounded-md text-sm">{k.word}</span>)}</div></div>
+                <form onSubmit={handleSubmit}>
+                    <textarea value={userSentence} onChange={e => setUserSentence(e.target.value)} className="w-full p-3 border border-slate-300 rounded-lg shadow-inner focus:ring-2 focus:ring-sky-500" rows="3" placeholder="Write your new sentence here..."></textarea>
+                    {feedback && <p className={`mt-4 ${score > 0 ? 'text-emerald-600' : 'text-amber-600'}`}>{feedback}</p>}
+                    <Button type="submit" size="large" className="mt-4" disabled={isLoading}>{isLoading ? 'Analyzing...' : 'Submit Sentence'}</Button>
+                </form>
+                {score > 0 && <div className="mt-6 text-2xl font-bold">Your Score: <span className="text-emerald-600">{score}</span></div>}
+                <div className="mt-2 text-lg font-bold">High Score: <span className="text-amber-500">{highScore}</span></div>
+                <div className="mt-8 flex gap-4 justify-center"><Button onClick={onBack} variant="secondary">Back to Home</Button><Button onClick={generateNewChallenge}>New Challenge</Button></div>
+            </div>
         </div>
     );
 };
 
-const ModeCard = ({ title, description, icon, onClick, disabled, buttonText }) => (
-    <div className={`p-6 rounded-xl shadow-md flex flex-col items-center text-center transition-all duration-300 h-full ${disabled ? 'bg-slate-200 text-slate-500' : 'bg-white hover:shadow-xl hover:-translate-y-1'}`}>
-        <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${disabled ? 'bg-slate-300' : 'bg-sky-100 text-sky-600'}`}>
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8"><path strokeLinecap="round" strokeLinejoin="round" d={icon} /></svg>
-        </div>
-        <h3 className="text-xl font-bold mb-2">{title}</h3>
-        <p className="text-sm mb-4 flex-grow">{description}</p>
-        <Button onClick={onClick} disabled={disabled} className="mt-auto">{buttonText}</Button>
-    </div>
-);
+const StudentLoginScreen = ({ onLogin, onBack }) => {
+    const [username, setUsername] = useState('');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+    
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setError(''); setIsLoading(true);
+        try { await onLogin(username, password); } 
+        catch (err) { setError(err.message); setIsLoading(false); }
+    };
 
-const HomeScreen = ({ onSelectTeacherLogin, onSelectDashboard, onSelectGuestJoin, onSelectStudentLogin, onSelectSolo, onSelectSentenceBuilder, currentUser }) => (
+    return (
+        <div className="w-full max-w-md mx-auto">
+            <div className="bg-white p-8 rounded-xl shadow-2xl text-center">
+                <h2 className="text-3xl font-bold text-slate-800 mb-2">Student Login</h2>
+                <p className="text-slate-600 mb-6">Enter your username and password.</p>
+                <form onSubmit={handleSubmit}>
+                    <div className="space-y-4">
+                        <input type="text" value={username} onChange={e => setUsername(e.target.value.toLowerCase())} placeholder="Username" className="w-full p-3 border rounded-lg" required />
+                        <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Password" className="w-full p-3 border rounded-lg" required />
+                    </div>
+                    {error && <p className="text-red-500 mt-4">{error}</p>}
+                    <div className="mt-6 flex flex-col sm:flex-row gap-4">
+                         <Button type="button" variant="secondary" size="large" onClick={onBack} className="w-full">Back</Button>
+                         <Button type="submit" size="large" className="w-full" disabled={isLoading}>{isLoading ? <LoadingSpinner /> : 'Log In'}</Button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+};
+
+const HomeScreen = ({ onSolo, onCreate, onJoin, onTeacher, onSentence, onStudentLogin, onJoinAsGuest }) => (
     <div className="text-center">
-        <h2 className="text-3xl font-bold text-slate-800 mb-4">Welcome!</h2>
-        <p className="text-lg text-slate-600 mb-8 max-w-3xl mx-auto">Choose a mode to begin your writing adventure. Sharpen your skills, join a friend's game, or create a challenge for your class!</p>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-5xl mx-auto">
-            
-            <div className="bg-sky-50/50 p-6 rounded-xl border border-sky-200">
-                <h3 className="text-2xl font-bold text-sky-700 mb-4">Multi-Player Game</h3>
-                <div className="grid grid-cols-1 gap-6">
-                    <Button onClick={currentUser ? onSelectDashboard : onSelectTeacherLogin} size="large" className="w-full">
-                        {currentUser ? "Teacher Dashboard" : "Teacher Login"}
-                    </Button>
-                    <Button onClick={onSelectStudentLogin} size="large" variant="secondary" className="w-full">
-                        Student Login
-                    </Button>
-                    <Button onClick={onSelectGuestJoin} size="large" variant="secondary" className="w-full">
-                        Join as Guest
-                    </Button>
+        <h1 className="text-6xl font-bold text-sky-600 mb-2">InkXP</h1>
+        <p className="text-xl text-slate-600 mb-10">The game that makes writing an adventure.</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            <div className="bg-white p-8 rounded-xl shadow-lg border border-slate-200">
+                <h2 className="text-2xl font-bold mb-4">Single Player</h2>
+                <div className="space-y-4">
+                    <Button onClick={onSolo} size="large" className="w-full">Solo Practice</Button>
+                    <Button onClick={onSentence} size="large" className="w-full">Sentence Lab</Button>
                 </div>
             </div>
-
-            <div className="bg-emerald-50/50 p-6 rounded-xl border border-emerald-200">
-                <h3 className="text-2xl font-bold text-emerald-700 mb-4">Writer's Workshop</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <ModeCard 
-                      title="Solo Game Mode" 
-                      description="Fly solo! Get a random prompt and practice your writing skills." 
-                      icon="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" 
-                      onClick={onSelectSolo} 
-                      disabled={false} 
-                      buttonText="Start Writing" 
-                    />
-                    <ModeCard 
-                      title="Sentence Lab" 
-                      description="Practice creating amazing sentences! Start with a simple idea and make it shine." 
-                      icon="M16.47,4.36,15.11,3,13.75,4.36,12.39,3,11,4.36,9.64,3,8.28,4.36,6.92,3,5.56,4.36,4.2,3,3,4.2,4.36,5.56,3,6.92,4.36,8.28,3,9.64,4.36,11,3,12.39,4.36,13.75,3,15.11,4.36,16.47,3,17.83,4.36,19.19,3,20.55,4.2,21.91,5.56,20.55,6.92,21.91,8.28,20.55,9.64,21.91,11,20.55,12.39,21.91,13.75,20.55,15.11,21.91,16.47,20.55,17.83,21.91,19.19,20.55,20.55,19.19,21.91,17.83,20.55,16.47,21.91,15.11,20.55,13.75,21.91,12.39,20.55,11,21.91,9.64,20.55,8.28,21.91,6.92,20.55,5.56,21.91,4.2,20.55,3,19.19,4.36,17.83,3,16.47,4.36Z" 
-                      onClick={onSelectSentenceBuilder} 
-                      disabled={false} 
-                      buttonText="Enter the Lab" 
-                    />
+            <div className="bg-white p-8 rounded-xl shadow-lg border border-slate-200">
+                <h2 className="text-2xl font-bold mb-4">Multiplayer</h2>
+                <div className="space-y-4">
+                     <Button onClick={onTeacher} size="large" className="w-full">Teacher Login</Button>
+                     <Button onClick={onStudentLogin} size="large" className="w-full">Student Login</Button>
+                     <Button onClick={onJoinAsGuest} size="large" className="w-full">Join as Guest</Button>
                 </div>
             </div>
         </div>
     </div>
 );
 
-const App = () => {
+function App() {
     const [gameState, setGameState] = useState(GameState.Home);
-    const [playerId, setPlayerId] = useState(null);
-    const [playerNickname, setPlayerNickname] = useState(null);
     const [gameId, setGameId] = useState(null);
+    const [playerId, setPlayerId] = useState(null);
     const [gameData, setGameData] = useState(null);
-    const [soloData, setSoloData] = useState(null);
-    const [finalStory, setFinalStory] = useState(null);
-    const [scoreAnalysis, setScoreAnalysis] = useState(null);
-    const [currentUser, setCurrentUser] = useState(null);
-    const [currentStudent, setCurrentStudent] = useState(null);
-    const [viewingGameData, setViewingGameData] = useState(null);
+    const [user, setUser] = useState(null);
     const [authLoading, setAuthLoading] = useState(true);
-    const [soloHighScore, setSoloHighScore] = useState(0);
+    const [soloHighScore, setSoloHighScore] = useState(Number(localStorage.getItem('soloHighScore')) || 0);
+    const gameSubRef = useRef(null);
 
     useEffect(() => {
-      let storedPlayerId = localStorage.getItem('inkxp_playerId');
-      if (!storedPlayerId) {
-          storedPlayerId = `player_${Math.random().toString(36).substring(2, 11)}`;
-          localStorage.setItem('inkxp_playerId', storedPlayerId);
-      }
-      setPlayerId(storedPlayerId);
-      
-      const unsubscribe = onAuthChange(async (user) => {
-          if (user) {
-              if (user.email.endsWith(`@${STUDENT_EMAIL_DOMAIN}`)) {
-                  const userDoc = await db.collection('users').doc(user.uid).get();
-                  if (userDoc.exists) {
-                      setCurrentStudent({ id: user.uid, ...userDoc.data() });
-                  }
-                  setCurrentUser(null);
-              } else {
-                  setCurrentUser(user);
-                  setCurrentStudent(null);
-              }
-          } else {
-              setCurrentUser(null);
-              setCurrentStudent(null);
-          }
-          setAuthLoading(false);
-      });
-      return () => unsubscribe();
-    }, []);
-
-    useEffect(() => {
-      if (!gameId) return;
-      const unsubscribe = getGameStream(gameId, (data) => {
-          if (data) {
-              setGameData(data); // Always update game data for all components
-              if (data.status === 'in-progress') {
-                  setGameState(GameState.InGame);
-              } else if (data.status === 'finished') {
-                  // Navigate non-players (host, late-joiners) immediately.
-                  // Active players will navigate themselves after submitting their work.
-                  const isPlayerInGame = data.players && data.players[playerId];
-                  const isHost = playerId === data.hostId;
-                  
-                  if (isHost || !isPlayerInGame) {
-                      setGameState(GameState.Results);
-                  }
-              }
-          } else {
-              alert("Game session not found or has been deleted.");
-              handleGoHome();
-          }
-      });
-      return () => unsubscribe();
-    }, [gameId, playerId]);
-    
-    const handleSetNickname = useCallback((nickname) => {
-      setPlayerNickname(nickname);
-    }, []);
-    
-    const handleSetAuthors = useCallback((authors) => {
-        setPlayerNickname(authors);
-    }, []);
-
-    const handleTeacherLogin = async () => {
-      try {
-          await signInWithGoogle();
-          setGameState(GameState.TeacherDashboard);
-      } catch (error) {
-          console.error("Error signing in: ", error);
-          alert("Could not sign in with Google. Please try again.");
-      }
-    };
-    
-    const handleStudentLogin = async (username, password) => {
-        const studentData = await signInWithUsername(username, password);
-        setCurrentStudent(studentData);
-        setGameState(GameState.JoinGameSetup);
-    };
-    
-    const handleSignOut = async () => {
-        await signOutUser();
-        setGameState(GameState.Home);
-    };
-
-    const handleCreateLobby = async (prompt, criteriaIds, duration) => {
-      if (!currentUser) {
-          alert("You must be signed in to create a game.");
-          return;
-      }
-      const newGameId = await createGame(playerId, prompt, criteriaIds, duration, currentUser.uid);
-      setGameId(newGameId);
-      setGameState(GameState.Lobby);
-    };
-
-    const handleJoinGame = async (code) => {
-      let playerInfo = { nickname: playerNickname };
-      if (currentStudent) {
-          playerInfo = {
-              ...playerInfo,
-              studentId: currentStudent.id,
-              classId: currentStudent.classId
-          };
-      }
-      await joinGame(code, playerId, playerInfo);
-      setGameId(code);
-      setGameState(GameState.Lobby);
-    };
-
-    const handleStartGame = async () => await startGame(gameId);
-    
-    const handleForceEndGame = useCallback(async () => {
-      if (gameId) {
-          await finishGame(gameId);
-      }
-    }, [gameId]);
-
-    const handleRemovePlayer = useCallback(async (playerIdToRemove) => {
-      if (gameId) {
-          await removePlayerFromGame(gameId, playerIdToRemove);
-      }
-    }, [gameId]);
-
-    const handleStartSolo = useCallback(async (prompt, criteriaIds, duration) => {
-        setSoloData({ prompt, criteria: criteriaIds, duration });
-        setSoloHighScore(0);
-        setGameState(GameState.InGame);
-    }, []);
-    
-    const handleRetrySolo = useCallback(() => {
-        setFinalStory(null);
-        setScoreAnalysis(null);
-        setGameState(GameState.InGame);
-    }, []);
-
-    const handleEndSolo = useCallback((story, analysis) => {
-        setFinalStory(story);
-        setScoreAnalysis(analysis);
-        if (analysis.totalScore > soloHighScore) {
-            setSoloHighScore(analysis.totalScore);
-        }
-        setGameState(GameState.Results);
-    }, [soloHighScore]);
-
-    const handleEndMultiplayerGame = useCallback(async (story, analysis) => {
-      // Submit the result first
-      await submitResult(gameId, playerId, story, analysis);
-      // THEN navigate to the results screen. This prevents the race condition.
-      setGameState(GameState.Results);
-    }, [gameId, playerId]);
-    
-    const handleScoreUpdate = useCallback(async (analysis) => {
-        if (gameId && playerId) {
-            await updatePlayerAnalysis(gameId, playerId, analysis);
-        }
-    }, [gameId, playerId]);
-    
-    const handleViewGameHistory = (game) => {
-      setViewingGameData(game);
-      setGameState(GameState.Results);
-    };
-
-    const resetGame = useCallback(() => {
-        setGameId(null);
-        setGameData(null);
-        setSoloData(null);
-        setFinalStory(null);
-        setScoreAnalysis(null);
-        setViewingGameData(null);
-        setPlayerNickname(null);
-        setSoloHighScore(0);
-    }, []);
-
-    const handleGoToDashboard = useCallback(() => {
-        resetGame();
-        setGameState(GameState.TeacherDashboard);
-    }, [resetGame]);
-
-    const handleGoHome = useCallback(() => {
-        resetGame();
-        if (auth.currentUser) {
-            signOutUser(); // Log out students when they go home
-        }
-        setGameState(GameState.Home);
-    }, [resetGame]);
-    
-    const handleGoToSoloSetup = useCallback(() => {
-        resetGame();
-        setGameState(GameState.SoloSetup);
-    }, [resetGame]);
-
-    const renderContent = () => {
-        if (authLoading) {
-          return <div className="flex justify-center p-8"><LoadingSpinner /></div>;
-        }
-
-        const isJoining = gameState === GameState.JoinGameSetup || gameState === GameState.GuestJoinSetup;
-        const needsNickname = playerId && !playerNickname && gameData && !gameData.players[playerId] && gameData.hostId !== playerId;
-        
-        if (isJoining && needsNickname) {
-            if (currentStudent) {
-                return <AuthorSelectionPrompt student={currentStudent} onAuthorsSubmit={handleSetAuthors} />;
+        const unsubscribe = onAuthChange(async (firebaseUser) => {
+            if (firebaseUser && !firebaseUser.email.endsWith(STUDENT_EMAIL_DOMAIN)) {
+                setUser({ type: 'teacher', ...firebaseUser });
+                setGameState(GameState.TeacherDashboard);
+            } else if (firebaseUser && firebaseUser.email.endsWith(STUDENT_EMAIL_DOMAIN)) {
+                const userDoc = await db.collection('users').doc(firebaseUser.uid).get();
+                if(userDoc.exists) setUser({ type: 'student', student: {id: firebaseUser.uid, ...userDoc.data()} });
             } else {
-                return <NicknamePrompt onNicknameSubmit={handleSetNickname} />;
+                setUser(null);
             }
+            setAuthLoading(false);
+        });
+        return () => unsubscribe();
+    }, []);
+    
+    useEffect(() => localStorage.setItem('soloHighScore', soloHighScore), [soloHighScore]);
+
+    const handleEndSoloGame = (story, analysis) => {
+        if (analysis.totalScore > soloHighScore) setSoloHighScore(analysis.totalScore);
+        const soloGameData = {
+            id: 'solo',
+            prompt: gameData.prompt,
+            players: { [playerId]: { story, analysis } }
+        };
+        setGameData(soloGameData);
+        setGameState(GameState.Results);
+    };
+    
+    const handleEndMultiplayerGame = useCallback(async (story, analysis) => {
+        await submitResult(gameId, playerId, story, analysis);
+        // Navigation is handled by the listener now
+    }, [gameId, playerId]);
+    
+    useEffect(() => {
+        if (gameId && playerId) {
+            gameSubRef.current = getGameStream(gameId, (data) => {
+                if (!data) { setGameState(GameState.Home); setGameId(null); return; }
+                const isHost = data.hostId === playerId;
+                const playerExists = data.players && data.players[playerId];
+
+                setGameData({ id: gameId, ...data });
+
+                if (data.status === 'finished') {
+                    // Only navigate if I'm NOT an active player who still needs to submit
+                    if (isHost || !playerExists) {
+                        setGameState(GameState.Results);
+                    }
+                }
+            });
         }
+        return () => { if (gameSubRef.current) gameSubRef.current(); };
+    }, [gameId, playerId]);
+    
+    const handleStartSolo = (prompt, criteria, duration) => {
+        const newPlayerId = `solo_${Date.now()}`;
+        setPlayerId(newPlayerId);
+        setGameData({ prompt, criteria, duration, startTime: new Date() });
+        setGameState(GameState.InGame);
+    };
+
+    const handleCreateGame = async (prompt, criteria, duration, teacherId) => {
+        const newGameId = await createGame(playerId, prompt, criteria, duration, teacherId);
+        setGameId(newGameId);
+        await joinGame(newGameId, playerId, { nickname: `${user.displayName} (Host)`, isHost: true });
+        setGameState(GameState.Lobby);
+    };
+
+    const handleJoinGame = async (code, studentData) => {
+        setGameId(code); setPlayerId(studentData.id);
+        await joinGame(code, studentData.id, { nickname: studentData.displayName, studentId: studentData.id, classId: studentData.classId });
+        setGameState(GameState.Lobby);
+    };
+    
+    const handleGuestJoinSubmit = async (code, nickname) => {
+        const guestPlayerId = `guest_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+        setPlayerId(guestPlayerId);
+        setGameId(code);
+        await joinGame(code, guestPlayerId, { nickname, isGuest: true, studentId: null, classId: null });
+        setGameState(GameState.Lobby);
+    };
+
+    const handleStartGame = () => startGame(gameId);
+    const handleEndGame = () => finishGame(gameId);
+    const handleSignOut = async () => { await signOutUser(); setGameState(GameState.Home); setUser(null); };
+
+    const resetGame = () => {
+        if (gameSubRef.current) gameSubRef.current();
+        setGameId(null); setPlayerId(null); setGameData(null);
+        setGameState(GameState.Home);
+    };
+    
+    const renderContent = () => {
+        if (authLoading) return <div className="flex justify-center items-center h-screen"><LoadingSpinner /></div>;
         
         switch (gameState) {
-            case GameState.Home:
-              return <HomeScreen 
-                  currentUser={currentUser}
-                  onSelectTeacherLogin={handleTeacherLogin}
-                  onSelectDashboard={() => setGameState(GameState.TeacherDashboard)}
-                  onSelectGuestJoin={() => setGameState(GameState.GuestJoinSetup)}
-                  onSelectStudentLogin={() => setGameState(GameState.StudentLogin)}
-                  onSelectSolo={() => setGameState(GameState.SoloSetup)} 
-                  onSelectSentenceBuilder={() => setGameState(GameState.SentenceBuilder)}
-                  />;
-            case GameState.SentenceBuilder:
-                return <SentenceBuilderScreen onGoHome={handleGoHome} />;
-            case GameState.StudentLogin:
-                return <StudentLoginScreen onLogin={handleStudentLogin} onGoHome={handleGoHome} />;
-            case GameState.SoloSetup: 
-              return <SetupScreen onStart={handleStartSolo} onGoHome={handleGoHome} isSolo={true} onBackToDashboard={handleGoHome} />;
-            case GameState.TeacherDashboard:
-              return currentUser ? <TeacherDashboard 
-                  currentUser={currentUser}
-                  onCreateNewGame={() => setGameState(GameState.CreateGameSetup)}
-                  onViewGame={handleViewGameHistory}
-                  onSignOut={handleSignOut}
-              /> : <p>Redirecting...</p>; // Should not happen
-            case GameState.CreateGameSetup:
-              return <SetupScreen onStart={handleCreateLobby} onGoHome={handleGoHome} onBackToDashboard={handleGoToDashboard} isSolo={false} isTeacher={!!currentUser} />;
-            case GameState.GuestJoinSetup:
-            case GameState.JoinGameSetup:
-              return <JoinGameScreen onJoin={handleJoinGame} onGoHome={handleGoHome} isStudent={!!currentStudent} />;
-            case GameState.Lobby:
-              return gameData && <LobbyScreen gameId={gameId} gameData={gameData} playerId={playerId} onStartGame={handleStartGame} onRemovePlayer={handleRemovePlayer} />;
-            case GameState.InGame:
-              if (soloData) {
-                  const soloGameWithStartTime = { ...soloData, startTime: new Date() };
-                  return <GameScreen gameData={soloGameWithStartTime} playerId={playerId} onTimeUp={handleEndSolo} onGoHome={handleGoHome} onScoreUpdate={() => {}} />;
-              }
-              if (gameData) {
-                  const isHost = playerId === gameData.hostId;
-                  if (isHost) {
-                      return <HostScreen gameId={gameId} gameData={gameData} onEndGame={handleForceEndGame} />;
-                  }
-                  return <GameScreen gameData={gameData} playerId={playerId} onTimeUp={handleEndMultiplayerGame} onGoHome={handleGoHome} onScoreUpdate={handleScoreUpdate} />;
-              }
-              return null;
-            case GameState.Results: 
-              if (viewingGameData) {
-                  return <HostResultsScreen gameData={viewingGameData} isHistoryView={true} onBackToDashboard={handleGoToDashboard} onNewGame={() => {}} onGoHome={() => {}} />;
-              }
-              if (scoreAnalysis) {
-                  const soloGameData = { prompt: soloData.prompt, players: { [playerId]: { nickname: 'You', story: finalStory, analysis: scoreAnalysis } } };
-                  return <ResultsScreen gameData={soloGameData} playerId={playerId} onPlayAgain={handleGoToSoloSetup} onGoHome={handleGoHome} onRetryPrompt={handleRetrySolo} soloHighScore={soloHighScore}/>;
-              }
-              if (gameData) {
-                  const isHost = playerId === gameData.hostId;
-                  if (isHost) {
-                    return <HostResultsScreen gameData={gameData} onNewGame={() => setGameState(GameState.CreateGameSetup)} onGoHome={handleGoHome} onBackToDashboard={() => {}} />;
-                  }
-                  return <ResultsScreen gameData={gameData} playerId={playerId} onPlayAgain={() => setGameState(GameState.JoinGameSetup)} onGoHome={handleGoHome} />;
-              }
-              return null;
-            default: 
-              return <HomeScreen 
-                  currentUser={currentUser}
-                  onSelectTeacherLogin={handleTeacherLogin}
-                  onSelectDashboard={() => setGameState(GameState.TeacherDashboard)}
-                  onSelectGuestJoin={() => setGameState(GameState.GuestJoinSetup)}
-                  onSelectStudentLogin={() => setGameState(GameState.StudentLogin)}
-                  onSelectSolo={() => setGameState(GameState.SoloSetup)}
-                  onSelectSentenceBuilder={() => setGameState(GameState.SentenceBuilder)}
-                  />;
+            case GameState.Home: return <HomeScreen onSolo={() => setGameState(GameState.SoloSetup)} onSentence={() => setGameState(GameState.SentenceBuilder)} onTeacher={() => { if(user && user.type === 'teacher') setGameState(GameState.TeacherDashboard); else signInWithGoogle(); }} onStudentLogin={() => setGameState(GameState.StudentLogin)} onJoinAsGuest={() => setGameState(GameState.GuestJoinSetup)} onCreate={user ? () => setGameState(GameState.CreateGameSetup) : signInWithGoogle} onJoin={user ? () => setGameState(GameState.JoinGameSetup) : signInWithGoogle} />;
+            case GameState.SoloSetup: return <PracticeSetupScreen onStart={handleStartSolo} onBack={resetGame} />;
+            case GameState.CreateGameSetup: return <CreateGameSetupScreen onCreate={(p, c, d) => { setPlayerId(user.uid); handleCreateGame(p, c, d, user.uid); }} onBack={() => setGameState(GameState.TeacherDashboard)} user={user} />;
+            case GameState.JoinGameSetup: return <JoinGameScreen onJoin={handleJoinGame} onBack={() => setGameState(GameState.Home)} user={user} />;
+            case GameState.GuestJoinSetup: return <GuestJoinScreen onJoin={handleGuestJoinSubmit} onBack={resetGame} />;
+            case GameState.Lobby: return <LobbyScreen gameId={gameId} gameData={gameData} playerId={playerId} onStartGame={handleStartGame} onLeaveGame={resetGame} user={user} />;
+            case GameState.InGame: return gameData.status === 'in-progress' || gameState === GameState.InGame ? <GameScreen gameData={gameData} playerId={playerId} onTimeUp={gameData.id === 'solo' ? handleEndSoloGame : handleEndMultiplayerGame} onScoreUpdate={(analysis) => updatePlayerAnalysis(gameId, playerId, analysis)} onGoHome={resetGame} /> : <div className="flex justify-center items-center h-screen"><LoadingSpinner /></div>;
+            case GameState.Results: return <ResultsScreen gameData={gameData} playerId={playerId} onPlayAgain={resetGame} onGoHome={resetGame} soloHighScore={soloHighScore} onRetryPrompt={gameData.id === 'solo' ? () => handleStartSolo(gameData.prompt, gameData.criteria, gameData.duration) : undefined} />;
+            case GameState.TeacherDashboard: return user ? <TeacherDashboard user={user} onSignOut={handleSignOut} onBack={resetGame} /> : <div className="p-4">Redirecting...</div>;
+            case GameState.SentenceBuilder: return <SentenceBuilderScreen onBack={resetGame} />;
+            case GameState.StudentLogin: return <StudentLoginScreen onLogin={async (u, p) => { const stud = await signInWithUsername(u, p); setUser({type: 'student', student: stud }); setGameState(GameState.Home); }} onBack={resetGame} />;
+            default: return <HomeScreen />;
         }
     };
-
-    return (
-        <div className="min-h-screen bg-gradient-to-br from-sky-100 to-emerald-100 p-4 sm:p-6 md:p-8">
-            <div className="max-w-7xl mx-auto">
-                <header className="text-center mb-8">
-                    <div className="flex items-center justify-center gap-3">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-10 h-10 text-sky-600"><path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg>
-                        <h1 className="text-4xl sm:text-5xl font-bold text-sky-700 tracking-tight">InkXP</h1>
-                    </div>
-                    <p className="text-slate-600 mt-2 text-lg">Level up your writing experience.</p>
-                </header>
-                <main className="bg-white/70 backdrop-blur-sm p-6 sm:p-8 rounded-2xl shadow-lg border border-slate-200">{renderContent()}</main>
-                <footer className="text-center mt-8 text-sm text-slate-500"><p>(c) Manakouri 2025</p></footer>
-            </div>
-        </div>
-    );
-};
+    
+    return <div className="min-h-screen p-4 sm:p-8 flex items-center justify-center">{renderContent()}</div>;
+}
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(<App />);
-
     </script>
   </body>
 </html>
