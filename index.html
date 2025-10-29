@@ -921,10 +921,6 @@ const SentenceBuilderScreen = ({ onBack }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!userSentence.toLowerCase().includes(root.verb)) {
-            setFeedback(`Your sentence must still contain the verb "${root.verb}".`);
-            return;
-        }
         setIsLoading(true);
         const fb = await getSentenceFeedback(root.root, userSentence);
         const wordCount = userSentence.trim().split(/\s+/).length;
@@ -956,7 +952,7 @@ const SentenceBuilderScreen = ({ onBack }) => {
                 <h2 className="text-3xl font-bold text-slate-800 mb-2">Sentence Lab</h2>
                 <div className="bg-sky-100 p-4 rounded-lg my-6"><p className="text-xl font-semibold text-sky-800">{root?.root}</p></div>
                 
-                {step === 1 && <p className="text-slate-600 mb-4">First, rewrite the sentence above to make it more interesting.</p>}
+                {step === 1 && <p className="text-slate-600 mb-4">Rewrite the sentence. Try upgrading the noun (the subject) or the verb (the action) to make it more powerful!</p>}
                 
                 <form onSubmit={handleSubmit} className="w-full">
                     <textarea value={userSentence} onChange={e => setUserSentence(e.target.value)} className="w-full p-3 border border-slate-300 rounded-lg shadow-inner focus:ring-2 focus:ring-sky-500" rows="3" placeholder="Write your new sentence here..."></textarea>
