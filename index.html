@@ -914,24 +914,31 @@ const SentenceBuilderScreen = ({ onBack }) => {
 };
 
 const HomeScreen = ({ onSolo, onJoinGame, onTeacher, onSentence }) => {
-    const OptionBox = ({ icon, title, description, onClick }) => (
-        <div onClick={onClick} className="bg-white/50 backdrop-blur-sm p-6 md:p-8 rounded-2xl shadow-lg border border-white/60 text-center cursor-pointer transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 flex flex-col items-center gap-4 text-slate-700 hover:text-sky-600">
-            {icon}
+    const SelectableOption = ({ icon, title, description, onClick }) => (
+        <div 
+            onClick={onClick} 
+            className="flex items-start text-left gap-5 p-5 rounded-2xl cursor-pointer transition-all duration-300 hover:bg-white/60 hover:shadow-inner"
+            role="button"
+            tabIndex="0"
+            onKeyPress={(e) => (e.key === 'Enter' || e.key === ' ') && onClick()}
+            aria-label={`${title}: ${description}`}
+        >
+            <div className="flex-shrink-0 text-sky-600">{icon}</div>
             <div>
-                <h3 className="text-xl font-bold">{title}</h3>
-                <p className="text-slate-500 mt-1 text-sm">{description}</p>
+                <h3 className="text-xl font-bold text-slate-800">{title}</h3>
+                <p className="text-slate-500 mt-1">{description}</p>
             </div>
         </div>
     );
 
-    const iconStyles = "w-16 h-16 stroke-2";
+    const iconStyles = "w-12 h-12 stroke-2";
 
     const icons = {
         inkxp: <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-12 h-12 text-slate-700"><path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" /></svg>,
         solo: <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={iconStyles}><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A1.875 1.875 0 0 1 18.12 22.5H5.88a1.875 1.875 0 0 1-1.379-2.382Z" /></svg>,
-        lab: <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={iconStyles}><path strokeLinecap="round" strokeLinejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 0 1-.659 1.591L5 14.5M9.75 3.104c.239.023.473.06.702.114a2.25 2.25 0 0 1 2.092 2.092c.054.229.09.463.114.702m-4.652 0a2.25 2.25 0 0 0-2.092 2.092c-.054.229-.09.463-.114.702m4.652 0c.239-.023.473-.06.702-.114a2.25 2.25 0 0 0 2.092-2.092c.054-.229.09-.463.114-.702m0 0v5.714a2.25 2.25 0 0 0 .659 1.591L19 14.5M12 14.5v5.25c0 .621-.504 1.125-1.125 1.125H10.125a1.125 1.125 0 0 1-1.125-1.125V14.5" /></svg>,
+        lab: <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={iconStyles}><path strokeLinecap="round" strokeLinejoin="round" d="m21 7.5-9-5.25L3 7.5m18 0-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" /></svg>,
         teacher: <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={iconStyles}><path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.627 48.627 0 0 1 12 20.904a48.627 48.627 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.57 50.57 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443m-7.007 11.55a5.981 5.981 0 0 0 6.75-6.175L12 12.583V17.5m1.243-1.243a5.981 5.981 0 0 0 6.75 6.175L12 17.5v-4.917Z" /></svg>,
-        join: <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={iconStyles}><path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 0 0 3.741-.479.5.5 0 0 0 .44-_ .492l-.635-1.581a.5.5 0 0 0-.44-.256l-1.888.315A11.956 11.956 0 0 1 12 13.25a11.956 11.956 0 0 1-5.228 1.488l-1.888-.315a.5.5 0 0 0-.44.256l-.635 1.581a.5.5 0 0 0 .44.742A9.093 9.093 0 0 0 6 18.72m-1.242 2.553a4.5 4.5 0 0 1-6.756 0m15.498 0a4.5 4.5 0 0 0-6.756 0M12 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 0a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg>
+        join: <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={iconStyles}><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9" /></svg>
     };
 
     return (
@@ -942,20 +949,22 @@ const HomeScreen = ({ onSolo, onJoinGame, onTeacher, onSentence }) => {
             </div>
             <p className="text-xl text-slate-600 mb-12">Level up your writing experience.</p>
 
-            <div className="flex flex-col lg:flex-row justify-center items-stretch gap-8">
-                <div className="flex-1">
-                    <h2 className="text-2xl font-semibold text-slate-700 mb-4 uppercase tracking-wider">Single Player</h2>
-                    <div className="space-y-6">
-                        <OptionBox icon={icons.solo} title="Solo Practice" description="Take on a timed writing challenge by yourself." onClick={onSolo} />
-                        <OptionBox icon={icons.lab} title="Sentence Lab" description="Hone your skills by upgrading simple sentences." onClick={onSentence} />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 w-full">
+                {/* Single Player Box */}
+                <div className="bg-white/50 backdrop-blur-sm p-6 md:p-8 rounded-2xl shadow-lg border border-white/60">
+                    <h2 className="text-2xl font-semibold text-slate-700 mb-6 text-center uppercase tracking-wider">Single Player</h2>
+                    <div className="space-y-4">
+                        <SelectableOption icon={icons.solo} title="Solo Practice" description="Take on a timed writing challenge by yourself." onClick={onSolo} />
+                        <SelectableOption icon={icons.lab} title="Sentence Lab" description="Hone your skills by upgrading simple sentences." onClick={onSentence} />
                     </div>
                 </div>
 
-                <div className="flex-1">
-                    <h2 className="text-2xl font-semibold text-slate-700 mb-4 uppercase tracking-wider">Multiplayer Game</h2>
-                    <div className="space-y-6">
-                        <OptionBox icon={icons.teacher} title="Teacher Login" description="Create a game and view your students' work." onClick={onTeacher} />
-                        <OptionBox icon={icons.join} title="Join Game" description="Enter a code to join a game lobby." onClick={onJoinGame} />
+                {/* Multiplayer Box */}
+                <div className="bg-white/50 backdrop-blur-sm p-6 md:p-8 rounded-2xl shadow-lg border border-white/60">
+                    <h2 className="text-2xl font-semibold text-slate-700 mb-6 text-center uppercase tracking-wider">Multiplayer Game</h2>
+                    <div className="space-y-4">
+                        <SelectableOption icon={icons.teacher} title="Teacher Login" description="Create a game and view your students' work." onClick={onTeacher} />
+                        <SelectableOption icon={icons.join} title="Join Game" description="Enter a code to join a game lobby." onClick={onJoinGame} />
                     </div>
                 </div>
             </div>
