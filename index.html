@@ -24,7 +24,7 @@
 }
 </script>
 </head>
-  <body class="bg-slate-50 text-slate-800">
+  <body class="bg-gradient-to-br from-sky-50 to-indigo-100 text-slate-800">
     <div id="root"></div>
 
     <!-- Load React and ReactDOM -->
@@ -452,7 +452,11 @@ const Timer = ({ startTime, duration, onTimeUp, onTick }) => {
 
 const Button = ({ children, className = '', variant = 'primary', size = 'medium', ...props }) => {
     const baseStyles = 'font-bold rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition-transform duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed transform active:scale-95';
-    const variantStyles = { primary: 'bg-sky-600 text-white hover:bg-sky-700 focus:ring-sky-500 disabled:hover:bg-sky-600', secondary: 'bg-slate-200 text-slate-800 hover:bg-slate-300 focus:ring-slate-400 disabled:hover:bg-slate-200', danger: 'bg-red-500 text-white hover:bg-red-600 focus:ring-red-400' };
+    const variantStyles = { 
+      primary: 'bg-gradient-to-r from-sky-500 to-sky-600 text-white hover:from-sky-600 hover:to-sky-700 focus:ring-sky-500 disabled:hover:from-sky-500 disabled:hover:to-sky-600', 
+      secondary: 'bg-slate-200 text-slate-800 hover:bg-slate-300 focus:ring-slate-400 disabled:hover:bg-slate-200', 
+      danger: 'bg-red-500 text-white hover:bg-red-600 focus:ring-red-400' 
+    };
     const sizeStyles = { small: 'py-1.5 px-3 text-sm', medium: 'py-2 px-5 text-base', large: 'py-3 px-8 text-lg' };
     return <button className={`${baseStyles} ${variantStyles[variant]} ${sizeStyles[size]} ${className}`} {...props}>{children}</button>;
 };
@@ -565,19 +569,19 @@ const ResultsScreen = ({ gameData, playerId, onPlayAgain, onGoHome, onRetryPromp
           <h2 className="text-3xl font-bold text-emerald-600 mb-2">Time's Up!</h2>
           <p className="text-slate-600 mb-6">Fantastic effort! Here are the final scores.</p>
           <div className="w-full grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <div className="lg:col-span-2 bg-white p-6 rounded-lg shadow-md border border-slate-200">
+              <div className="lg:col-span-2 bg-gradient-to-br from-white to-slate-50 p-6 rounded-2xl shadow-xl border border-white/40">
                   <h3 className="text-xl font-bold mb-2 text-slate-800">{myFinalStory?.title || "Untitled Story"}</h3>
                   <p className="text-sm font-semibold text-sky-600 mb-4">{gameData.prompt.text}</p>
-                  <div className="prose max-w-none text-slate-700 whitespace-pre-wrap bg-slate-50 p-4 rounded-md">{myFinalStory?.text || "You didn't write anything this time. Try again!"}</div>
+                  <div className="prose max-w-none text-slate-700 whitespace-pre-wrap bg-slate-100 p-4 rounded-md">{myFinalStory?.text || "You didn't write anything this time. Try again!"}</div>
               </div>
               <div className="lg:col-span-1 space-y-6">
                   {isSolo ? (
-                     <div className="bg-white p-6 rounded-lg shadow-md border border-slate-200 text-center">
+                     <div className="bg-gradient-to-br from-white to-slate-50 p-6 rounded-2xl shadow-xl border border-white/40 text-center">
                          <h3 className="text-lg font-bold text-slate-500 uppercase tracking-wider mb-3">High Score</h3>
                          <p className="text-4xl font-bold text-amber-500">{soloHighScore.toLocaleString()}</p>
                      </div>
                   ) : (
-                      <div className="bg-white p-6 rounded-lg shadow-md border border-slate-200">
+                      <div className="bg-gradient-to-br from-white to-slate-50 p-6 rounded-2xl shadow-xl border border-white/40">
                            <h3 className="text-lg font-bold text-slate-500 uppercase tracking-wider mb-3">Leaderboard</h3>
                            <ol className="space-y-2">
                             {sortedPlayers.map((player, index) => (
@@ -590,7 +594,7 @@ const ResultsScreen = ({ gameData, playerId, onPlayAgain, onGoHome, onRetryPromp
                       </div>
                   )}
                   {myAnalysis && (
-                      <div className="bg-white p-6 rounded-lg shadow-md border border-slate-200">
+                      <div className="bg-gradient-to-br from-white to-slate-50 p-6 rounded-2xl shadow-xl border border-white/40">
                           <h3 className="text-xl font-bold mb-4 text-slate-800">Your Score Breakdown</h3>
                            <ul className="space-y-2">
                               {myAnalysis.breakdown.map((item) => {
@@ -700,7 +704,7 @@ const GameScreen = ({ gameData, playerId, onTimeUp, onGoHome, onScoreUpdate }) =
         <TimeAlert message={timeAlert} />
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2">
-                <div className="relative bg-white p-6 rounded-lg shadow-md border border-slate-200 mb-4">
+                <div className="relative bg-gradient-to-br from-white to-slate-50 p-6 rounded-2xl shadow-xl border border-white/40 mb-4">
                     <Button onClick={onGoHome} variant="secondary" size="small" className="absolute top-4 right-4">Quit Game</Button>
                     <div className="flex items-start gap-6">
                         <div className="flex-grow">
@@ -724,7 +728,7 @@ const GameScreen = ({ gameData, playerId, onTimeUp, onGoHome, onScoreUpdate }) =
                     <div className="bg-sky-600 text-white p-4 rounded-lg shadow-lg text-center"><p className="text-lg font-semibold">Time Remaining</p><Timer startTime={gameData.startTime} duration={gameData.duration} onTimeUp={handleTimeUp} onTick={handleTick} /></div>
                     <div className="bg-emerald-600 text-white p-4 rounded-lg shadow-lg text-center"><p className="text-lg font-semibold">Your Score</p><p className={`text-5xl font-bold tracking-tighter transition-transform duration-300 ease-out ${isScoreAnimating ? 'scale-125' : 'scale-100'}`}>{scoreAnalysis.totalScore.toLocaleString()}</p></div>
                     <div className="bg-violet-600 text-white p-4 rounded-lg shadow-lg text-center"><p className="text-lg font-semibold">Word Count</p><p className="text-5xl font-bold tracking-tighter">{wordCount}</p></div>
-                    <div className="bg-white p-6 rounded-lg shadow-md border border-slate-200">
+                    <div className="bg-gradient-to-br from-white to-slate-50 p-6 rounded-2xl shadow-xl border border-white/40">
                         <h3 className="text-xl font-bold mb-4 text-slate-800 border-b pb-2">Scoring Goals</h3>
                         <ul className="space-y-1">
                             {fullCriteria.map((criterion) => {
@@ -760,7 +764,7 @@ const HostScreen = ({ gameId, gameData, onEndGame }) => {
                   </Button>
               </div>
           </div>
-          <div className="w-full max-w-4xl bg-white p-6 rounded-lg shadow-md border border-slate-200">
+          <div className="w-full max-w-4xl bg-gradient-to-br from-white to-slate-50 p-6 rounded-2xl shadow-xl border border-white/40">
               <div className="flex justify-between items-center border-b pb-3 mb-3">
                   <h3 className="text-xl font-bold text-slate-800">Live Leaderboard</h3>
                   <div className="text-center">
@@ -801,7 +805,7 @@ const LobbyScreen = ({ gameId, gameData, playerId, onStartGame, onLeaveGame, use
     return (
         <div className="w-full max-w-2xl mx-auto">
             {showAuthorPrompt && user && user.student && <AuthorSelectionPrompt student={user.student} onAuthorsSubmit={handleSetAuthors} />}
-            <div className="bg-white p-8 rounded-xl shadow-2xl text-center">
+            <div className="bg-gradient-to-br from-white to-slate-50 p-8 rounded-2xl shadow-xl border border-white/40 text-center">
                 <h2 className="text-3xl font-bold text-slate-800 mb-2">Game Lobby</h2>
                 <p className="text-slate-600 mb-6">Waiting for the host to start the game...</p>
                 <div className="flex items-center justify-center gap-2 mb-8">
@@ -844,7 +848,7 @@ const PracticeSetupScreen = ({ onStart, onBack }) => {
 
     return (
         <div className="w-full max-w-xl mx-auto">
-            <div className="bg-white p-8 rounded-xl shadow-2xl text-center">
+            <div className="bg-gradient-to-br from-white to-slate-50 p-8 rounded-2xl shadow-xl border border-white/40 text-center">
                 <h2 className="text-3xl font-bold text-slate-800 mb-2">Solo Practice Setup</h2>
                 <p className="text-slate-600 mb-8">Set up your writing challenge.</p>
                 <div className="space-y-6 text-left">
@@ -880,7 +884,7 @@ const CreateGameSetupScreen = ({ onCreate, onBack, user }) => {
 
     return (
         <div className="w-full max-w-xl mx-auto">
-            <div className="bg-white p-8 rounded-xl shadow-2xl text-center">
+            <div className="bg-gradient-to-br from-white to-slate-50 p-8 rounded-2xl shadow-xl border border-white/40 text-center">
                 <h2 className="text-3xl font-bold text-slate-800 mb-2">Create Multiplayer Game</h2>
                 <p className="text-slate-600 mb-8">Set the rules for this game.</p>
                 <div className="space-y-6 text-left">
@@ -918,7 +922,7 @@ const JoinGameScreen = ({ onJoin, onBack, user }) => {
 
     return (
         <div className="w-full max-w-md mx-auto">
-            <div className="bg-white p-8 rounded-xl shadow-2xl text-center">
+            <div className="bg-gradient-to-br from-white to-slate-50 p-8 rounded-2xl shadow-xl border border-white/40 text-center">
                 <h2 className="text-3xl font-bold text-slate-800 mb-2">Join Game</h2>
                 <p className="text-slate-600 mb-6">Enter the 6-character code from your teacher.</p>
                 <form onSubmit={handleSubmit}>
@@ -951,7 +955,7 @@ const GuestJoinScreen = ({ onJoin, onBack }) => {
 
     return (
         <div className="w-full max-w-md mx-auto">
-            <div className="bg-white p-8 rounded-xl shadow-2xl text-center">
+            <div className="bg-gradient-to-br from-white to-slate-50 p-8 rounded-2xl shadow-xl border border-white/40 text-center">
                 <h2 className="text-3xl font-bold text-slate-800 mb-2">Join a Game as a Guest</h2>
                 <p className="text-slate-600 mb-6">Enter your name and the 6-character game code.</p>
                 <form onSubmit={handleSubmit}>
@@ -984,11 +988,13 @@ const TeacherDashboard = ({ user, onSignOut, onBack }) => {
     const [lastAddedStudent, setLastAddedStudent] = useState(null);
 
     useEffect(() => {
+        if (!user || !user.uid) return;
         const unsubscribe = getGamesForTeacher(user.uid, setGames);
         return () => unsubscribe();
     }, [user.uid]);
 
      useEffect(() => {
+        if (!user || !user.uid) return;
         const unsubscribe = getClassesForTeacher(user.uid, (fetchedClasses) => {
             setClasses(fetchedClasses);
             if (!selectedClassId && fetchedClasses.length > 0) setSelectedClassId(fetchedClasses[0].id);
@@ -1043,11 +1049,11 @@ const TeacherDashboard = ({ user, onSignOut, onBack }) => {
             <div className="flex border-b border-slate-200 mb-6"><button onClick={() => setActiveTab('history')} className={`px-4 py-2 font-semibold ${activeTab === 'history' ? 'border-b-2 border-sky-600 text-sky-600' : 'text-slate-500'}`}>Student History</button><button onClick={() => setActiveTab('classes')} className={`px-4 py-2 font-semibold ${activeTab === 'classes' ? 'border-b-2 border-sky-600 text-sky-600' : 'text-slate-500'}`}>Class Management</button></div>
             {activeTab === 'history' && (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="md:col-span-1 bg-white p-4 rounded-lg shadow-md border border-slate-200 max-h-[70vh] overflow-y-auto">
+                    <div className="md:col-span-1 bg-gradient-to-br from-white to-slate-50 p-4 rounded-2xl shadow-xl border border-white/40 max-h-[70vh] overflow-y-auto">
                         <h3 className="text-lg font-bold p-2">All Games ({games.length})</h3>
                         <ul>{games.map(game => <li key={game.id}><button onClick={() => setSelectedGame(game)} className={`w-full text-left p-2 rounded-md ${selectedGame?.id === game.id ? 'bg-sky-100' : 'hover:bg-slate-50'}`}>Game: {game.id}</button></li>)}</ul>
                     </div>
-                    <div className="md:col-span-2 bg-white p-6 rounded-lg shadow-md border border-slate-200 max-h-[70vh] overflow-y-auto">
+                    <div className="md:col-span-2 bg-gradient-to-br from-white to-slate-50 p-6 rounded-2xl shadow-xl border border-white/40 max-h-[70vh] overflow-y-auto">
                         {selectedGame ? (
                             <div>
                                 <h3 className="text-xl font-bold mb-4">Results for Game {selectedGame.id}</h3>
@@ -1059,13 +1065,13 @@ const TeacherDashboard = ({ user, onSignOut, onBack }) => {
             )}
             {activeTab === 'classes' && (
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                     <div className="bg-white p-6 rounded-lg shadow-md border border-slate-200">
+                     <div className="bg-gradient-to-br from-white to-slate-50 p-6 rounded-2xl shadow-xl border border-white/40">
                          <h3 className="text-xl font-bold mb-4">Your Classes</h3>
                          <form onSubmit={handleCreateClass} className="flex gap-2 mb-4"><input type="text" value={newClassName} onChange={e => setNewClassName(e.target.value)} placeholder="New class name" className="flex-grow p-2 border rounded-lg" /><Button type="submit">Create</Button></form>
                          <select value={selectedClassId} onChange={e => setSelectedClassId(e.target.value)} className="w-full p-2 border rounded-lg mb-4">{classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select>
                          <div className="max-h-60 overflow-y-auto"><ul>{students.map(s => <li key={s.id} className="p-2 bg-slate-50 rounded-md mb-1">{s.displayName} ({s.username})</li>)}</ul></div>
                      </div>
-                      <div className="bg-white p-6 rounded-lg shadow-md border border-slate-200">
+                      <div className="bg-gradient-to-br from-white to-slate-50 p-6 rounded-2xl shadow-xl border border-white/40">
                           <h3 className="text-xl font-bold mb-4">Add Student</h3>
                           <form onSubmit={handleAddStudent} className="space-y-3"><input type="text" value={newStudentName} onChange={e => setNewStudentName(e.target.value)} placeholder="Student's Display Name" className="w-full p-2 border rounded-lg" required /><input type="text" value={newStudentUsername} onChange={e => setNewStudentUsername(e.target.value.toLowerCase().replace(/\s/g, ''))} placeholder="Create a username (no spaces)" className="w-full p-2 border rounded-lg" required /><Button type="submit" className="w-full">Add Student to Class</Button></form>
                           {error && <p className="text-red-500 mt-4">{error}</p>}
@@ -1114,7 +1120,7 @@ const SentenceBuilderScreen = ({ onBack }) => {
 
     return (
         <div className="w-full max-w-3xl mx-auto">
-            <div className="bg-white p-8 rounded-xl shadow-2xl text-center">
+            <div className="bg-gradient-to-br from-white to-slate-50 p-8 rounded-2xl shadow-xl border border-white/40 text-center">
                 <h2 className="text-3xl font-bold text-slate-800 mb-2">Sentence Lab</h2>
                 <p className="text-slate-600 mb-6">Upgrade the simple sentence below. Make it more interesting!</p>
                 <div className="bg-sky-100 p-4 rounded-lg mb-6"><p className="text-xl font-semibold text-sky-800">{root?.root}</p></div>
@@ -1147,7 +1153,7 @@ const StudentLoginScreen = ({ onLogin, onBack }) => {
 
     return (
         <div className="w-full max-w-md mx-auto">
-            <div className="bg-white p-8 rounded-xl shadow-2xl text-center">
+            <div className="bg-gradient-to-br from-white to-slate-50 p-8 rounded-2xl shadow-xl border border-white/40 text-center">
                 <h2 className="text-3xl font-bold text-slate-800 mb-2">Student Login</h2>
                 <p className="text-slate-600 mb-6">Enter your username and password.</p>
                 <form onSubmit={handleSubmit}>
@@ -1171,14 +1177,14 @@ const HomeScreen = ({ onSolo, onCreate, onJoin, onTeacher, onSentence, onStudent
         <h1 className="text-6xl font-bold text-sky-600 mb-2">InkXP</h1>
         <p className="text-xl text-slate-600 mb-10">The game that makes writing an adventure.</p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            <div className="bg-white p-8 rounded-xl shadow-lg border border-slate-200">
+            <div className="bg-gradient-to-br from-white to-slate-50 p-8 rounded-2xl shadow-xl border border-white/40">
                 <h2 className="text-2xl font-bold mb-4">Single Player</h2>
                 <div className="space-y-4">
                     <Button onClick={onSolo} size="large" className="w-full">Solo Practice</Button>
                     <Button onClick={onSentence} size="large" className="w-full">Sentence Lab</Button>
                 </div>
             </div>
-            <div className="bg-white p-8 rounded-xl shadow-lg border border-slate-200">
+            <div className="bg-gradient-to-br from-white to-slate-50 p-8 rounded-2xl shadow-xl border border-white/40">
                 <h2 className="text-2xl font-bold mb-4">Multiplayer</h2>
                 <div className="space-y-4">
                      <Button onClick={onTeacher} size="large" className="w-full">Teacher Login</Button>
@@ -1203,6 +1209,9 @@ function App() {
     useEffect(() => {
         const unsubscribe = onAuthChange(async (firebaseUser) => {
             if (firebaseUser && !firebaseUser.email.endsWith(STUDENT_EMAIL_DOMAIN)) {
+                // BUG FIX: The firebaseUser object is complex and can't be spread reliably.
+                // We create a new, plain object to ensure properties like 'uid' are always present.
+                // This prevents crashes in components that rely on user.uid for database queries.
                 setUser({
                     type: 'teacher',
                     uid: firebaseUser.uid,
