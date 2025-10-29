@@ -54,8 +54,6 @@ const GameState = Object.freeze({
     Results: 6,
     TeacherDashboard: 7,
     SentenceBuilder: 8,
-    StudentLogin: 9,
-    GuestJoinSetup: 10,
 });
 
 // Writing Category Constants
@@ -144,14 +142,11 @@ const db = firebase.firestore(app);
 const auth = firebase.auth(app);
 const googleProvider = new firebase.auth.GoogleAuthProvider();
 
-const STUDENT_EMAIL_DOMAIN = 'inkxp-student.com';
-
 const onAuthChange = (callback) => auth.onAuthStateChanged(callback);
 const signInWithGoogle = () => auth.signInWithPopup(googleProvider);
 const signOutUser = () => auth.signOut();
 
 const generateGameCode = () => Math.random().toString(36).substring(2, 8).toUpperCase();
-const generatePassword = () => Math.random().toString(36).substring(2, 10);
 
 const createGame = async (hostId, prompt, criteria, duration, teacherId) => {
     const gameCode = generateGameCode();
@@ -218,13 +213,6 @@ const updatePlayerAnalysis = async (gameCode, playerId, analysis) => {
   });
 };
 
-const updatePlayerNickname = async (gameCode, playerId, nickname) => {
-    const gameRef = db.collection('games').doc(gameCode);
-    await gameRef.update({
-        [`players.${playerId}.nickname`]: nickname
-    });
-};
-
 const finishGame = async (gameCode) => {
   await db.collection('games').doc(gameCode).update({ status: 'finished' });
 };
@@ -234,74 +222,6 @@ const removePlayerFromGame = async (gameCode, playerIdToRemove) => {
     await gameRef.update({
         [`players.${playerIdToRemove}`]: firebase.firestore.FieldValue.delete()
     });
-};
-
-// Student & Class Management
-const createClass = async (className, teacherId) => {
-    return db.collection('classes').add({
-        name: className,
-        teacherId: teacherId,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-    });
-};
-
-const getClassesForTeacher = (teacherId, callback) => {
-    const q = db.collection('classes').where('teacherId', '==', teacherId).orderBy('createdAt', 'desc');
-    return q.onSnapshot(querySnapshot => {
-        const classes = [];
-        querySnapshot.forEach(doc => classes.push({ id: doc.id, ...doc.data() }));
-        callback(classes);
-    });
-};
-
-const addStudentToClass = async (username, displayName, classId, teacherId) => {
-    const usernameLower = username.toLowerCase();
-    const userQuery = await db.collection('users').where('username', '==', usernameLower).get();
-    if (!userQuery.empty) throw new Error("Username is already taken.");
-
-    const password = generatePassword();
-    const email = `${usernameLower}@${STUDENT_EMAIL_DOMAIN}`;
-    
-    const tempAuthApp = firebase.initializeApp(firebaseConfig, 'secondary');
-    const tempAuth = tempAuthApp.auth();
-    const userCredential = await tempAuth.createUserWithEmailAndPassword(email, password);
-    await tempAuth.signOut();
-    await tempAuthApp.delete(); 
-
-    const userDoc = {
-        uid: userCredential.user.uid,
-        username: usernameLower,
-        displayName: displayName,
-        classId: classId,
-        teacherId: teacherId,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-    };
-    await db.collection('users').doc(userCredential.user.uid).set(userDoc);
-    
-    return { ...userDoc, password };
-};
-
-const getStudentsInClass = (classId, teacherId, callback) => {
-    const q = db.collection('users').where('classId', '==', classId).where('teacherId', '==', teacherId);
-    return q.onSnapshot(querySnapshot => {
-        const students = [];
-        querySnapshot.forEach(doc => students.push({ id: doc.id, ...doc.data() }));
-        callback(students);
-    });
-};
-
-const signInWithUsername = async (username, password) => {
-    const usernameLower = username.toLowerCase();
-    const email = `${usernameLower}@${STUDENT_EMAIL_DOMAIN}`;
-    
-    await auth.signInWithEmailAndPassword(email, password);
-    const user = auth.currentUser;
-    if (!user) throw new Error("Authentication failed.");
-    
-    const userDoc = await db.collection('users').doc(user.uid).get();
-    if (!userDoc.exists) throw new Error("Student data not found.");
-    
-    return { id: user.uid, ...userDoc.data() };
 };
 
 // Scoring Service
@@ -473,63 +393,6 @@ const NicknamePrompt = ({ onNicknameSubmit }) => {
                     <input type="text" value={nickname} onChange={(e) => setNickname(e.target.value)} className="w-full p-3 border border-slate-300 rounded-lg shadow-inner focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-shadow duration-200 text-lg text-center" placeholder="e.g. Rachel F, Sam C" maxLength={50} required />
                     <Button type="submit" size="large" className="mt-6 w-full">Let's Go!</Button>
                 </form>
-            </div>
-        </div>
-    );
-};
-
-const AuthorSelectionPrompt = ({ student, onAuthorsSubmit }) => {
-    const [authors, setAuthors] = useState([student]);
-    const [classmates, setClassmates] = useState([]);
-    const [showClassmates, setShowClassmates] = useState(false);
-
-    useEffect(() => {
-        const unsubscribe = getStudentsInClass(student.classId, student.teacherId, (students) => {
-            setClassmates(students.filter(s => s.id !== student.id));
-        });
-        return () => unsubscribe();
-    }, [student.classId, student.id, student.teacherId]);
-    
-    const handleAddAuthor = (classmate) => {
-        if (!authors.find(a => a.id === classmate.id)) setAuthors(prev => [...prev, classmate]);
-        setShowClassmates(false);
-    };
-    
-    const handleRemoveAuthor = (authorToRemove) => setAuthors(prev => prev.filter(a => a.id !== authorToRemove.id));
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        onAuthorsSubmit(authors.map(a => a.displayName).join(', '));
-    };
-    
-    const availableClassmates = classmates.filter(c => !authors.find(a => a.id === c.id));
-
-    return (
-        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-50">
-            <div className="bg-white p-8 rounded-xl shadow-2xl w-full max-w-lg text-center">
-                <h2 className="text-2xl font-bold text-slate-800 mb-4">Who is Writing?</h2>
-                <p className="text-slate-600 mb-6">Your name is already added. Add any classmates who are writing with you on this device.</p>
-                <div className="flex flex-wrap items-center justify-center gap-2 mb-6 min-h-[44px] bg-slate-100 p-3 rounded-lg">
-                    {authors.map(author => (
-                        <div key={author.id} className="bg-sky-200 text-sky-800 font-semibold px-3 py-1 rounded-full flex items-center gap-2">
-                            {author.displayName}
-                            {author.id !== student.id && ( <button onClick={() => handleRemoveAuthor(author)} className="w-4 h-4 rounded-full bg-sky-600 text-white flex items-center justify-center text-xs font-bold">&times;</button> )}
-                        </div>
-                    ))}
-                </div>
-                <div className="relative">
-                    <Button type="button" variant="secondary" onClick={() => setShowClassmates(prev => !prev)} disabled={availableClassmates.length === 0}>
-                        {availableClassmates.length > 0 ? "Add Classmate" : "All classmates added"}
-                    </Button>
-                    {showClassmates && availableClassmates.length > 0 && (
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 bg-white border border-slate-200 rounded-lg shadow-lg z-10">
-                            <ul className="max-h-40 overflow-y-auto">
-                                {availableClassmates.map(c => <li key={c.id}><button onClick={() => handleAddAuthor(c)} className="w-full text-left px-4 py-2 hover:bg-slate-100">{c.displayName}</button></li>)}
-                            </ul>
-                        </div>
-                    )}
-                </div>
-                <Button type="button" size="large" className="mt-6 w-full" onClick={handleSubmit}>Confirm Authors & Join</Button>
             </div>
         </div>
     );
@@ -786,15 +649,8 @@ const HostScreen = ({ gameId, gameData, onEndGame }) => {
   );
 };
 
-const LobbyScreen = ({ gameId, gameData, playerId, onStartGame, onLeaveGame, user }) => {
+const LobbyScreen = ({ gameId, gameData, playerId, onStartGame, onLeaveGame }) => {
     const isHost = gameData.hostId === playerId;
-    const [playerNickname, setPlayerNickname] = useState(gameData.players[playerId]?.nickname || '');
-    const [showAuthorPrompt, setShowAuthorPrompt] = useState(user && user.student && !gameData.players[playerId]?.nickname);
-
-    const handleSetAuthors = async (authors) => {
-        await updatePlayerNickname(gameId, playerId, authors);
-        setShowAuthorPrompt(false);
-    };
 
     const handleRemovePlayer = async (playerIdToRemove) => {
         if (isHost) await removePlayerFromGame(gameId, playerIdToRemove);
@@ -804,7 +660,6 @@ const LobbyScreen = ({ gameId, gameData, playerId, onStartGame, onLeaveGame, use
 
     return (
         <div className="w-full max-w-2xl mx-auto">
-            {showAuthorPrompt && user && user.student && <AuthorSelectionPrompt student={user.student} onAuthorsSubmit={handleSetAuthors} />}
             <div className="bg-gradient-to-br from-white to-sky-100 p-8 rounded-2xl shadow-2xl border border-white/40 text-center">
                 <h2 className="text-3xl font-bold text-slate-800 mb-2">Game Lobby</h2>
                 <p className="text-slate-600 mb-6">Waiting for the host to start the game...</p>
@@ -906,39 +761,7 @@ const CreateGameSetupScreen = ({ onCreate, onBack, user }) => {
     );
 };
 
-const JoinGameScreen = ({ onJoin, onBack, user }) => {
-    const [gameCode, setGameCode] = useState('');
-    const [error, setError] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
-    
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setError(''); setIsLoading(true);
-        if (gameCode.trim()) {
-            try { await onJoin(gameCode.trim().toUpperCase(), user.student); } 
-            catch (err) { setError(err.message); setIsLoading(false); }
-        } else { setIsLoading(false); }
-    };
-
-    return (
-        <div className="w-full max-w-md mx-auto">
-            <div className="bg-gradient-to-br from-white to-sky-100 p-8 rounded-2xl shadow-2xl border border-white/40 text-center">
-                <h2 className="text-3xl font-bold text-slate-800 mb-2">Join Game</h2>
-                <p className="text-slate-600 mb-6">Enter the 6-character code from your teacher.</p>
-                <form onSubmit={handleSubmit}>
-                    <input type="text" value={gameCode} onChange={(e) => setGameCode(e.target.value)} className="w-full p-3 border border-slate-300 rounded-lg shadow-inner focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-shadow duration-200 text-lg text-center uppercase tracking-widest" placeholder="GAME CODE" maxLength={6} required style={{textTransform: "uppercase"}} />
-                    {error && <p className="text-red-500 mt-4">{error}</p>}
-                    <div className="mt-6 flex flex-col sm:flex-row gap-4">
-                        <Button type="button" variant="secondary" size="large" onClick={onBack} className="w-full">Back</Button>
-                        <Button type="submit" size="large" className="w-full" disabled={isLoading}>{isLoading ? <LoadingSpinner /> : 'Join'}</Button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    );
-};
-
-const GuestJoinScreen = ({ onJoin, onBack }) => {
+const JoinGameScreen = ({ onJoin, onBack }) => {
     const [nickname, setNickname] = useState('');
     const [gameCode, setGameCode] = useState('');
     const [error, setError] = useState('');
@@ -956,7 +779,7 @@ const GuestJoinScreen = ({ onJoin, onBack }) => {
     return (
         <div className="w-full max-w-md mx-auto">
             <div className="bg-gradient-to-br from-white to-sky-100 p-8 rounded-2xl shadow-2xl border border-white/40 text-center">
-                <h2 className="text-3xl font-bold text-slate-800 mb-2">Join a Game as a Guest</h2>
+                <h2 className="text-3xl font-bold text-slate-800 mb-2">Join a Game</h2>
                 <p className="text-slate-600 mb-6">Enter your name and the 6-character game code.</p>
                 <form onSubmit={handleSubmit}>
                     <div className="space-y-4">
@@ -975,17 +798,8 @@ const GuestJoinScreen = ({ onJoin, onBack }) => {
 };
 
 const TeacherDashboard = ({ user, onSignOut, onBack }) => {
-    const [activeTab, setActiveTab] = useState('history');
     const [games, setGames] = useState([]);
     const [selectedGame, setSelectedGame] = useState(null);
-    const [classes, setClasses] = useState([]);
-    const [students, setStudents] = useState([]);
-    const [selectedClassId, setSelectedClassId] = useState('');
-    const [newClassName, setNewClassName] = useState('');
-    const [newStudentName, setNewStudentName] = useState('');
-    const [newStudentUsername, setNewStudentUsername] = useState('');
-    const [error, setError] = useState('');
-    const [lastAddedStudent, setLastAddedStudent] = useState(null);
 
     useEffect(() => {
         if (!user || !user.uid) return;
@@ -993,99 +807,53 @@ const TeacherDashboard = ({ user, onSignOut, onBack }) => {
         return () => unsubscribe();
     }, [user.uid]);
 
-    useEffect(() => {
-        if (!user || !user.uid) return;
-        const unsubscribe = getClassesForTeacher(user.uid, setClasses);
-        return () => unsubscribe();
-    }, [user.uid]);
-
-    useEffect(() => {
-        // This effect runs whenever the list of classes changes.
-        // It ensures a class is always selected if one exists, improving UX.
-        if (classes.length > 0 && !classes.some(c => c.id === selectedClassId)) {
-            setSelectedClassId(classes[0].id);
-        } else if (classes.length === 0) {
-            setSelectedClassId('');
-        }
-    }, [classes, selectedClassId]);
-
-    useEffect(() => {
-        if (!selectedClassId || !user?.uid) { setStudents([]); return; }
-        const unsubscribe = getStudentsInClass(selectedClassId, user.uid, setStudents);
-        return () => unsubscribe();
-    }, [selectedClassId, user?.uid]);
-
-    const handleCreateClass = async (e) => {
-        e.preventDefault();
-        if (!newClassName.trim()) return;
-        setError('');
-        try {
-            await createClass(newClassName, user.uid);
-            setNewClassName('');
-        } catch (err) { setError(`Error creating class: ${err.message}`); console.error(err); }
-    };
-    
-    const handleAddStudent = async (e) => {
-        e.preventDefault();
-        if (!newStudentName.trim() || !newStudentUsername.trim() || !selectedClassId) return;
-        setError(''); setLastAddedStudent(null);
-        try {
-            const newStudent = await addStudentToClass(newStudentUsername, newStudentName, selectedClassId, user.uid);
-            setLastAddedStudent(newStudent);
-            setNewStudentName(''); setNewStudentUsername('');
-        } catch (err) { setError(`Error adding student: ${err.message}`); }
-    };
-
-    const playerHistory = useMemo(() => {
-        const allPlayers = {};
-        games.forEach(game => {
-            Object.entries(game.players).forEach(([id, player]) => {
-                 if (player.studentId && !allPlayers[player.studentId]) allPlayers[player.studentId] = { displayName: player.nickname, studentId: player.studentId, writings: [] };
-                 if (player.studentId) allPlayers[player.studentId].writings.push({ gameId: game.id, prompt: game.prompt, story: player.story, analysis: player.analysis, date: game.createdAt?.toDate() });
-            });
-        });
-        return Object.values(allPlayers);
-    }, [games]);
-    
     return (
         <div className="w-full max-w-7xl mx-auto">
             <div className="flex justify-between items-center mb-6">
                 <h2 className="text-3xl font-bold text-slate-800">Teacher Dashboard</h2>
-                <div><Button onClick={onBack} variant="secondary">Home</Button> <Button onClick={onSignOut}>Sign Out</Button></div>
+                 <div>
+                    <Button onClick={() => onBack(true)} variant="secondary" className="mr-4">Create Game</Button>
+                    <Button onClick={onSignOut}>Sign Out</Button>
+                </div>
             </div>
-            <div className="flex border-b border-slate-200 mb-6"><button onClick={() => setActiveTab('history')} className={`px-4 py-2 font-semibold ${activeTab === 'history' ? 'border-b-2 border-sky-600 text-sky-600' : 'text-slate-500'}`}>Student History</button><button onClick={() => setActiveTab('classes')} className={`px-4 py-2 font-semibold ${activeTab === 'classes' ? 'border-b-2 border-sky-600 text-sky-600' : 'text-slate-500'}`}>Class Management</button></div>
-            {activeTab === 'history' && (
+            <div className="bg-gradient-to-br from-white to-sky-100 p-6 rounded-2xl shadow-2xl border border-white/40">
+                <h3 className="text-2xl font-bold text-slate-800 mb-4">Game History</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="md:col-span-1 bg-gradient-to-br from-white to-sky-100 p-4 rounded-2xl shadow-2xl border border-white/40 max-h-[70vh] overflow-y-auto">
-                        <h3 className="text-lg font-bold p-2">All Games ({games.length})</h3>
-                        <ul>{games.map(game => <li key={game.id}><button onClick={() => setSelectedGame(game)} className={`w-full text-left p-2 rounded-md ${selectedGame?.id === game.id ? 'bg-sky-100' : 'hover:bg-slate-50'}`}>Game: {game.id}</button></li>)}</ul>
+                    <div className="md:col-span-1 max-h-[70vh] overflow-y-auto bg-slate-50 p-2 rounded-lg">
+                        <h3 className="text-lg font-bold p-2 text-slate-600">All Games ({games.length})</h3>
+                        <ul>
+                          {games.map(game => (
+                            <li key={game.id}>
+                                <button onClick={() => setSelectedGame(game)} className={`w-full text-left p-3 rounded-md transition-colors duration-150 ${selectedGame?.id === game.id ? 'bg-sky-200 text-sky-800 font-semibold' : 'hover:bg-sky-100'}`}>
+                                    <span className="block">Game: {game.id}</span>
+                                    <span className="text-xs text-slate-500">{game.createdAt?.toDate().toLocaleDateString()}</span>
+                                </button>
+                            </li>
+                           ))}
+                        </ul>
                     </div>
-                    <div className="md:col-span-2 bg-gradient-to-br from-white to-sky-100 p-6 rounded-2xl shadow-2xl border border-white/40 max-h-[70vh] overflow-y-auto">
+                    <div className="md:col-span-2 max-h-[70vh] overflow-y-auto p-2">
                         {selectedGame ? (
                             <div>
-                                <h3 className="text-xl font-bold mb-4">Results for Game {selectedGame.id}</h3>
-                                {Object.values(selectedGame.players).map((p, i) => <div key={i} className="mb-4 p-4 border rounded-lg"><p className="font-bold">{p.nickname}</p><p className="whitespace-pre-wrap">{p.story?.text}</p></div>)}
+                                <h3 className="text-xl font-bold mb-2">Results for Game {selectedGame.id}</h3>
+                                <p className="text-sm text-slate-500 mb-4">Prompt: {selectedGame.prompt.text}</p>
+                                <div className="space-y-4">
+                                  {Object.values(selectedGame.players).map((p, i) => (
+                                    <div key={i} className="p-4 border bg-white rounded-lg shadow-sm">
+                                        <div className="flex justify-between items-center mb-2">
+                                            <p className="font-bold text-lg text-sky-700">{p.nickname}</p>
+                                            <Button size="small" variant="secondary" onClick={() => downloadPDF(p.nickname, p.story, selectedGame.prompt)}>Download PDF</Button>
+                                        </div>
+                                        <h4 className="font-semibold italic text-slate-700">{p.story?.title || 'Untitled'}</h4>
+                                        <p className="whitespace-pre-wrap mt-1 text-slate-600 bg-slate-50 p-3 rounded-md">{p.story?.text || 'No story submitted.'}</p>
+                                    </div>
+                                   ))}
+                                </div>
                             </div>
-                        ) : <p>Select a game to view results.</p>}
+                        ) : <div className="flex items-center justify-center h-full text-slate-500"><p>Select a game from the list to view student writing.</p></div>}
                     </div>
                 </div>
-            )}
-            {activeTab === 'classes' && (
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                     <div className="bg-gradient-to-br from-white to-sky-100 p-6 rounded-2xl shadow-2xl border border-white/40">
-                         <h3 className="text-xl font-bold mb-4">Your Classes</h3>
-                         <form onSubmit={handleCreateClass} className="flex gap-2 mb-4"><input type="text" value={newClassName} onChange={e => setNewClassName(e.target.value)} placeholder="New class name" className="flex-grow p-2 border rounded-lg" /><Button type="submit">Create</Button></form>
-                         <select value={selectedClassId} onChange={e => setSelectedClassId(e.target.value)} className="w-full p-2 border rounded-lg mb-4">{classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select>
-                         <div className="max-h-60 overflow-y-auto"><ul>{students.map(s => <li key={s.id} className="p-2 bg-slate-50 rounded-md mb-1">{s.displayName} ({s.username})</li>)}</ul></div>
-                     </div>
-                      <div className="bg-gradient-to-br from-white to-sky-100 p-6 rounded-2xl shadow-2xl border border-white/40">
-                          <h3 className="text-xl font-bold mb-4">Add Student</h3>
-                          <form onSubmit={handleAddStudent} className="space-y-3"><input type="text" value={newStudentName} onChange={e => setNewStudentName(e.target.value)} placeholder="Student's Display Name" className="w-full p-2 border rounded-lg" required /><input type="text" value={newStudentUsername} onChange={e => setNewStudentUsername(e.target.value.toLowerCase().replace(/\s/g, ''))} placeholder="Create a username (no spaces)" className="w-full p-2 border rounded-lg" required /><Button type="submit" className="w-full">Add Student to Class</Button></form>
-                          {error && <p className="text-red-500 mt-4">{error}</p>}
-                          {lastAddedStudent && <div className="mt-4 p-3 bg-emerald-50 text-emerald-800 rounded-lg">Student Added! <strong>Username:</strong> {lastAddedStudent.username}, <strong>Password:</strong> {lastAddedStudent.password}</div>}
-                      </div>
-                 </div>
-            )}
+            </div>
         </div>
     );
 };
@@ -1145,41 +913,7 @@ const SentenceBuilderScreen = ({ onBack }) => {
     );
 };
 
-const StudentLoginScreen = ({ onLogin, onBack }) => {
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
-    const [error, setError] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
-    
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setError(''); setIsLoading(true);
-        try { await onLogin(username, password); } 
-        catch (err) { setError(err.message); setIsLoading(false); }
-    };
-
-    return (
-        <div className="w-full max-w-md mx-auto">
-            <div className="bg-gradient-to-br from-white to-sky-100 p-8 rounded-2xl shadow-2xl border border-white/40 text-center">
-                <h2 className="text-3xl font-bold text-slate-800 mb-2">Student Login</h2>
-                <p className="text-slate-600 mb-6">Enter your username and password.</p>
-                <form onSubmit={handleSubmit}>
-                    <div className="space-y-4">
-                        <input type="text" value={username} onChange={e => setUsername(e.target.value.toLowerCase())} placeholder="Username" className="w-full p-3 border rounded-lg" required />
-                        <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Password" className="w-full p-3 border rounded-lg" required />
-                    </div>
-                    {error && <p className="text-red-500 mt-4">{error}</p>}
-                    <div className="mt-6 flex flex-col sm:flex-row gap-4">
-                         <Button type="button" variant="secondary" size="large" onClick={onBack} className="w-full">Back</Button>
-                         <Button type="submit" size="large" className="w-full" disabled={isLoading}>{isLoading ? <LoadingSpinner /> : 'Log In'}</Button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    );
-};
-
-const HomeScreen = ({ onSolo, onCreate, onJoin, onTeacher, onSentence, onStudentLogin, onJoinAsGuest }) => (
+const HomeScreen = ({ onSolo, onJoinGame, onTeacher, onSentence }) => (
     <div className="text-center">
         <h1 className="text-6xl font-bold text-sky-600 mb-2">InkXP</h1>
         <p className="text-xl text-slate-600 mb-10">The game that makes writing an adventure.</p>
@@ -1195,8 +929,7 @@ const HomeScreen = ({ onSolo, onCreate, onJoin, onTeacher, onSentence, onStudent
                 <h2 className="text-2xl font-bold mb-4">Multiplayer</h2>
                 <div className="space-y-4">
                      <Button onClick={onTeacher} size="large" className="w-full">Teacher Login</Button>
-                     <Button onClick={onStudentLogin} size="large" className="w-full">Student Login</Button>
-                     <Button onClick={onJoinAsGuest} size="large" className="w-full">Join as Guest</Button>
+                     <Button onClick={onJoinGame} size="large" className="w-full">Join Game</Button>
                 </div>
             </div>
         </div>
@@ -1215,20 +948,14 @@ function App() {
 
     useEffect(() => {
         const unsubscribe = onAuthChange(async (firebaseUser) => {
-            if (firebaseUser && !firebaseUser.email.endsWith(STUDENT_EMAIL_DOMAIN)) {
-                // BUG FIX: The firebaseUser object is complex and can't be spread reliably.
-                // We create a new, plain object to ensure properties like 'uid' are always present.
-                // This prevents crashes in components that rely on user.uid for database queries.
+            if (firebaseUser) {
                 setUser({
                     type: 'teacher',
                     uid: firebaseUser.uid,
                     displayName: firebaseUser.displayName,
                     email: firebaseUser.email
                 });
-                setGameState(GameState.TeacherDashboard);
-            } else if (firebaseUser && firebaseUser.email.endsWith(STUDENT_EMAIL_DOMAIN)) {
-                const userDoc = await db.collection('users').doc(firebaseUser.uid).get();
-                if(userDoc.exists) setUser({ type: 'student', student: {id: firebaseUser.uid, ...userDoc.data()} });
+                // Don't auto-redirect here, let them choose to go to dashboard.
             } else {
                 setUser(null);
             }
@@ -1252,7 +979,6 @@ function App() {
     
     const handleEndMultiplayerGame = useCallback(async (story, analysis) => {
         await submitResult(gameId, playerId, story, analysis);
-        // Navigation is handled by the listener now
     }, [gameId, playerId]);
     
     useEffect(() => {
@@ -1265,7 +991,6 @@ function App() {
                 setGameData({ id: gameId, ...data });
 
                 if (data.status === 'finished') {
-                    // Only navigate if I'm NOT an active player who still needs to submit
                     if (isHost || !playerExists) {
                         setGameState(GameState.Results);
                     }
@@ -1289,45 +1014,56 @@ function App() {
         setGameState(GameState.Lobby);
     };
 
-    const handleJoinGame = async (code, studentData) => {
-        setGameId(code); setPlayerId(studentData.id);
-        await joinGame(code, studentData.id, { nickname: studentData.displayName, studentId: studentData.id, classId: studentData.classId });
-        setGameState(GameState.Lobby);
-    };
-    
-    const handleGuestJoinSubmit = async (code, nickname) => {
-        const guestPlayerId = `guest_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    const handleJoinSubmit = async (code, nickname) => {
+        const guestPlayerId = `player_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
         setPlayerId(guestPlayerId);
         setGameId(code);
-        await joinGame(code, guestPlayerId, { nickname, isGuest: true, studentId: null, classId: null });
+        await joinGame(code, guestPlayerId, { nickname });
         setGameState(GameState.Lobby);
     };
 
     const handleStartGame = () => startGame(gameId);
     const handleEndGame = () => finishGame(gameId);
     const handleSignOut = async () => { await signOutUser(); setGameState(GameState.Home); setUser(null); };
+    const handleTeacherLogin = async () => {
+        if (user) {
+            setGameState(GameState.TeacherDashboard);
+        } else {
+            try {
+                await signInWithGoogle();
+                // onAuthStateChanged will handle setting user and navigating
+                setGameState(GameState.TeacherDashboard);
+            } catch (error) {
+                console.error("Teacher sign-in error:", error);
+            }
+        }
+    };
 
-    const resetGame = () => {
+    const resetGame = (goToCreate = false) => {
         if (gameSubRef.current) gameSubRef.current();
         setGameId(null); setPlayerId(null); setGameData(null);
-        setGameState(GameState.Home);
+        if (goToCreate && user) {
+            setGameState(GameState.CreateGameSetup);
+        } else if (user) {
+            setGameState(GameState.TeacherDashboard);
+        } else {
+            setGameState(GameState.Home);
+        }
     };
     
     const renderContent = () => {
         if (authLoading) return <div className="flex justify-center items-center h-screen"><LoadingSpinner /></div>;
         
         switch (gameState) {
-            case GameState.Home: return <HomeScreen onSolo={() => setGameState(GameState.SoloSetup)} onSentence={() => setGameState(GameState.SentenceBuilder)} onTeacher={() => { if(user && user.type === 'teacher') setGameState(GameState.TeacherDashboard); else signInWithGoogle(); }} onStudentLogin={() => setGameState(GameState.StudentLogin)} onJoinAsGuest={() => setGameState(GameState.GuestJoinSetup)} onCreate={user ? () => setGameState(GameState.CreateGameSetup) : signInWithGoogle} onJoin={user ? () => setGameState(GameState.JoinGameSetup) : signInWithGoogle} />;
+            case GameState.Home: return <HomeScreen onSolo={() => setGameState(GameState.SoloSetup)} onSentence={() => setGameState(GameState.SentenceBuilder)} onTeacher={handleTeacherLogin} onJoinGame={() => setGameState(GameState.JoinGameSetup)} />;
             case GameState.SoloSetup: return <PracticeSetupScreen onStart={handleStartSolo} onBack={resetGame} />;
             case GameState.CreateGameSetup: return <CreateGameSetupScreen onCreate={(p, c, d) => { setPlayerId(user.uid); handleCreateGame(p, c, d, user.uid); }} onBack={() => setGameState(GameState.TeacherDashboard)} user={user} />;
-            case GameState.JoinGameSetup: return <JoinGameScreen onJoin={handleJoinGame} onBack={() => setGameState(GameState.Home)} user={user} />;
-            case GameState.GuestJoinSetup: return <GuestJoinScreen onJoin={handleGuestJoinSubmit} onBack={resetGame} />;
-            case GameState.Lobby: return <LobbyScreen gameId={gameId} gameData={gameData} playerId={playerId} onStartGame={handleStartGame} onLeaveGame={resetGame} user={user} />;
+            case GameState.JoinGameSetup: return <JoinGameScreen onJoin={handleJoinSubmit} onBack={resetGame} />;
+            case GameState.Lobby: return <LobbyScreen gameId={gameId} gameData={gameData} playerId={playerId} onStartGame={handleStartGame} onLeaveGame={resetGame} />;
             case GameState.InGame: return gameData.status === 'in-progress' || gameState === GameState.InGame ? <GameScreen gameData={gameData} playerId={playerId} onTimeUp={gameData.id === 'solo' ? handleEndSoloGame : handleEndMultiplayerGame} onScoreUpdate={(analysis) => updatePlayerAnalysis(gameId, playerId, analysis)} onGoHome={resetGame} /> : <div className="flex justify-center items-center h-screen"><LoadingSpinner /></div>;
             case GameState.Results: return <ResultsScreen gameData={gameData} playerId={playerId} onPlayAgain={resetGame} onGoHome={resetGame} soloHighScore={soloHighScore} onRetryPrompt={gameData.id === 'solo' ? () => handleStartSolo(gameData.prompt, gameData.criteria, gameData.duration) : undefined} />;
             case GameState.TeacherDashboard: return user ? <TeacherDashboard user={user} onSignOut={handleSignOut} onBack={resetGame} /> : <div className="p-4">Redirecting...</div>;
             case GameState.SentenceBuilder: return <SentenceBuilderScreen onBack={resetGame} />;
-            case GameState.StudentLogin: return <StudentLoginScreen onLogin={async (u, p) => { const stud = await signInWithUsername(u, p); setUser({type: 'student', student: stud }); setGameState(GameState.Home); }} onBack={resetGame} />;
             default: return <HomeScreen />;
         }
     };
