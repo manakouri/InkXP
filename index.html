@@ -1203,7 +1203,12 @@ function App() {
     useEffect(() => {
         const unsubscribe = onAuthChange(async (firebaseUser) => {
             if (firebaseUser && !firebaseUser.email.endsWith(STUDENT_EMAIL_DOMAIN)) {
-                setUser({ type: 'teacher', ...firebaseUser });
+                setUser({
+                    type: 'teacher',
+                    uid: firebaseUser.uid,
+                    displayName: firebaseUser.displayName,
+                    email: firebaseUser.email
+                });
                 setGameState(GameState.TeacherDashboard);
             } else if (firebaseUser && firebaseUser.email.endsWith(STUDENT_EMAIL_DOMAIN)) {
                 const userDoc = await db.collection('users').doc(firebaseUser.uid).get();
