@@ -104,6 +104,7 @@ const KETE_WORDS = {
     'How/When/Where Phrases': ['across the field', 'after school', 'all of a sudden', 'at the park', 'behind the door', 'down the street', 'early in the morning', 'in the afternoon', 'inside the box', 'late at night', 'like a rocket', 'near the river', 'on the weekend', 'over the fence', 'quickly', 'quietly', 'slowly', 'suddenly', 'through the forest', 'under the bed', 'with excitement'],
     'Sensory Details': ['a delicious smell', 'a loud crash', 'a sharp sting', 'a sweet taste', 'bright colours', 'cold wind', 'crunchy leaves', 'fluffy clouds', 'freezing water', 'hot sun', 'rough bark', 'silky smooth', 'the sound of waves', 'warm sand', 'with a high-pitched yip']
 };
+const BANNED_WORDS = ['ASS', 'BUT', 'DIK', 'FAG', 'FUK', 'GAY', 'SEX', 'TIT', 'CNT', 'POO', 'BUM', 'WEE']; // Simple profanity filter
 
 // Gemini API Service
 const callApi = async (task, payload) => {
@@ -192,6 +193,36 @@ const getGamesForTeacher = (teacherId, callback) => {
       callback(games);
   });
 };
+
+const getLeaderboardStream = (callback) => {
+    const leaderboardRef = db.collection('leaderboard').doc('sentenceLab');
+    return leaderboardRef.onSnapshot(doc => {
+        if (doc.exists) {
+            callback(doc.data().scores || []);
+        } else {
+            callback([]);
+        }
+    });
+};
+
+const updateLeaderboard = async (newEntry) => {
+    const leaderboardRef = db.collection('leaderboard').doc('sentenceLab');
+    return db.runTransaction(async (transaction) => {
+        const doc = await transaction.get(leaderboardRef);
+        let scores = [];
+        if (doc.exists) {
+            scores = doc.data().scores || [];
+        }
+        
+        scores.push(newEntry);
+        scores.sort((a, b) => b.score - a.score);
+        const topScores = scores.slice(0, 10);
+
+        transaction.set(leaderboardRef, { scores: topScores }, { merge: true });
+        return topScores;
+    });
+};
+
 
 const startGame = async (gameCode) => await db.collection('games').doc(gameCode).update({
   status: 'in-progress',
@@ -899,7 +930,7 @@ const TeacherDashboard = ({ user, onSignOut, onBack }) => {
 };
 
 const SentenceBuilderScreen = ({ onBack }) => {
-    const [step, setStep] = useState(1); // 1 for initial rewrite, 2 for kete rewrite
+    const [step, setStep] = useState(1);
     const [root, setRoot] = useState(null);
     const [userSentence, setUserSentence] = useState('');
     const [feedback, setFeedback] = useState('');
@@ -908,127 +939,163 @@ const SentenceBuilderScreen = ({ onBack }) => {
     const [isLoading, setIsLoading] = useState(false);
     const [isSubmitted, setIsSubmitted] = useState(false);
     const [activeKeteTab, setActiveKeteTab] = useState(Object.keys(KETE_WORDS)[0]);
+    const [leaderboard, setLeaderboard] = useState([]);
+    const [showLeaderboardModal, setShowLeaderboardModal] = useState(false);
+
+    useEffect(() => {
+        const unsubscribe = getLeaderboardStream(setLeaderboard);
+        return () => unsubscribe();
+    }, []);
 
     const generateNewChallenge = useCallback(() => {
         setRoot(SENTENCE_ROOTS[Math.floor(Math.random() * SENTENCE_ROOTS.length)]);
-        setUserSentence('');
-        setFeedback('');
-        setScore(0);
-        setStep(1);
-        setIsSubmitted(false);
+        setUserSentence(''); setFeedback(''); setScore(0); setStep(1); setIsSubmitted(false);
     }, []);
-    
+
     const handleTryAgainSame = () => {
-        setUserSentence('');
-        setFeedback('');
-        setScore(0);
-        setStep(1);
-        setIsSubmitted(false);
+        setUserSentence(''); setFeedback(''); setScore(0); setStep(1); setIsSubmitted(false);
     };
 
     useEffect(() => generateNewChallenge(), [generateNewChallenge]);
     useEffect(() => localStorage.setItem('sentenceBuilderHighScore', highScore), [highScore]);
 
     const handleNextStep = () => {
-        if (!userSentence.trim()) {
-            setFeedback("Please write a new sentence before moving to the next step.");
-            return;
-        }
-        setFeedback("");
-        setStep(2);
+        if (!userSentence.trim()) { setFeedback("Please write a new sentence before moving to the next step."); return; }
+        setFeedback(""); setStep(2);
     };
 
     const handleSubmit = async (e) => {
-        e.preventDefault();
-        setIsLoading(true);
+        e.preventDefault(); setIsLoading(true);
         const fb = await getSentenceFeedback(root.root, userSentence);
         const wordCount = userSentence.trim().split(/\s+/).length;
         const newScore = Math.round(wordCount * 10 * fb.qualityScore);
-        setScore(newScore);
-        setFeedback(fb.feedback);
+        setScore(newScore); setFeedback(fb.feedback);
         if (newScore > highScore) setHighScore(newScore);
-        setIsLoading(false);
-        setIsSubmitted(true);
+        setIsLoading(false); setIsSubmitted(true);
+        
+        const lowestLeaderboardScore = leaderboard.length < 10 ? 0 : leaderboard[leaderboard.length - 1].score;
+        if (newScore > 0 && newScore > lowestLeaderboardScore) {
+            setShowLeaderboardModal(true);
+        }
     };
     
     const KeteWord = ({ word, onSelect }) => (
-        <button 
-            type="button"
-            onClick={() => onSelect(word)} 
-            className="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm font-semibold transition-transform duration-150 hover:bg-amber-200 hover:scale-105 active:scale-95"
-        >
-            {word}
-        </button>
+        <button type="button" onClick={() => onSelect(word)} className="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm font-semibold transition-transform duration-150 hover:bg-amber-200 hover:scale-105 active:scale-95">{word}</button>
     );
 
     const handleWordSelect = (word) => {
         setUserSentence(prev => prev.trim() ? `${prev.trim()} ${word}` : word);
     };
+    
+    const LeaderboardModal = ({ newScore, onRegister }) => {
+        const [initials, setInitials] = useState('');
+        const [error, setError] = useState('');
+        const handleInitialsSubmit = (e) => {
+            e.preventDefault();
+            const upperInitials = initials.trim().toUpperCase();
+            if (BANNED_WORDS.includes(upperInitials)) {
+              setError('Please use appropriate initials.');
+              return;
+            }
+            if (upperInitials.length === 3) {
+                onRegister(upperInitials);
+                setInitials('');
+                setError('');
+            } else {
+                setError('Please enter exactly 3 initials.');
+            }
+        };
+        return (
+            <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-50">
+                <form onSubmit={handleInitialsSubmit} className="bg-white p-8 rounded-xl shadow-2xl w-full max-w-sm text-center">
+                    <h2 className="text-2xl font-bold text-amber-500 mb-2">New High Score!</h2>
+                    <p className="text-slate-600 mb-4">You've made it to the global leaderboard with a score of <span className="font-bold">{newScore.toLocaleString()}</span>!</p>
+                    <p className="text-slate-600 mb-6">Enter your initials (3 letters) to save your score.</p>
+                    <input type="text" value={initials} onChange={(e) => setInitials(e.target.value)} className="w-full p-3 border border-slate-300 rounded-lg shadow-inner focus:ring-2 focus:ring-sky-500 text-lg text-center uppercase tracking-widest font-bold" maxLength={3} required />
+                    {error && <p className="text-red-500 mt-2">{error}</p>}
+                    <Button type="submit" size="large" className="mt-6 w-full">Save to Leaderboard</Button>
+                </form>
+            </div>
+        );
+    };
+    
+    const LeaderboardView = ({ scores, yourScore }) => (
+        <div className="bg-gradient-to-br from-white to-amber-100 p-6 rounded-2xl shadow-2xl border border-white/40">
+            <h3 className="text-xl font-bold text-slate-800 mb-4 text-center">Global Top 10</h3>
+            <ol className="space-y-2">
+                {scores.map((entry, index) => (
+                    <li key={index} className={`p-2 rounded-md flex justify-between items-center ${yourScore === entry.score ? 'bg-amber-200' : 'bg-slate-50'}`}>
+                        <span className="font-semibold text-slate-700">
+                           {index + 1}. {entry.initials}
+                        </span>
+                        <span className="font-bold text-amber-600">{entry.score.toLocaleString()}</span>
+                    </li>
+                ))}
+            </ol>
+        </div>
+    );
+
+    const handleRegisterScore = async (initials) => {
+        await updateLeaderboard({ score, initials, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+        setShowLeaderboardModal(false);
+    };
 
     return (
         <div className="w-full max-w-4xl mx-auto">
+            {showLeaderboardModal && <LeaderboardModal newScore={score} onRegister={handleRegisterScore} />}
             <div className="bg-gradient-to-br from-white to-sky-100 p-8 rounded-2xl shadow-2xl border border-white/40 text-center">
                 <h2 className="text-3xl font-bold text-slate-800 mb-2">Sentence Lab</h2>
                 <div className="bg-sky-100 p-4 rounded-lg my-6"><p className="text-xl font-semibold text-sky-800">{root?.root}</p></div>
                 
                 {step === 1 && <p className="text-slate-600 mb-4">Rewrite the sentence. Try upgrading the noun (the subject) or the verb (the action) to make it more powerful!</p>}
                 
-                <form onSubmit={handleSubmit} className="w-full">
-                    <textarea value={userSentence} onChange={e => setUserSentence(e.target.value)} className="w-full p-3 border border-slate-300 rounded-lg shadow-inner focus:ring-2 focus:ring-sky-500" rows="3" placeholder="Write your new sentence here..."></textarea>
-                    
-                    {step === 2 && !isSubmitted && (
-                         <div className="mt-6 text-left animate-fade-in">
-                            <h3 className="text-lg font-bold text-slate-700 mb-2">Inspiration Kete (Basket)</h3>
-                            <p className="text-slate-600 mb-4">Great start! Now use these words to improve your sentence even more, then submit it for analysis.</p>
-                             <div className="border-b border-slate-200 mb-4">
-                                <nav className="-mb-px flex space-x-6" aria-label="Tabs">
-                                    {Object.keys(KETE_WORDS).map((category) => (
-                                        <button
-                                            key={category}
-                                            type="button"
-                                            onClick={() => setActiveKeteTab(category)}
-                                            className={`${
-                                                activeKeteTab === category
-                                                    ? 'border-sky-500 text-sky-600'
-                                                    : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
-                                            } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
-                                        >
-                                            {category}
-                                        </button>
-                                    ))}
-                                </nav>
+                {!isSubmitted && (
+                    <form onSubmit={handleSubmit} className="w-full">
+                        <textarea value={userSentence} onChange={e => setUserSentence(e.target.value)} className="w-full p-3 border border-slate-300 rounded-lg shadow-inner focus:ring-2 focus:ring-sky-500" rows="3" placeholder="Write your new sentence here..."></textarea>
+                        
+                        {step === 2 && (
+                             <div className="mt-6 text-left animate-fade-in">
+                                <h3 className="text-lg font-bold text-slate-700 mb-2">Inspiration Kete (Basket)</h3>
+                                <p className="text-slate-600 mb-4">Great start! Now use these words to improve your sentence even more, then submit it for analysis.</p>
+                                 <div className="border-b border-slate-200 mb-4">
+                                    <nav className="-mb-px flex space-x-6" aria-label="Tabs">
+                                        {Object.keys(KETE_WORDS).map((category) => (
+                                            <button key={category} type="button" onClick={() => setActiveKeteTab(category)} className={`${activeKeteTab === category ? 'border-sky-500 text-sky-600' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}>{category}</button>
+                                        ))}
+                                    </nav>
+                                </div>
+                                 <div className="flex flex-wrap gap-2 p-2 bg-slate-50 rounded-lg min-h-[50px]">
+                                    {KETE_WORDS[activeKeteTab].map(word => <KeteWord key={word} word={word} onSelect={handleWordSelect} />)}
+                                </div>
                             </div>
-                             <div className="flex flex-wrap gap-2 p-2 bg-slate-50 rounded-lg min-h-[50px]">
-                                {KETE_WORDS[activeKeteTab].map(word => <KeteWord key={word} word={word} onSelect={handleWordSelect} />)}
+                        )}
+
+                        {feedback && !isSubmitted && <p className={`mt-4 text-amber-600`}>{feedback}</p>}
+                        
+                        {step === 2 && (
+                            <div className="mt-6">
+                               <Button type="submit" size="large" disabled={isLoading}>{isLoading ? <LoadingSpinner/> : 'Submit for Analysis'}</Button>
                             </div>
-                        </div>
-                    )}
-
-                    {feedback && <p className={`mt-4 ${score > 0 ? 'text-emerald-600' : 'text-amber-600'}`}>{feedback}</p>}
-                    
-                    {!isSubmitted && step === 2 && (
-                        <div className="mt-6">
-                           <Button type="submit" size="large" disabled={isLoading}>{isLoading ? <LoadingSpinner/> : 'Submit for Analysis'}</Button>
-                        </div>
-                    )}
-                </form>
-
-                {!isSubmitted && step === 1 && (
-                    <div className="mt-6">
-                        <Button type="button" size="large" onClick={handleNextStep}>Next Step</Button>
-                    </div>
+                        )}
+                    </form>
                 )}
 
+                {!isSubmitted && step === 1 && ( <div className="mt-6"><Button type="button" size="large" onClick={handleNextStep}>Next Step</Button></div> )}
 
                 {isSubmitted && (
-                    <div className="mt-6 animate-fade-in">
-                        <div className="text-2xl font-bold">Your Score: <span className="text-emerald-600">{score}</span></div>
-                        <div className="mt-2 text-lg font-bold">High Score: <span className="text-amber-500">{highScore}</span></div>
-                        <div className="mt-8 flex gap-4 justify-center">
-                            <Button onClick={onBack} variant="secondary">Back to Home</Button>
-                            <Button onClick={handleTryAgainSame} variant="secondary">Try Same Sentence</Button>
-                            <Button onClick={generateNewChallenge}>New Challenge</Button>
+                    <div className="mt-6 animate-fade-in grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                        <div className="text-center">
+                            <h3 className="text-xl font-bold text-slate-700">Your Results</h3>
+                            <p className="mt-4 text-emerald-600 font-semibold">{feedback}</p>
+                            <div className="mt-4 text-2xl font-bold">Your Score: <span className="text-emerald-600">{score.toLocaleString()}</span></div>
+                            <div className="mt-2 text-lg font-bold">Your Personal Best: <span className="text-amber-500">{highScore.toLocaleString()}</span></div>
+                            <div className="mt-8 flex gap-4 justify-center flex-wrap">
+                                <Button onClick={onBack} variant="secondary">Back to Home</Button>
+                                <Button onClick={handleTryAgainSame} variant="secondary">Try Same Sentence</Button>
+                                <Button onClick={generateNewChallenge}>New Challenge</Button>
+                            </div>
                         </div>
+                        <LeaderboardView scores={leaderboard} yourScore={score} />
                     </div>
                 )}
                  {!isSubmitted && <Button onClick={onBack} variant="secondary" className="mt-4">Back to Home</Button>}
