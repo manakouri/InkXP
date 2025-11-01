@@ -941,19 +941,25 @@ const SentenceBuilderScreen = ({ onBack }) => {
     const [activeKeteTab, setActiveKeteTab] = useState(Object.keys(KETE_WORDS)[0]);
     const [leaderboard, setLeaderboard] = useState([]);
     const [showLeaderboardModal, setShowLeaderboardModal] = useState(false);
+    const [promptedForInitials, setPromptedForInitials] = useState(false);
+    const [isViewingLeaderboard, setIsViewingLeaderboard] = useState(false);
 
     useEffect(() => {
         const unsubscribe = getLeaderboardStream(setLeaderboard);
         return () => unsubscribe();
     }, []);
 
+    const resetState = () => {
+        setUserSentence(''); setFeedback(''); setScore(0); setStep(1); setIsSubmitted(false); setPromptedForInitials(false);
+    };
+
     const generateNewChallenge = useCallback(() => {
         setRoot(SENTENCE_ROOTS[Math.floor(Math.random() * SENTENCE_ROOTS.length)]);
-        setUserSentence(''); setFeedback(''); setScore(0); setStep(1); setIsSubmitted(false);
+        resetState();
     }, []);
 
     const handleTryAgainSame = () => {
-        setUserSentence(''); setFeedback(''); setScore(0); setStep(1); setIsSubmitted(false);
+        resetState();
     };
 
     useEffect(() => generateNewChallenge(), [generateNewChallenge]);
@@ -974,8 +980,9 @@ const SentenceBuilderScreen = ({ onBack }) => {
         setIsLoading(false); setIsSubmitted(true);
         
         const lowestLeaderboardScore = leaderboard.length < 10 ? 0 : leaderboard[leaderboard.length - 1].score;
-        if (newScore > 0 && newScore > lowestLeaderboardScore) {
+        if (newScore > 0 && newScore > lowestLeaderboardScore && !promptedForInitials) {
             setShowLeaderboardModal(true);
+            setPromptedForInitials(true);
         }
     };
     
@@ -993,25 +1000,25 @@ const SentenceBuilderScreen = ({ onBack }) => {
         const handleInitialsSubmit = (e) => {
             e.preventDefault();
             const upperInitials = initials.trim().toUpperCase();
-            if (BANNED_WORDS.includes(upperInitials)) {
+            if (BANNED_WORDS.some(banned => upperInitials.includes(banned))) {
               setError('Please use appropriate initials.');
               return;
             }
-            if (upperInitials.length === 3) {
+            if (upperInitials.length >= 2 && upperInitials.length <= 3) {
                 onRegister(upperInitials);
                 setInitials('');
                 setError('');
             } else {
-                setError('Please enter exactly 3 initials.');
+                setError('Please enter 2 or 3 initials.');
             }
         };
         return (
-            <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
                 <form onSubmit={handleInitialsSubmit} className="bg-white p-8 rounded-xl shadow-2xl w-full max-w-sm text-center">
                     <h2 className="text-2xl font-bold text-amber-500 mb-2">New High Score!</h2>
                     <p className="text-slate-600 mb-4">You've made it to the global leaderboard with a score of <span className="font-bold">{newScore.toLocaleString()}</span>!</p>
-                    <p className="text-slate-600 mb-6">Enter your initials (3 letters) to save your score.</p>
-                    <input type="text" value={initials} onChange={(e) => setInitials(e.target.value)} className="w-full p-3 border border-slate-300 rounded-lg shadow-inner focus:ring-2 focus:ring-sky-500 text-lg text-center uppercase tracking-widest font-bold" maxLength={3} required />
+                    <p className="text-slate-600 mb-6">Enter your initials (2 or 3 letters) to save your score.</p>
+                    <input type="text" value={initials} onChange={(e) => setInitials(e.target.value)} className="w-full p-3 border border-slate-300 rounded-lg shadow-inner focus:ring-2 focus:ring-sky-500 text-lg text-center uppercase tracking-widest font-bold" minLength={2} maxLength={3} required />
                     {error && <p className="text-red-500 mt-2">{error}</p>}
                     <Button type="submit" size="large" className="mt-6 w-full">Save to Leaderboard</Button>
                 </form>
@@ -1034,6 +1041,15 @@ const SentenceBuilderScreen = ({ onBack }) => {
             </ol>
         </div>
     );
+    
+    const LeaderboardViewModal = ({ scores, onClose }) => (
+        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md text-center relative">
+                 <Button onClick={onClose} variant="secondary" size="small" className="absolute top-4 right-4">Close</Button>
+                <LeaderboardView scores={scores} />
+            </div>
+        </div>
+    );
 
     const handleRegisterScore = async (initials) => {
         await updateLeaderboard({ score, initials, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
@@ -1043,8 +1059,12 @@ const SentenceBuilderScreen = ({ onBack }) => {
     return (
         <div className="w-full max-w-4xl mx-auto">
             {showLeaderboardModal && <LeaderboardModal newScore={score} onRegister={handleRegisterScore} />}
+            {isViewingLeaderboard && <LeaderboardViewModal scores={leaderboard} onClose={() => setIsViewingLeaderboard(false)} />}
             <div className="bg-gradient-to-br from-white to-sky-100 p-8 rounded-2xl shadow-2xl border border-white/40 text-center">
                 <h2 className="text-3xl font-bold text-slate-800 mb-2">Sentence Lab</h2>
+                <div className="flex justify-center items-center gap-4 my-4">
+                  <Button onClick={() => setIsViewingLeaderboard(true)} variant="secondary">View Leaderboard</Button>
+                </div>
                 <div className="bg-sky-100 p-4 rounded-lg my-6"><p className="text-xl font-semibold text-sky-800">{root?.root}</p></div>
                 
                 {step === 1 && <p className="text-slate-600 mb-4">Rewrite the sentence. Try upgrading the noun (the subject) or the verb (the action) to make it more powerful!</p>}
@@ -1105,19 +1125,21 @@ const SentenceBuilderScreen = ({ onBack }) => {
 };
 
 const HomeScreen = ({ onSolo, onJoinGame, onTeacher, onSentence }) => {
-    const SelectableOption = ({ icon, title, description, onClick }) => (
-        <div 
-            onClick={onClick} 
-            className="flex items-start text-left gap-5 p-5 rounded-2xl cursor-pointer transition-all duration-300 hover:bg-white/60 hover:shadow-inner"
+    const HomeCard = ({ icon, title, description, onClick }) => (
+        <div
+            onClick={onClick}
+            className="bg-white/60 backdrop-blur-sm p-6 rounded-2xl shadow-lg border border-white/70 cursor-pointer transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
             role="button"
             tabIndex="0"
             onKeyPress={(e) => (e.key === 'Enter' || e.key === ' ') && onClick()}
             aria-label={`${title}: ${description}`}
         >
-            <div className="flex-shrink-0 text-sky-600">{icon}</div>
-            <div>
-                <h3 className="text-xl font-bold text-slate-800">{title}</h3>
-                <p className="text-slate-500 mt-1">{description}</p>
+            <div className="flex items-start text-left gap-5">
+                <div className="flex-shrink-0 text-sky-600">{icon}</div>
+                <div>
+                    <h3 className="text-xl font-bold text-slate-800">{title}</h3>
+                    <p className="text-slate-500 mt-1">{description}</p>
+                </div>
             </div>
         </div>
     );
@@ -1141,22 +1163,18 @@ const HomeScreen = ({ onSolo, onJoinGame, onTeacher, onSentence }) => {
             <p className="text-xl text-slate-600 mb-12">Level up your writing experience.</p>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 w-full">
-                {/* Single Player Box */}
-                <div className="bg-white/50 backdrop-blur-sm p-6 md:p-8 rounded-2xl shadow-lg border border-white/60">
-                    <h2 className="text-2xl font-semibold text-slate-700 mb-6 text-center uppercase tracking-wider">Single Player</h2>
-                    <div className="space-y-4">
-                        <SelectableOption icon={icons.solo} title="Solo Practice" description="Take on a timed writing challenge by yourself." onClick={onSolo} />
-                        <SelectableOption icon={icons.lab} title="Sentence Lab" description="Hone your skills by upgrading simple sentences." onClick={onSentence} />
-                    </div>
+                {/* Single Player Column */}
+                <div className="space-y-6">
+                    <h2 className="text-2xl font-semibold text-slate-700 text-center uppercase tracking-wider">Single Player</h2>
+                    <HomeCard icon={icons.solo} title="Solo Practice" description="Take on a timed writing challenge by yourself." onClick={onSolo} />
+                    <HomeCard icon={icons.lab} title="Sentence Lab" description="Hone your skills by upgrading simple sentences." onClick={onSentence} />
                 </div>
 
-                {/* Multiplayer Box */}
-                <div className="bg-white/50 backdrop-blur-sm p-6 md:p-8 rounded-2xl shadow-lg border border-white/60">
-                    <h2 className="text-2xl font-semibold text-slate-700 mb-6 text-center uppercase tracking-wider">Multiplayer Game</h2>
-                    <div className="space-y-4">
-                        <SelectableOption icon={icons.teacher} title="Teacher Login" description="Create a game and view your students' work." onClick={onTeacher} />
-                        <SelectableOption icon={icons.join} title="Join Game" description="Enter a code to join a game lobby." onClick={onJoinGame} />
-                    </div>
+                {/* Multiplayer Column */}
+                <div className="space-y-6">
+                     <h2 className="text-2xl font-semibold text-slate-700 text-center uppercase tracking-wider">Multiplayer Game</h2>
+                    <HomeCard icon={icons.teacher} title="Teacher Login" description="Create a game and view your students' work." onClick={onTeacher} />
+                    <HomeCard icon={icons.join} title="Join Game" description="Enter a code to join a game lobby." onClick={onJoinGame} />
                 </div>
             </div>
         </div>
