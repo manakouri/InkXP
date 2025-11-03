@@ -1100,11 +1100,24 @@ const SentenceBuilderScreen = ({ onBack }) => {
 
                 {isSubmitted && (
                     <div className="mt-6 animate-fade-in grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-                        <div className="text-center">
-                            <h3 className="text-xl font-bold text-slate-700">Your Results</h3>
-                            <p className="mt-4 text-emerald-600 font-semibold">{feedback}</p>
-                            <div className="mt-4 text-2xl font-bold">Your Score: <span className="text-emerald-600">{score.toLocaleString()}</span></div>
-                            <div className="mt-2 text-lg font-bold">Your Personal Best: <span className="text-amber-500">{highScore.toLocaleString()}</span></div>
+                        <div className="text-left">
+                            <h3 className="text-xl font-bold text-slate-700 text-center mb-6">Your Results</h3>
+
+                            <div className="space-y-4 mb-6">
+                                <div>
+                                    <p className="text-sm font-semibold text-slate-500">Original Sentence</p>
+                                    <p className="p-3 bg-slate-100 rounded-md text-slate-700">{root?.root}</p>
+                                </div>
+                                <div>
+                                    <p className="text-sm font-semibold text-sky-600">Your Upgraded Sentence</p>
+                                    <p className="p-3 bg-sky-50 border border-sky-200 rounded-md text-sky-800 font-medium">{userSentence}</p>
+                                </div>
+                            </div>
+
+                            <p className="text-center text-emerald-600 font-semibold">{feedback}</p>
+                            <div className="mt-4 text-center text-2xl font-bold">Your Score: <span className="text-emerald-600">{score.toLocaleString()}</span></div>
+                            <div className="mt-2 text-center text-lg font-bold">Your Personal Best: <span className="text-amber-500">{highScore.toLocaleString()}</span></div>
+                            
                             <div className="mt-8 flex gap-4 justify-center flex-wrap">
                                 <Button onClick={onBack} variant="secondary">Back to Home</Button>
                                 <Button onClick={handleTryAgainSame} variant="secondary">Try Same Sentence</Button>
