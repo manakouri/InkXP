@@ -1052,7 +1052,7 @@ const SentenceBuilderScreen = ({ onBack }) => {
     );
 
     const handleRegisterScore = async (initials) => {
-        await updateLeaderboard({ score, initials, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+        await updateLeaderboard({ score, initials, createdAt: firebase.firestore.Timestamp.now() });
         setShowLeaderboardModal(false);
     };
 
