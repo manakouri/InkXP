@@ -1035,7 +1035,9 @@ const SentenceBuilderScreen = ({ onBack }) => {
         <div className="bg-gradient-to-br from-white to-amber-100 p-6 rounded-2xl shadow-2xl border border-white/40">
             <h3 className="text-xl font-bold text-slate-800 mb-4 text-center">Global Top 10</h3>
             <ol className="space-y-2">
-                {scores.map((entry, index) => (
+                {scores
+                    .filter(entry => entry && typeof entry.score === 'number')
+                    .map((entry, index) => (
                     <li key={index} className={`p-2 rounded-md flex justify-between items-center ${yourScore === entry.score ? 'bg-amber-200' : 'bg-slate-50'}`}>
                         <span className="font-semibold text-slate-700">
                            {index + 1}. {entry.initials}
