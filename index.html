@@ -223,7 +223,7 @@ const updateLeaderboard = async (newEntry) => {
             transaction.update(leaderboardRef, { scores: topScores });
         } else {
             // This handles the case where the leaderboard document doesn't exist yet.
-            transaction.create(leaderboardRef, { scores: topScores });
+            transaction.set(leaderboardRef, { scores: topScores });
         }
         
         return topScores;
