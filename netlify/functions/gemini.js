@@ -1,5 +1,5 @@
-import { GoogleGenAI, Type } from "@google/genai";
-import * as admin from 'firebase-admin';
+const { GoogleGenAI, Type } = require("@google/genai");
+const admin = require('firebase-admin');
 
 // Initialize Firebase Admin SDK
 // This will use the service account credentials from the environment variables in Netlify
@@ -73,7 +73,7 @@ const updateLeaderboardTask = async (payload) => {
         const newEntry = {
             score: Number(score),
             initials: initials,
-            createdAt: admin.firestore.FieldValue.serverTimestamp()
+            createdAt: admin.firestore.Timestamp.now() // Use Timestamp.now() instead of FieldValue.serverTimestamp()
         };
 
         if (!doc.exists) {
@@ -100,7 +100,7 @@ const updateLeaderboardTask = async (payload) => {
 };
 
 
-export const handler = async (event) => {
+exports.handler = async (event) => {
     if (event.httpMethod !== 'POST') {
         return { statusCode: 405, body: JSON.stringify({ error: 'Method Not Allowed' }) };
     }
