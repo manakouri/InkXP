@@ -28,21 +28,21 @@ const getFeedback = async (payload) => {
     const { rootSentence, userSentence } = payload;
     if (!rootSentence || !userSentence) throw new Error("rootSentence and userSentence are required");
     
-    const prompt = `You are an AI writing tutor for a 10-year-old. The original simple sentence was '${rootSentence}'. The student has rewritten it as: '${userSentence}'.
+    const prompt = `You are an expert AI writing teacher evaluating a sentence written by a 10-year-old student.
+The student was given a simple "root" sentence: '${rootSentence}'.
+They have rewritten it as: '${userSentence}'.
 
-Your task is to provide a quality score and feedback.
+Your task is to analyze the student's sentence based on four criteria and provide a score from 0.0 to 1.0 for each. You must also provide a short, encouraging feedback message.
 
-1.  **Meaning Check:** First, evaluate if the student's new sentence ('${userSentence}') preserves the core meaning of the original ('${rootSentence}'). The student is allowed to change the main noun and verb to more powerful synonyms (e.g., 'The cat sat' could become 'The leopard lounged'). If the meaning is completely unrelated (e.g., 'The cat sat' becomes 'The spaceship flew'), assign a score of 0.5 and provide feedback explaining that the sentence has strayed too far from the original idea. If the core meaning is preserved, then proceed with the scoring and feedback as described below.
+Analyze the following criteria:
+1.  **coherenceScore**: How well does the student's sentence retain the core meaning of the root sentence? Does it make grammatical sense? If it's gibberish or completely off-topic (e.g., from '${rootSentence}' to 'I like pizza'), this score should be very low (e.g., 0.1). If it's a perfect, relevant upgrade, it should be 1.0.
+2.  **vividnessScore**: How well does the sentence use strong verbs, precise nouns, and evocative adjectives/adverbs to create a clear picture? A score of 0.0 means no improvement. A score of 1.0 means it is extremely descriptive and vivid.
+3.  **figurativeLanguageScore**: Does the sentence use figurative language like similes, metaphors, or personification? A score of 0.0 means no figurative language. A score of 1.0 indicates a well-used and creative instance of figurative language.
+4.  **complexityScore**: How much has the student improved the grammatical structure? Look for things like subordinate clauses, prepositional phrases, or varied sentence openers. A score of 0.0 means the structure is identical to the root. A score of 1.0 means it is a well-formed, complex sentence.
 
-2.  **Scoring (qualityScore):** Provide a score between 0.5 and 2.0. This score will be used as a multiplier. Base the score on the following criteria combined:
-    *   **Creativity & Interest:** Is the new sentence significantly more engaging and interesting than the original?
-    *   **Adjectives & Sensory Details:** Does it use descriptive words effectively to paint a picture?
-    *   **Language Features:** Does it include features like similes, alliteration, or varied sentence structure?
-    *   **Punctuation & Grammar:** Is the sentence grammatically correct with proper punctuation?
+Finally, provide **feedback**: A single, short (max 20 words) sentence of positive and encouraging feedback with a specific tip for next time.
 
-3.  **Feedback (feedback):** Provide one short, positive, and encouraging tip (no more than 20 words) that is specific to their sentence on how they could make it even better next time.
-
-Respond ONLY with a valid JSON object.`;
+Respond ONLY with a valid JSON object in the specified format. Do not add any explanation or introductory text.`;
 
     const response = await ai.models.generateContent({
         model: "gemini-2.5-pro",
@@ -52,18 +52,19 @@ Respond ONLY with a valid JSON object.`;
             responseSchema: {
                 type: Type.OBJECT,
                 properties: {
-                    qualityScore: { type: Type.NUMBER },
+                    coherenceScore: { type: Type.NUMBER },
+                    vividnessScore: { type: Type.NUMBER },
+                    figurativeLanguageScore: { type: Type.NUMBER },
+                    complexityScore: { type: Type.NUMBER },
                     feedback: { type: Type.STRING }
                 },
-                required: ['qualityScore', 'feedback']
+                required: ['coherenceScore', 'vividnessScore', 'figurativeLanguageScore', 'complexityScore', 'feedback']
             }
         }
     });
 
     const jsonText = response.text.trim();
-    const result = JSON.parse(jsonText);
-    const clampedScore = Math.max(0.5, Math.min(result.qualityScore, 2.0));
-    return { qualityScore: clampedScore, feedback: result.feedback };
+    return JSON.parse(jsonText);
 };
 
 const updateLeaderboardTask = async (payload) => {

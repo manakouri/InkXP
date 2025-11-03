@@ -126,7 +126,13 @@ const getSentenceFeedback = async (rootSentence, userSentence) => {
         return await callApi('getSentenceFeedback', { rootSentence, userSentence });
     } catch (error) {
         console.error("Error getting sentence feedback:", error);
-        return { qualityScore: 1.0, feedback: "Great job trying something new!" };
+        return {
+            coherenceScore: 1.0,
+            vividnessScore: 0.5,
+            figurativeLanguageScore: 0.0,
+            complexityScore: 0.5,
+            feedback: "Great job on your sentence!"
+        };
     }
 };
 
@@ -990,7 +996,10 @@ const SentenceBuilderScreen = () => {
     const [activeTab, setActiveTab] = useState(Object.keys(KETE_WORDS)[0]);
     
     useEffect(() => {
-      const unsubscribe = getLeaderboardStream(setLeaderboard);
+      const unsubscribe = getLeaderboardStream((scores) => {
+          const sortedScores = [...scores].sort((a,b) => b.score - a.score);
+          setLeaderboard(sortedScores);
+      });
       return () => unsubscribe();
     }, []);
 
@@ -1041,21 +1050,52 @@ const SentenceBuilderScreen = () => {
         }
     };
 
+    const handleSentenceChange = (e) => {
+        let value = e.target.value;
+        const match = value.match(/(.*?[.?!])/);
+        if (match && value.length > match[0].length) {
+            value = match[0];
+        }
+        setUserSentence(value);
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setIsLoading(true);
-        const feedbackResult = await getSentenceFeedback(sentenceRoot.root, userSentence);
-        const baseScore = userSentence.length * 10;
-        const totalScore = Math.round(baseScore * feedbackResult.qualityScore);
+        
+        if (userSentence.trim().toLowerCase() === sentenceRoot.root.trim().toLowerCase()) {
+            alert("You need to change the sentence to submit it!");
+            return;
+        }
 
-        setResult({ ...feedbackResult, totalScore });
+        setIsLoading(true);
+        const analysisResult = await getSentenceFeedback(sentenceRoot.root, userSentence);
+        
+        // Sanity check for coherence
+        if (analysisResult.coherenceScore < 0.5) {
+            analysisResult.vividnessScore = 0;
+            analysisResult.figurativeLanguageScore = 0;
+            analysisResult.complexityScore = 0;
+        }
+
+        const baseScore = 100;
+        const coherencePoints = Math.round(analysisResult.coherenceScore * 50);
+        const vividnessPoints = Math.round(analysisResult.vividnessScore * 100);
+        const figurativeLanguagePoints = Math.round(analysisResult.figurativeLanguageScore * 150);
+        const complexityPoints = Math.round(analysisResult.complexityScore * 75);
+        const totalScore = baseScore + coherencePoints + vividnessPoints + figurativeLanguagePoints + complexityPoints;
+
+        setResult({ 
+            ...analysisResult, 
+            totalScore,
+            breakdown: { baseScore, coherencePoints, vividnessPoints, figurativeLanguagePoints, complexityPoints }
+        });
 
         if (totalScore > highScore) {
             setHighScore(totalScore);
             localStorage.setItem('sentenceLabHighScore', totalScore);
         }
         
-        const lowestLeaderboardScore = leaderboard.length < 10 ? 0 : leaderboard[leaderboard.length - 1].score;
+        const lowestLeaderboardScore = leaderboard.length < 10 ? 0 : (leaderboard[leaderboard.length - 1]?.score || 0);
         if (totalScore > lowestLeaderboardScore && !hasBeenPrompted) {
              setIsLeaderboardScore(true);
              setShowInitialsPrompt(true);
@@ -1069,7 +1109,6 @@ const SentenceBuilderScreen = () => {
     if (!sentenceRoot) return <div className="flex justify-center items-center h-screen"><LoadingSpinner /></div>;
 
     if (gameState === 'submitted') {
-        const safeLeaderboard = (leaderboard || []).filter(entry => entry && typeof entry.score === 'number' && !isNaN(entry.score));
         return (
             <div className="w-full max-w-3xl mx-auto text-center">
                  {showInitialsPrompt && (
@@ -1104,31 +1143,29 @@ const SentenceBuilderScreen = () => {
                     <p className="text-lg italic text-slate-800">"{result.feedback}"</p>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <div className="bg-white p-6 rounded-lg shadow-md text-center"><p className="text-slate-500">Quality Multiplier</p><p className="text-3xl font-bold text-sky-600">x{result.qualityScore.toFixed(2)}</p></div>
+                 <div className="bg-white p-6 rounded-lg shadow-md mb-8 text-left">
+                    <h3 className="text-xl font-bold text-slate-800 mb-4 text-center">Score Breakdown</h3>
+                    <ul className="space-y-2">
+                        <li className="flex justify-between items-center text-base p-2 bg-slate-50 rounded-md"><span>Base Score</span><span className="font-semibold text-emerald-600">+{result.breakdown.baseScore.toLocaleString()}</span></li>
+                        <li className="flex justify-between items-center text-base p-2 bg-slate-50 rounded-md"><span>Coherence</span><span className="font-semibold text-emerald-600">+{result.breakdown.coherencePoints.toLocaleString()}</span></li>
+                        <li className="flex justify-between items-center text-base p-2 bg-slate-50 rounded-md"><span>Vivid Language</span><span className="font-semibold text-emerald-600">+{result.breakdown.vividnessPoints.toLocaleString()}</span></li>
+                        <li className="flex justify-between items-center text-base p-2 bg-slate-50 rounded-md"><span>Figurative Language</span><span className="font-semibold text-emerald-600">+{result.breakdown.figurativeLanguagePoints.toLocaleString()}</span></li>
+                        <li className="flex justify-between items-center text-base p-2 bg-slate-50 rounded-md"><span>Sentence Structure</span><span className="font-semibold text-emerald-600">+{result.breakdown.complexityPoints.toLocaleString()}</span></li>
+                        <li className="flex justify-between items-center text-lg font-bold p-2 bg-sky-100 rounded-md mt-2">
+                            <span className="text-sky-800">Total Score</span>
+                            <span className="text-sky-800">{result.totalScore.toLocaleString()}</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                     <div className="bg-white p-6 rounded-lg shadow-md text-center"><p className="text-slate-500">Your Score</p><p className="text-5xl font-bold text-emerald-600">{result.totalScore.toLocaleString()}</p></div>
                     <div className="bg-white p-6 rounded-lg shadow-md text-center"><p className="text-slate-500">Personal Best</p><p className="text-3xl font-bold text-amber-500">{highScore.toLocaleString()}</p></div>
                 </div>
                 
-                <div className="bg-white p-6 rounded-lg shadow-md mb-8">
-                  <h3 className="text-xl font-bold text-slate-800 mb-4">Global Top 10</h3>
-                  <div className="space-y-2 max-h-80 overflow-y-auto">
-                    {safeLeaderboard.length > 0 ? (
-                        safeLeaderboard.map((entry, index) => (
-                            <div key={index} className="flex justify-between items-center bg-slate-100 p-3 rounded-lg">
-                                <span className="font-bold text-slate-600 w-8">{index + 1}.</span>
-                                <span className="font-semibold text-sky-700 text-lg flex-1 text-left">{entry.initials}</span>
-                                <span className="font-bold text-emerald-600 text-lg">{entry.score.toLocaleString()}</span>
-                            </div>
-                        ))
-                    ) : (
-                        <p className="text-slate-500 py-8">The leaderboard is empty. Be the first!</p>
-                    )}
-                </div>
-                </div>
-
                 <div className="flex items-center justify-center gap-4">
                     <Button onClick={() => setGameState('setup')} variant="secondary" size="large">Back to Home</Button>
+                    <Button onClick={() => setShowLeaderboard(true)} variant="secondary" size="large">Leaderboard</Button>
                     <Button onClick={startNewChallenge} size="large">New Sentence</Button>
                 </div>
             </div>
@@ -1154,7 +1191,7 @@ const SentenceBuilderScreen = () => {
 
                 <form onSubmit={handleSubmit}>
                     <label htmlFor="sentence-input" className="block text-lg font-semibold text-slate-700 mb-2">Your new sentence:</label>
-                    <textarea id="sentence-input" value={userSentence} onChange={(e) => setUserSentence(e.target.value)} className="w-full min-h-[100px] p-3 border border-slate-300 rounded-lg shadow-inner focus:ring-2 focus:ring-sky-500" placeholder="Rewrite the sentence here..." required></textarea>
+                    <textarea id="sentence-input" value={userSentence} onChange={handleSentenceChange} className="w-full min-h-[100px] p-3 border border-slate-300 rounded-lg shadow-inner focus:ring-2 focus:ring-sky-500" placeholder="Rewrite the sentence here..." required></textarea>
                 
                     {showKete && (
                         <div className="mt-6 bg-slate-50 p-4 rounded-lg border">
