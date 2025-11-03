@@ -1069,6 +1069,7 @@ const SentenceBuilderScreen = () => {
     if (!sentenceRoot) return <div className="flex justify-center items-center h-screen"><LoadingSpinner /></div>;
 
     if (gameState === 'submitted') {
+        const safeLeaderboard = (leaderboard || []).filter(entry => entry && typeof entry.score === 'number' && !isNaN(entry.score));
         return (
             <div className="w-full max-w-3xl mx-auto text-center">
                  {showInitialsPrompt && (
@@ -1111,7 +1112,19 @@ const SentenceBuilderScreen = () => {
                 
                 <div className="bg-white p-6 rounded-lg shadow-md mb-8">
                   <h3 className="text-xl font-bold text-slate-800 mb-4">Global Top 10</h3>
-                  <LeaderboardView scores={leaderboard} onBack={() => {}} title="" />
+                  <div className="space-y-2 max-h-80 overflow-y-auto">
+                    {safeLeaderboard.length > 0 ? (
+                        safeLeaderboard.map((entry, index) => (
+                            <div key={index} className="flex justify-between items-center bg-slate-100 p-3 rounded-lg">
+                                <span className="font-bold text-slate-600 w-8">{index + 1}.</span>
+                                <span className="font-semibold text-sky-700 text-lg flex-1 text-left">{entry.initials}</span>
+                                <span className="font-bold text-emerald-600 text-lg">{entry.score.toLocaleString()}</span>
+                            </div>
+                        ))
+                    ) : (
+                        <p className="text-slate-500 py-8">The leaderboard is empty. Be the first!</p>
+                    )}
+                </div>
                 </div>
 
                 <div className="flex items-center justify-center gap-4">
