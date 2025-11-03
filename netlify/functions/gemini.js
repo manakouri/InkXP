@@ -2,13 +2,18 @@ const { GoogleGenAI, Type } = require("@google/genai");
 const admin = require('firebase-admin');
 
 // Initialize Firebase Admin SDK
-// This will use the service account credentials from the environment variables in Netlify
 try {
   if (admin.apps.length === 0) {
-    admin.initializeApp();
+    if (!process.env.FIREBASE_SERVICE_ACCOUNT_JSON) {
+      throw new Error('The FIREBASE_SERVICE_ACCOUNT_JSON environment variable is not set.');
+    }
+    const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON);
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount)
+    });
   }
 } catch (e) {
-  console.error('Firebase admin initialization error', e);
+  console.error('Firebase admin initialization error. Make sure FIREBASE_SERVICE_ACCOUNT_JSON is set correctly in Netlify.', e);
 }
 const db = admin.firestore();
 
@@ -73,7 +78,7 @@ const updateLeaderboardTask = async (payload) => {
         const newEntry = {
             score: Number(score),
             initials: initials,
-            createdAt: admin.firestore.Timestamp.now() // Use Timestamp.now() instead of FieldValue.serverTimestamp()
+            createdAt: admin.firestore.Timestamp.now()
         };
 
         if (!doc.exists) {
@@ -84,7 +89,7 @@ const updateLeaderboardTask = async (payload) => {
         const data = doc.data();
         const existingScores = data.scores || [];
 
-        // Self-healing filter
+        // Self-healing filter to remove malformed entries
         const cleanScores = existingScores.filter(entry => 
             entry && typeof entry === 'object' && typeof entry.score === 'number' && !isNaN(entry.score)
         );
