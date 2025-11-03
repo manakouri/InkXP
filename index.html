@@ -764,8 +764,7 @@ const PracticeSetupScreen = ({ onStart, onBack }) => {
     );
 };
 
-
-const CreateGameSetupScreen = ({ onCreate, onBack }) => {
+const CreateGameSetupScreen = ({ onCreate, onBack, user }) => {
     const [duration, setDuration] = useState(600);
     const [prompt, setPrompt] = useState(null);
 
@@ -778,6 +777,10 @@ const CreateGameSetupScreen = ({ onCreate, onBack }) => {
     }, [generateNewPrompt]);
     
     const handleCreate = () => {
+        if (!user) {
+            console.error("No user found, cannot create game.");
+            return;
+        }
         const alwaysCriteria = ALL_SCORING_CRITERIA.filter(c => c.type === 'always').map(c => c.id);
         const randomCriteria = ALL_SCORING_CRITERIA.filter(c => c.type === 'random').sort(() => 0.5 - Math.random()).slice(0, 3).map(c => c.id);
         const criteria = [...alwaysCriteria, ...randomCriteria];
@@ -788,10 +791,10 @@ const CreateGameSetupScreen = ({ onCreate, onBack }) => {
         <div className="w-full max-w-xl mx-auto">
             <div className="bg-gradient-to-br from-white to-sky-100 p-8 rounded-2xl shadow-2xl border border-white/40 text-center">
                 <h2 className="text-3xl font-bold text-slate-800 mb-2">Create Multiplayer Game</h2>
-                <p className="text-slate-600 mb-8">Set the rules for this game.</p>
+                <p className="text-slate-600 mb-8">Choose a prompt and duration for your students.</p>
                 
-                 <div className="text-left mb-6">
-                    <label className="block text-lg font-semibold text-slate-700 mb-2">Game Writing Prompt:</label>
+                <div className="text-left mb-6">
+                    <label className="block text-lg font-semibold text-slate-700 mb-2">Writing Prompt:</label>
                     <div className="bg-sky-50 p-4 rounded-lg border border-sky-200 min-h-[100px]">
                         {prompt ? (
                             <>
@@ -811,43 +814,46 @@ const CreateGameSetupScreen = ({ onCreate, onBack }) => {
                         <input id="duration-multi" type="range" min="120" max="1800" step="60" value={duration} onChange={(e) => setDuration(Number(e.target.value))} className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-sky-600" />
                     </div>
                 </div>
-                 <div className="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <Button onClick={onBack} variant="secondary" size="large" className="w-full sm:col-span-1">Back</Button>
-                    <Button onClick={handleCreate} size="large" className="w-full sm:col-span-2">Create Game</Button>
+
+                <div className="mt-10 flex flex-col sm:flex-row gap-4">
+                    <Button onClick={onBack} variant="secondary" size="large" className="w-full">Back</Button>
+                    <Button onClick={handleCreate} size="large" className="w-full">Create Game</Button>
                 </div>
             </div>
         </div>
     );
 };
 
-const JoinGameScreen = ({ onJoin, onBack }) => {
-    const [nickname, setNickname] = useState('');
+const JoinGameSetupScreen = ({ onJoin, onBack }) => {
     const [gameCode, setGameCode] = useState('');
+    const [nickname, setNickname] = useState('');
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setError(''); setIsLoading(true);
-        if (nickname.trim() && gameCode.trim()) {
-            try { await onJoin(gameCode.trim().toUpperCase(), nickname.trim()); } 
-            catch (err) { setError(err.message); setIsLoading(false); }
-        } else { setError("Please enter a name and a game code."); setIsLoading(false); }
+        if (!gameCode.trim() || !nickname.trim()) return;
+        setIsLoading(true);
+        setError('');
+        try {
+            await onJoin(gameCode.toUpperCase(), nickname);
+        } catch (err) {
+            setError(err.message);
+            setIsLoading(false);
+        }
     };
 
     return (
-        <div className="w-full max-w-md mx-auto">
+        <div className="w-full max-w-sm mx-auto">
             <div className="bg-gradient-to-br from-white to-sky-100 p-8 rounded-2xl shadow-2xl border border-white/40 text-center">
                 <h2 className="text-3xl font-bold text-slate-800 mb-2">Join a Game</h2>
-                <p className="text-slate-600 mb-6">Enter your name and the 6-character game code.</p>
-                <form onSubmit={handleSubmit}>
-                    <div className="space-y-4">
-                        <input type="text" value={nickname} onChange={(e) => setNickname(e.target.value)} className="w-full p-3 border border-slate-300 rounded-lg shadow-inner focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-shadow duration-200 text-lg text-center" placeholder="Your Name" maxLength={25} required />
-                        <input type="text" value={gameCode} onChange={(e) => setGameCode(e.target.value)} className="w-full p-3 border border-slate-300 rounded-lg shadow-inner focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-shadow duration-200 text-lg text-center uppercase" placeholder="GAME CODE" maxLength={6} required style={{ textTransform: 'uppercase' }} />
-                    </div>
-                    {error && <p className="text-red-500 mt-4">{error}</p>}
-                    <div className="mt-6 flex flex-col sm:flex-row gap-4">
-                        <Button type="button" variant="secondary" size="large" onClick={onBack} className="w-full">Back</Button>
+                <p className="text-slate-600 mb-8">Enter the game code and your name to join.</p>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <input type="text" value={gameCode} onChange={(e) => setGameCode(e.target.value)} className="w-full p-3 border border-slate-300 rounded-lg shadow-inner focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-shadow duration-200 text-lg text-center uppercase tracking-widest" placeholder="GAME CODE" maxLength={6} required />
+                    <input type="text" value={nickname} onChange={(e) => setNickname(e.target.value)} className="w-full p-3 border border-slate-300 rounded-lg shadow-inner focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-shadow duration-200 text-lg text-center" placeholder="Your Name" maxLength={25} required />
+                    {error && <p className="text-red-500 text-sm">{error}</p>}
+                    <div className="pt-4 flex flex-col sm:flex-row gap-4">
+                        <Button onClick={onBack} variant="secondary" size="large" className="w-full" disabled={isLoading}>Back</Button>
                         <Button type="submit" size="large" className="w-full" disabled={isLoading}>{isLoading ? <LoadingSpinner /> : 'Join Game'}</Button>
                     </div>
                 </form>
@@ -856,336 +862,364 @@ const JoinGameScreen = ({ onJoin, onBack }) => {
     );
 };
 
-const TeacherDashboard = ({ user, onSignOut, onBack }) => {
+const TeacherDashboard = ({ user, onSignOut, onGoHome }) => {
     const [games, setGames] = useState([]);
     const [selectedGame, setSelectedGame] = useState(null);
 
     useEffect(() => {
-        if (!user || !user.uid) return;
-        const unsubscribe = getGamesForTeacher(user.uid, setGames);
-        return () => unsubscribe();
-    }, [user.uid]);
+        if (user?.uid) {
+            const unsubscribe = getGamesForTeacher(user.uid, (fetchedGames) => {
+                setGames(fetchedGames);
+                if (!selectedGame && fetchedGames.length > 0) {
+                    setSelectedGame(fetchedGames[0]);
+                }
+            });
+            return () => unsubscribe();
+        }
+    }, [user?.uid]);
+
+    const handleSelectGame = (game) => setSelectedGame(game);
+    const getPlayerCount = (game) => Object.keys(game?.players || {}).length;
 
     return (
         <div className="w-full max-w-7xl mx-auto">
             <div className="flex justify-between items-center mb-6">
-                <h2 className="text-3xl font-bold text-slate-800">Teacher Dashboard</h2>
+                 <h1 className="text-3xl font-bold text-slate-800">Teacher Dashboard</h1>
                  <div>
-                    <Button onClick={() => onBack(true)} variant="secondary" className="mr-4">Create Game</Button>
+                    <Button onClick={onGoHome} variant="secondary" className="mr-4">Home</Button>
                     <Button onClick={onSignOut}>Sign Out</Button>
                 </div>
             </div>
-            <div className="bg-gradient-to-br from-white to-sky-100 p-6 rounded-2xl shadow-2xl border border-white/40">
-                <h3 className="text-2xl font-bold text-slate-800 mb-4">Game History</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="md:col-span-1 max-h-[70vh] overflow-y-auto bg-slate-50 p-2 rounded-lg">
-                        <h3 className="text-lg font-bold p-2 text-slate-600">All Games ({games.length})</h3>
-                        <ul>
-                          {games.map(game => (
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div className="md:col-span-1 bg-gradient-to-br from-white to-sky-100 p-6 rounded-2xl shadow-2xl border border-white/40">
+                    <h2 className="text-xl font-bold mb-4">Game History</h2>
+                    <ul className="space-y-2 max-h-[60vh] overflow-y-auto">
+                        {games.length > 0 ? games.map(game => (
                             <li key={game.id}>
-                                <button onClick={() => setSelectedGame(game)} className={`w-full text-left p-3 rounded-md transition-colors duration-150 ${selectedGame?.id === game.id ? 'bg-sky-200 text-sky-800 font-semibold' : 'hover:bg-sky-100'}`}>
-                                    <span className="block">Game: {game.id}</span>
-                                    <span className="text-xs text-slate-500">{game.createdAt?.toDate().toLocaleDateString()}</span>
+                                <button onClick={() => handleSelectGame(game)} className={`w-full text-left p-3 rounded-lg transition-colors ${selectedGame?.id === game.id ? 'bg-sky-200' : 'bg-slate-50 hover:bg-sky-100'}`}>
+                                    <p className="font-semibold text-slate-800">{game.prompt.text.substring(0, 40)}...</p>
+                                    <p className="text-sm text-slate-500">
+                                        {game.createdAt?.toDate().toLocaleDateString()} - {getPlayerCount(game)} player(s)
+                                    </p>
                                 </button>
                             </li>
-                           ))}
-                        </ul>
-                    </div>
-                    <div className="md:col-span-2 max-h-[70vh] overflow-y-auto p-2">
-                        {selectedGame ? (
-                            <div>
-                                <h3 className="text-xl font-bold mb-2">Results for Game {selectedGame.id}</h3>
-                                <p className="text-sm text-slate-500 mb-4">Prompt: {selectedGame.prompt.text}</p>
-                                <div className="space-y-4">
-                                  {Object.values(selectedGame.players).map((p, i) => (
-                                    <div key={i} className="p-4 border bg-white rounded-lg shadow-sm">
-                                        <div className="flex justify-between items-center mb-2">
-                                            <p className="font-bold text-lg text-sky-700">{p.nickname}</p>
-                                            <Button size="small" variant="secondary" onClick={() => downloadPDF(p.nickname, p.story, selectedGame.prompt)}>Download PDF</Button>
-                                        </div>
-                                        <h4 className="font-semibold italic text-slate-700">{p.story?.title || 'Untitled'}</h4>
-                                        <p className="whitespace-pre-wrap mt-1 text-slate-600 bg-slate-50 p-3 rounded-md">{p.story?.text || 'No story submitted.'}</p>
-                                    </div>
-                                   ))}
-                                </div>
+                        )) : <p className="text-slate-500">No games played yet.</p>}
+                    </ul>
+                </div>
+                <div className="md:col-span-2 bg-gradient-to-br from-white to-sky-100 p-6 rounded-2xl shadow-2xl border border-white/40">
+                    {selectedGame ? (
+                        <div>
+                             <h2 className="text-xl font-bold mb-1">Game Details</h2>
+                             <p className="text-sm text-slate-500 mb-4">{selectedGame.createdAt?.toDate().toLocaleString()}</p>
+                             <div className="bg-sky-50 p-4 rounded-lg border border-sky-200 mb-6">
+                                <p className="font-semibold text-sky-700">Prompt:</p>
+                                <p className="text-slate-800">{selectedGame.prompt.text}</p>
                             </div>
-                        ) : <div className="flex items-center justify-center h-full text-slate-500"><p>Select a game from the list to view student writing.</p></div>}
-                    </div>
+                            <h3 className="text-lg font-bold mb-3">Student Submissions</h3>
+                            <div className="space-y-4 max-h-[45vh] overflow-y-auto pr-2">
+                                {Object.values(selectedGame.players).length > 0 ? Object.values(selectedGame.players).map((player, idx) => (
+                                    <div key={idx} className="bg-white p-4 rounded-lg shadow">
+                                        <div className="flex justify-between items-start mb-2">
+                                            <div>
+                                                <p className="font-bold text-slate-800">{player.nickname}</p>
+                                                <p className="text-sm font-semibold text-emerald-600">Score: {player.analysis?.totalScore?.toLocaleString() || 'N/A'}</p>
+                                            </div>
+                                            <Button onClick={() => downloadPDF(player.nickname, player.story, selectedGame.prompt)} size="small" variant="secondary">Download PDF</Button>
+                                        </div>
+                                         <div className="prose prose-sm max-w-none text-slate-600 whitespace-pre-wrap bg-slate-50 p-3 rounded-md border">
+                                            <h4 className="font-bold">{player.story?.title || "Untitled Story"}</h4>
+                                            {player.story?.text || "No submission."}
+                                        </div>
+                                    </div>
+                                )) : <p className="text-slate-500">No students joined this game.</p>}
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="flex items-center justify-center h-full">
+                            <p className="text-slate-500 text-lg">Select a game from the history to view details.</p>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
     );
 };
 
-const SentenceBuilderScreen = ({ onBack }) => {
-    const [step, setStep] = useState(1);
-    const [root, setRoot] = useState(null);
+
+const LeaderboardView = ({ scores, onBack, title }) => {
+    const safeScores = Array.isArray(scores) ? scores.filter(entry => entry && typeof entry.score === 'number' && !isNaN(entry.score)) : [];
+    
+    return (
+        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md text-center">
+                <h2 className="text-2xl font-bold text-slate-800 mb-6">{title}</h2>
+                <div className="space-y-2 max-h-80 overflow-y-auto">
+                    {safeScores.length > 0 ? (
+                        safeScores.map((entry, index) => (
+                            <div key={index} className="flex justify-between items-center bg-slate-100 p-3 rounded-lg">
+                                <span className="font-bold text-slate-600 w-8">{index + 1}.</span>
+                                <span className="font-semibold text-sky-700 text-lg flex-1 text-left">{entry.initials}</span>
+                                <span className="font-bold text-emerald-600 text-lg">{entry.score.toLocaleString()}</span>
+                            </div>
+                        ))
+                    ) : (
+                        <p className="text-slate-500 py-8">The leaderboard is empty. Be the first!</p>
+                    )}
+                </div>
+                <Button onClick={onBack} variant="secondary" size="large" className="mt-8 w-full">Close</Button>
+            </div>
+        </div>
+    );
+};
+
+const SentenceBuilderScreen = () => {
+    const [gameState, setGameState] = useState('setup'); // 'setup', 'writing', 'submitted'
+    const [sentenceRoot, setSentenceRoot] = useState(null);
     const [userSentence, setUserSentence] = useState('');
-    const [feedback, setFeedback] = useState('');
-    const [score, setScore] = useState(0);
-    const [highScore, setHighScore] = useState(Number(localStorage.getItem('sentenceBuilderHighScore')) || 0);
+    const [showKete, setShowKete] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
-    const [isSubmitted, setIsSubmitted] = useState(false);
-    const [activeKeteTab, setActiveKeteTab] = useState(Object.keys(KETE_WORDS)[0]);
+    const [result, setResult] = useState(null);
+    const [highScore, setHighScore] = useState(() => Number(localStorage.getItem('sentenceLabHighScore')) || 0);
+    const [isLeaderboardScore, setIsLeaderboardScore] = useState(false);
+    const [showInitialsPrompt, setShowInitialsPrompt] = useState(false);
+    const [initials, setInitials] = useState('');
     const [leaderboard, setLeaderboard] = useState([]);
-    const [showLeaderboardModal, setShowLeaderboardModal] = useState(false);
-    const [promptedForInitials, setPromptedForInitials] = useState(false);
-    const [isViewingLeaderboard, setIsViewingLeaderboard] = useState(false);
+    const [showLeaderboard, setShowLeaderboard] = useState(false);
+    const [hasBeenPrompted, setHasBeenPrompted] = useState(false);
+    const [activeTab, setActiveTab] = useState(Object.keys(KETE_WORDS)[0]);
+    
+    useEffect(() => {
+      const unsubscribe = getLeaderboardStream(setLeaderboard);
+      return () => unsubscribe();
+    }, []);
+
+    const startNewChallenge = useCallback(() => {
+        const newRoot = SENTENCE_ROOTS[Math.floor(Math.random() * SENTENCE_ROOTS.length)];
+        setSentenceRoot(newRoot);
+        setUserSentence(newRoot.root);
+        setGameState('writing');
+        setShowKete(false);
+        setResult(null);
+        setIsLeaderboardScore(false);
+        setShowInitialsPrompt(false);
+        setHasBeenPrompted(false);
+    }, []);
 
     useEffect(() => {
-        const unsubscribe = getLeaderboardStream(setLeaderboard);
-        return () => unsubscribe();
-    }, []);
-
-    const resetState = () => {
-        setUserSentence(''); setFeedback(''); setScore(0); setStep(1); setIsSubmitted(false); setPromptedForInitials(false);
-    };
-
-    const generateNewChallenge = useCallback(() => {
-        setRoot(SENTENCE_ROOTS[Math.floor(Math.random() * SENTENCE_ROOTS.length)]);
-        resetState();
-    }, []);
-
-    const handleTryAgainSame = () => {
-        resetState();
-    };
-
-    useEffect(() => generateNewChallenge(), [generateNewChallenge]);
-    useEffect(() => localStorage.setItem('sentenceBuilderHighScore', highScore), [highScore]);
+        startNewChallenge();
+    }, [startNewChallenge]);
 
     const handleNextStep = () => {
-        if (!userSentence.trim()) { setFeedback("Please write a new sentence before moving to the next step."); return; }
-        setFeedback(""); setStep(2);
+        if (!userSentence.trim()) {
+            alert("Please rewrite the sentence first!");
+            return;
+        }
+        setShowKete(true);
     };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault(); setIsLoading(true);
-        const fb = await getSentenceFeedback(root.root, userSentence);
-        const wordCount = userSentence.trim().split(/\s+/).length;
-        const newScore = Math.round(wordCount * 10 * fb.qualityScore);
-        setScore(newScore); setFeedback(fb.feedback);
-        if (newScore > highScore) setHighScore(newScore);
-        setIsLoading(false); setIsSubmitted(true);
-        
-        const lowestLeaderboardScore = leaderboard.length < 10 ? 0 : leaderboard[leaderboard.length - 1].score;
-        if (newScore > 0 && newScore > lowestLeaderboardScore && !promptedForInitials) {
-            setShowLeaderboardModal(true);
-            setPromptedForInitials(true);
+    const handleAddWord = (word) => {
+        setUserSentence(prev => prev.endsWith(' ') ? prev + word : prev + ' ' + word);
+    };
+    
+    const handleRegisterScore = async (initials) => {
+        if (!result || !initials) return;
+        try {
+            await updateLeaderboard({ score: result.totalScore, initials: initials.toUpperCase() });
+        } catch (error) {
+            console.error("Failed to update leaderboard:", error);
+            alert(`Failed to update leaderboard: ${error.message}`);
+        } finally {
+            setShowInitialsPrompt(false);
         }
     };
     
-    const KeteWord = ({ word, onSelect }) => (
-        <button type="button" onClick={() => onSelect(word)} className="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm font-semibold transition-transform duration-150 hover:bg-amber-200 hover:scale-105 active:scale-95">{word}</button>
-    );
-
-    const handleWordSelect = (word) => {
-        setUserSentence(prev => prev.trim() ? `${prev.trim()} ${word}` : word);
+    const handleInitialsSubmit = (e) => {
+        e.preventDefault();
+        if (initials.trim().length >= 2 && initials.trim().length <= 3) {
+            handleRegisterScore(initials.trim());
+        }
     };
-    
-    const LeaderboardModal = ({ newScore, onRegister }) => {
-        const [initials, setInitials] = useState('');
-        const [error, setError] = useState('');
-        const handleInitialsSubmit = (e) => {
-            e.preventDefault();
-            const upperInitials = initials.trim().toUpperCase();
-            if (BANNED_WORDS.some(banned => upperInitials.includes(banned))) {
-              setError('Please use appropriate initials.');
-              return;
-            }
-            if (upperInitials.length >= 2 && upperInitials.length <= 3) {
-                onRegister(upperInitials);
-                setInitials('');
-                setError('');
-            } else {
-                setError('Please enter 2 or 3 initials.');
-            }
-        };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setIsLoading(true);
+        const feedbackResult = await getSentenceFeedback(sentenceRoot.root, userSentence);
+        const baseScore = userSentence.length * 10;
+        const totalScore = Math.round(baseScore * feedbackResult.qualityScore);
+
+        setResult({ ...feedbackResult, totalScore });
+
+        if (totalScore > highScore) {
+            setHighScore(totalScore);
+            localStorage.setItem('sentenceLabHighScore', totalScore);
+        }
+        
+        const lowestLeaderboardScore = leaderboard.length < 10 ? 0 : leaderboard[leaderboard.length - 1].score;
+        if (totalScore > lowestLeaderboardScore && !hasBeenPrompted) {
+             setIsLeaderboardScore(true);
+             setShowInitialsPrompt(true);
+             setHasBeenPrompted(true);
+        }
+
+        setGameState('submitted');
+        setIsLoading(false);
+    };
+
+    if (!sentenceRoot) return <div className="flex justify-center items-center h-screen"><LoadingSpinner /></div>;
+
+    if (gameState === 'submitted') {
         return (
-            <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                <form onSubmit={handleInitialsSubmit} className="bg-white p-8 rounded-xl shadow-2xl w-full max-w-sm text-center">
-                    <h2 className="text-2xl font-bold text-amber-500 mb-2">New High Score!</h2>
-                    <p className="text-slate-600 mb-4">You've made it to the global leaderboard with a score of <span className="font-bold">{newScore.toLocaleString()}</span>!</p>
-                    <p className="text-slate-600 mb-6">Enter your initials (2 or 3 letters) to save your score.</p>
-                    <input type="text" value={initials} onChange={(e) => setInitials(e.target.value)} className="w-full p-3 border border-slate-300 rounded-lg shadow-inner focus:ring-2 focus:ring-sky-500 text-lg text-center uppercase tracking-widest font-bold" minLength={2} maxLength={3} required />
-                    {error && <p className="text-red-500 mt-2">{error}</p>}
-                    <Button type="submit" size="large" className="mt-6 w-full">Save to Leaderboard</Button>
-                </form>
-            </div>
-        );
-    };
-    
-    const LeaderboardView = ({ scores, yourScore }) => (
-        <div className="bg-gradient-to-br from-white to-amber-100 p-6 rounded-2xl shadow-2xl border border-white/40">
-            <h3 className="text-xl font-bold text-slate-800 mb-4 text-center">Global Top 10</h3>
-            <ol className="space-y-2">
-                {scores
-                    .filter(entry => entry && typeof entry.score === 'number' && !isNaN(entry.score))
-                    .map((entry, index) => (
-                    <li key={index} className={`p-2 rounded-md flex justify-between items-center ${yourScore === entry.score ? 'bg-amber-200' : 'bg-slate-50'}`}>
-                        <span className="font-semibold text-slate-700">
-                           {index + 1}. {entry.initials}
-                        </span>
-                        <span className="font-bold text-amber-600">{entry.score.toLocaleString()}</span>
-                    </li>
-                ))}
-            </ol>
-        </div>
-    );
-    
-    const LeaderboardViewModal = ({ scores, onClose }) => (
-        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md text-center relative">
-                 <Button onClick={onClose} variant="secondary" size="small" className="absolute top-4 right-4">Close</Button>
-                <LeaderboardView scores={scores} />
-            </div>
-        </div>
-    );
-
-    const handleRegisterScore = async (initials) => {
-      try {
-        await updateLeaderboard({ score, initials });
-      } catch (error) {
-        console.error("Failed to update leaderboard:", error);
-        // Optionally show an error message to the user
-      } finally {
-        setShowLeaderboardModal(false);
-      }
-    };
-
-    return (
-        <div className="w-full max-w-4xl mx-auto">
-            {showLeaderboardModal && <LeaderboardModal newScore={score} onRegister={handleRegisterScore} />}
-            {isViewingLeaderboard && <LeaderboardViewModal scores={leaderboard} onClose={() => setIsViewingLeaderboard(false)} />}
-            <div className="bg-gradient-to-br from-white to-sky-100 p-8 rounded-2xl shadow-2xl border border-white/40 text-center">
-                <h2 className="text-3xl font-bold text-slate-800 mb-2">Sentence Lab</h2>
-                <div className="flex justify-center items-center gap-4 my-4">
-                  <Button onClick={() => setIsViewingLeaderboard(true)} variant="secondary">View Leaderboard</Button>
-                </div>
-                <div className="bg-sky-100 p-4 rounded-lg my-6"><p className="text-xl font-semibold text-sky-800">{root?.root}</p></div>
-                
-                {step === 1 && <p className="text-slate-600 mb-4">Rewrite the sentence. Try upgrading the noun (the subject) or the verb (the action) to make it more powerful!</p>}
-                
-                {!isSubmitted && (
-                    <form onSubmit={handleSubmit} className="w-full">
-                        <textarea value={userSentence} onChange={e => setUserSentence(e.target.value)} className="w-full p-3 border border-slate-300 rounded-lg shadow-inner focus:ring-2 focus:ring-sky-500" rows="3" placeholder="Write your new sentence here..."></textarea>
-                        
-                        {step === 2 && (
-                             <div className="mt-6 text-left animate-fade-in">
-                                <h3 className="text-lg font-bold text-slate-700 mb-2">Inspiration Kete (Basket)</h3>
-                                <p className="text-slate-600 mb-4">Great start! Now use these words to improve your sentence even more, then submit it for analysis.</p>
-                                 <div className="border-b border-slate-200 mb-4">
-                                    <nav className="-mb-px flex space-x-6" aria-label="Tabs">
-                                        {Object.keys(KETE_WORDS).map((category) => (
-                                            <button key={category} type="button" onClick={() => setActiveKeteTab(category)} className={`${activeKeteTab === category ? 'border-sky-500 text-sky-600' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}>{category}</button>
-                                        ))}
-                                    </nav>
-                                </div>
-                                 <div className="flex flex-wrap gap-2 p-2 bg-slate-50 rounded-lg min-h-[50px]">
-                                    {KETE_WORDS[activeKeteTab].map(word => <KeteWord key={word} word={word} onSelect={handleWordSelect} />)}
-                                </div>
-                            </div>
-                        )}
-
-                        {feedback && !isSubmitted && <p className={`mt-4 text-amber-600`}>{feedback}</p>}
-                        
-                        {step === 2 && (
-                            <div className="mt-6">
-                               <Button type="submit" size="large" disabled={isLoading}>{isLoading ? <LoadingSpinner/> : 'Submit for Analysis'}</Button>
-                            </div>
-                        )}
-                    </form>
-                )}
-
-                {!isSubmitted && step === 1 && ( <div className="mt-6"><Button type="button" size="large" onClick={handleNextStep}>Next Step</Button></div> )}
-
-                {isSubmitted && (
-                    <div className="mt-6 animate-fade-in grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-                        <div className="text-left">
-                            <h3 className="text-xl font-bold text-slate-700 text-center mb-6">Your Results</h3>
-
-                            <div className="space-y-4 mb-6">
-                                <div>
-                                    <p className="text-sm font-semibold text-slate-500">Original Sentence</p>
-                                    <p className="p-3 bg-slate-100 rounded-md text-slate-700">{root?.root}</p>
-                                </div>
-                                <div>
-                                    <p className="text-sm font-semibold text-sky-600">Your Upgraded Sentence</p>
-                                    <p className="p-3 bg-sky-50 border border-sky-200 rounded-md text-sky-800 font-medium">{userSentence}</p>
-                                </div>
-                            </div>
-
-                            <p className="text-center text-emerald-600 font-semibold">{feedback}</p>
-                            <div className="mt-4 text-center text-2xl font-bold">Your Score: <span className="text-emerald-600">{score.toLocaleString()}</span></div>
-                            <div className="mt-2 text-center text-lg font-bold">Your Personal Best: <span className="text-amber-500">{highScore.toLocaleString()}</span></div>
-                            
-                            <div className="mt-8 flex gap-4 justify-center flex-wrap">
-                                <Button onClick={onBack} variant="secondary">Back to Home</Button>
-                                <Button onClick={handleTryAgainSame} variant="secondary">Try Same Sentence</Button>
-                                <Button onClick={generateNewChallenge}>New Challenge</Button>
-                            </div>
+            <div className="w-full max-w-3xl mx-auto text-center">
+                 {showInitialsPrompt && (
+                    <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                        <div className="bg-white p-8 rounded-xl shadow-2xl w-full max-w-sm text-center">
+                            <h2 className="text-2xl font-bold text-amber-500 mb-2">New High Score!</h2>
+                            <p className="text-slate-600 mb-6">You've made it onto the global leaderboard! Enter your initials (2-3 characters).</p>
+                             <form onSubmit={handleInitialsSubmit}>
+                                 <input type="text" value={initials} onChange={e => setInitials(e.target.value)} className="w-full p-3 border border-slate-300 rounded-lg shadow-inner text-center uppercase tracking-widest text-2xl font-bold" maxLength="3" required />
+                                 <Button type="submit" size="large" className="mt-6 w-full">Submit to Leaderboard</Button>
+                             </form>
                         </div>
-                        <LeaderboardView scores={leaderboard} yourScore={score} />
                     </div>
                 )}
-                 {!isSubmitted && <Button onClick={onBack} variant="secondary" className="mt-4">Back to Home</Button>}
+                {showLeaderboard && <LeaderboardView scores={leaderboard} onBack={() => setShowLeaderboard(false)} title="Global Leaderboard" />}
+
+                <h2 className="text-3xl font-bold text-emerald-600 mb-4">Challenge Complete!</h2>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 text-left">
+                     <div className="bg-white p-6 rounded-lg shadow-md">
+                        <p className="text-sm font-semibold text-slate-500 mb-1">Original Sentence</p>
+                        <p className="text-lg text-slate-700">{sentenceRoot.root}</p>
+                    </div>
+                     <div className="bg-sky-50 p-6 rounded-lg shadow-md border border-sky-200">
+                        <p className="text-sm font-semibold text-sky-600 mb-1">Your Upgraded Sentence</p>
+                        <p className="text-lg font-bold text-sky-800">{userSentence}</p>
+                    </div>
+                </div>
+
+                <div className="bg-white p-6 rounded-lg shadow-md mb-6">
+                    <p className="text-sm font-semibold text-slate-500 mb-2">AI Feedback:</p>
+                    <p className="text-lg italic text-slate-800">"{result.feedback}"</p>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div className="bg-white p-6 rounded-lg shadow-md text-center"><p className="text-slate-500">Quality Multiplier</p><p className="text-3xl font-bold text-sky-600">x{result.qualityScore.toFixed(2)}</p></div>
+                    <div className="bg-white p-6 rounded-lg shadow-md text-center"><p className="text-slate-500">Your Score</p><p className="text-5xl font-bold text-emerald-600">{result.totalScore.toLocaleString()}</p></div>
+                    <div className="bg-white p-6 rounded-lg shadow-md text-center"><p className="text-slate-500">Personal Best</p><p className="text-3xl font-bold text-amber-500">{highScore.toLocaleString()}</p></div>
+                </div>
+                
+                <div className="bg-white p-6 rounded-lg shadow-md mb-8">
+                  <h3 className="text-xl font-bold text-slate-800 mb-4">Global Top 10</h3>
+                  <LeaderboardView scores={leaderboard} onBack={() => {}} title="" />
+                </div>
+
+                <div className="flex items-center justify-center gap-4">
+                    <Button onClick={() => setGameState('setup')} variant="secondary" size="large">Back to Home</Button>
+                    <Button onClick={startNewChallenge} size="large">New Sentence</Button>
+                </div>
+            </div>
+        );
+    }
+    
+    const KeteWord = ({ word, onAdd }) => (
+      <button type="button" onClick={() => onAdd(word)} className="bg-sky-100 text-sky-800 px-3 py-1 rounded-full text-sm font-semibold hover:bg-sky-200 transition-colors">
+          {word}
+      </button>
+    );
+
+    return (
+        <div className="w-full max-w-3xl mx-auto">
+            <h1 className="text-3xl font-bold text-center text-slate-800 mb-2">Sentence Lab</h1>
+            <p className="text-center text-slate-600 mb-8">Upgrade the simple sentence to make it more powerful and interesting!</p>
+            
+            <div className="bg-white p-8 rounded-xl shadow-2xl border border-white/50">
+                <div className="text-center mb-6">
+                    <p className="text-slate-500 mb-1">Your challenge:</p>
+                    <p className="text-2xl font-bold text-sky-600 bg-sky-50 p-4 rounded-lg inline-block">{sentenceRoot.root}</p>
+                </div>
+
+                <form onSubmit={handleSubmit}>
+                    <label htmlFor="sentence-input" className="block text-lg font-semibold text-slate-700 mb-2">Your new sentence:</label>
+                    <textarea id="sentence-input" value={userSentence} onChange={(e) => setUserSentence(e.target.value)} className="w-full min-h-[100px] p-3 border border-slate-300 rounded-lg shadow-inner focus:ring-2 focus:ring-sky-500" placeholder="Rewrite the sentence here..." required></textarea>
+                
+                    {showKete && (
+                        <div className="mt-6 bg-slate-50 p-4 rounded-lg border">
+                           <h3 className="text-lg font-semibold text-slate-700 mb-4">Inspiration Kete</h3>
+                             <div className="flex border-b mb-4">
+                                {Object.keys(KETE_WORDS).map(tabName => (
+                                    <button type="button" key={tabName} onClick={() => setActiveTab(tabName)} className={`px-4 py-2 text-sm font-semibold transition-colors ${activeTab === tabName ? 'border-b-2 border-sky-500 text-sky-600' : 'text-slate-500 hover:text-sky-500'}`}>
+                                        {tabName}
+                                    </button>
+                                ))}
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                                {KETE_WORDS[activeTab].map(word => <KeteWord key={word} word={word} onAdd={handleAddWord} />)}
+                            </div>
+                        </div>
+                    )}
+                
+                    <div className="mt-8 flex items-center justify-between">
+                        <Button type="button" onClick={() => setGameState('setup')} variant="secondary" size="large">Back to Home</Button>
+                        <div className="flex items-center gap-4">
+                            {!showKete && <Button type="button" onClick={handleNextStep} size="large">Next Step</Button>}
+                            {showKete && <Button type="submit" size="large" disabled={isLoading}>{isLoading ? <LoadingSpinner/> : "Submit for Analysis"}</Button>}
+                        </div>
+                    </div>
+                </form>
+                 <div className="text-center mt-4">
+                    <Button onClick={() => setShowLeaderboard(true)} variant="secondary">View Leaderboard</Button>
+                </div>
+                 {showLeaderboard && <LeaderboardView scores={leaderboard} onBack={() => setShowLeaderboard(false)} title="Global Leaderboard" />}
             </div>
         </div>
     );
 };
 
-const HomeScreen = ({ onSolo, onJoinGame, onTeacher, onSentence }) => {
-    const HomeCard = ({ icon, title, description, onClick }) => (
-        <div
-            onClick={onClick}
-            className="bg-white/60 backdrop-blur-sm p-6 rounded-2xl shadow-lg border border-white/70 cursor-pointer transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
-            role="button"
-            tabIndex="0"
-            onKeyPress={(e) => (e.key === 'Enter' || e.key === ' ') && onClick()}
-            aria-label={`${title}: ${description}`}
-        >
-            <div className="flex items-start text-left gap-5">
-                <div className="flex-shrink-0 text-sky-600">{icon}</div>
-                <div>
+const HomeScreen = ({ onSelect }) => {
+     const OptionCard = ({ icon, title, description, onClick }) => (
+        <button onClick={onClick} className="w-full bg-white/60 backdrop-blur-sm border border-white/30 rounded-2xl p-6 text-left shadow-lg hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500">
+            <div className="flex items-center gap-5">
+                 <div className="bg-sky-100 p-3 rounded-xl">{icon}</div>
+                 <div>
                     <h3 className="text-xl font-bold text-slate-800">{title}</h3>
-                    <p className="text-slate-500 mt-1">{description}</p>
+                    <p className="text-slate-600 text-sm mt-1">{description}</p>
                 </div>
             </div>
-        </div>
+        </button>
     );
 
-    const iconStyles = "w-12 h-12 stroke-2";
-
+    const iconStyles = "w-10 h-10 text-sky-600";
     const icons = {
-        inkxp: <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-12 h-12 text-slate-700"><path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" /></svg>,
-        solo: <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={iconStyles}><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A1.875 1.875 0 0 1 18.12 22.5H5.88a1.875 1.875 0 0 1-1.379-2.382Z" /></svg>,
-        lab: <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={iconStyles}><path strokeLinecap="round" strokeLinejoin="round" d="m21 7.5-9-5.25L3 7.5m18 0-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" /></svg>,
-        teacher: <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={iconStyles}><path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.627 48.627 0 0 1 12 20.904a48.627 48.627 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.57 50.57 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443m-7.007 11.55a5.981 5.981 0 0 0 6.75-6.175L12 12.583V17.5m1.243-1.243a5.981 5.981 0 0 0 6.75 6.175L12 17.5v-4.917Z" /></svg>,
-        join: <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={iconStyles}><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9" /></svg>
+        solo: <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={iconStyles}><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" /></svg>,
+        sentence: <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={iconStyles}><path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" /></svg>,
+        teacher: <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={iconStyles}><path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.627 48.627 0 0 1 12 20.904a48.627 48.627 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.57 50.57 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443m-7.007 11.55A5.981 5.981 0 0 0 6.75 15.75v-1.5" /></svg>,
+        join: <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={iconStyles}><path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m-7.5-2.962 3.992-3.992a.75.75 0 0 1 1.06 0l3.992 3.992" /><path strokeLinecap="round" strokeLinejoin="round" d="M12 3v17.25m0 0c-1.472 0-2.882.265-4.185.75M12 20.25c1.472 0 2.882.265 4.185.75M18.75 20.25c1.623 0 3.19-.623 4.372-1.732a4.5 4.5 0 0 0-8.744 0c1.182 1.11 2.749 1.732 4.372 1.732Z" /></svg>,
     };
 
     return (
-        <div className="text-center w-full max-w-6xl mx-auto">
-            <div className="flex items-center justify-center gap-3 mb-3">
-                {icons.inkxp}
-                <h1 className="text-6xl font-bold text-slate-700">InkXP</h1>
-            </div>
-            <p className="text-xl text-slate-600 mb-12">Level up your writing experience.</p>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 w-full">
-                {/* Single Player Column */}
-                <div className="space-y-6">
-                    <h2 className="text-2xl font-semibold text-slate-700 text-center uppercase tracking-wider">Single Player</h2>
-                    <HomeCard icon={icons.solo} title="Solo Practice" description="Take on a timed writing challenge by yourself." onClick={onSolo} />
-                    <HomeCard icon={icons.lab} title="Sentence Lab" description="Hone your skills by upgrading simple sentences." onClick={onSentence} />
+        <div className="text-center px-4 py-8">
+            <header className="mb-12">
+                 <div className="flex items-center justify-center gap-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-12 h-12 text-sky-700">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+                    </svg>
+                    <h1 className="text-5xl font-bold text-slate-800">InkXP</h1>
                 </div>
-
-                {/* Multiplayer Column */}
+                <p className="text-slate-600 mt-2 text-lg">Level up your writing experience.</p>
+            </header>
+            <main className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
                 <div className="space-y-6">
-                     <h2 className="text-2xl font-semibold text-slate-700 text-center uppercase tracking-wider">Multiplayer Game</h2>
-                    <HomeCard icon={icons.teacher} title="Teacher Login" description="Create a game and view your students' work." onClick={onTeacher} />
-                    <HomeCard icon={icons.join} title="Join Game" description="Enter a code to join a game lobby." onClick={onJoinGame} />
+                    <h2 className="text-2xl font-bold text-slate-700">Single Player</h2>
+                    <OptionCard icon={icons.solo} title="Solo Practice" description="Write a story based on a random prompt and get a score." onClick={() => onSelect(GameState.SoloSetup)} />
+                    <OptionCard icon={icons.sentence} title="Sentence Lab" description="Upgrade a simple sentence to make it more powerful." onClick={() => onSelect(GameState.SentenceBuilder)} />
                 </div>
-            </div>
+                <div className="space-y-6">
+                    <h2 className="text-2xl font-bold text-slate-700">Multiplayer</h2>
+                     <OptionCard icon={icons.teacher} title="Teacher Login" description="Create and manage games for your students." onClick={() => onSelect('teacherLogin')} />
+                    <OptionCard icon={icons.join} title="Join Game" description="Enter a code to join a game hosted by your teacher." onClick={() => onSelect(GameState.JoinGameSetup)} />
+                </div>
+            </main>
         </div>
     );
 };
@@ -1194,138 +1228,171 @@ const HomeScreen = ({ onSolo, onJoinGame, onTeacher, onSentence }) => {
 function App() {
     const [gameState, setGameState] = useState(GameState.Home);
     const [gameId, setGameId] = useState(null);
-    const [playerId, setPlayerId] = useState(null);
     const [gameData, setGameData] = useState(null);
+    const [playerId, setPlayerId] = useState(() => `guest_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`);
     const [user, setUser] = useState(null);
     const [authLoading, setAuthLoading] = useState(true);
-    const [soloHighScore, setSoloHighScore] = useState(Number(localStorage.getItem('soloHighScore')) || 0);
-    const gameSubRef = useRef(null);
+    const [soloHighScore, setSoloHighScore] = useState(() => Number(localStorage.getItem('soloHighScore')) || 0);
 
     useEffect(() => {
-        const unsubscribe = onAuthChange(async (firebaseUser) => {
+        const unsubscribe = onAuthChange(firebaseUser => {
             if (firebaseUser) {
-                setUser({
-                    type: 'teacher',
+                const isTeacher = firebaseUser.email && !firebaseUser.email.endsWith('@inkxp-student.com');
+                const simpleUser = {
                     uid: firebaseUser.uid,
                     displayName: firebaseUser.displayName,
-                    email: firebaseUser.email
-                });
-                // Don't auto-redirect here, let them choose to go to dashboard.
+                    email: firebaseUser.email,
+                    isTeacher: isTeacher
+                };
+                setUser(simpleUser);
+                setPlayerId(firebaseUser.uid);
             } else {
                 setUser(null);
+                 setPlayerId(`guest_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`);
             }
             setAuthLoading(false);
         });
         return () => unsubscribe();
     }, []);
-    
-    useEffect(() => localStorage.setItem('soloHighScore', soloHighScore), [soloHighScore]);
 
-    const handleEndSoloGame = (story, analysis) => {
-        if (analysis.totalScore > soloHighScore) setSoloHighScore(analysis.totalScore);
-        const soloGameData = {
-            id: 'solo',
-            prompt: gameData.prompt,
-            players: { [playerId]: { story, analysis } }
-        };
-        setGameData(soloGameData);
-        setGameState(GameState.Results);
-    };
-    
-    const handleEndMultiplayerGame = useCallback(async (story, analysis) => {
-        await submitResult(gameId, playerId, story, analysis);
-    }, [gameId, playerId]);
-    
     useEffect(() => {
-        if (gameId && playerId) {
-            gameSubRef.current = getGameStream(gameId, (data) => {
-                if (!data) { setGameState(GameState.Home); setGameId(null); return; }
-                const isHost = data.hostId === playerId;
-                const playerExists = data.players && data.players[playerId];
-
-                setGameData({ id: gameId, ...data });
-
+        let unsubscribe;
+        if (gameState === GameState.Lobby || (gameState === GameState.InGame && gameId)) {
+            unsubscribe = getGameStream(gameId, (data) => {
+                if (!data) {
+                    setGameState(GameState.Home);
+                    setGameId(null);
+                    setGameData(null);
+                    return;
+                }
+                setGameData(data);
+                if (data.status === 'in-progress') {
+                    setGameState(GameState.InGame);
+                }
                 if (data.status === 'finished') {
-                    if (isHost || !playerExists) {
-                        setGameState(GameState.Results);
-                    }
+                    setGameState(GameState.Results);
                 }
             });
         }
-        return () => { if (gameSubRef.current) gameSubRef.current(); };
-    }, [gameId, playerId]);
+        return () => {
+            if (unsubscribe) unsubscribe();
+        };
+    }, [gameState, gameId]);
+
+    const goHome = useCallback(() => {
+        setGameState(GameState.Home);
+        setGameId(null);
+        setGameData(null);
+    }, []);
+
+    const handleCreateGame = useCallback(async (prompt, criteria, duration) => {
+        if (!user) {
+            console.error("User not logged in, cannot create game.");
+            return;
+        }
+        const newGameId = await createGame(user.uid, prompt, criteria, duration, user.uid);
+        setGameId(newGameId);
+        setGameState(GameState.Lobby);
+    }, [user]);
+
+    const handleJoinGame = useCallback(async (code, nickname) => {
+        await joinGame(code, playerId, { nickname, isGuest: !user });
+        setGameId(code);
+        setGameState(GameState.Lobby);
+    }, [playerId, user]);
+
+    const handleTeacherLogin = async () => {
+        try {
+            await signInWithGoogle();
+            setGameState(GameState.TeacherDashboard);
+        } catch (error) {
+            console.error("Teacher sign-in error:", error);
+        }
+    };
+    
+    const handleSignOut = async () => {
+        try {
+            await signOutUser();
+            goHome();
+        } catch (error) {
+            console.error("Sign out error:", error);
+        }
+    };
+
+    const handleSelectHome = (selection) => {
+        if (selection === 'teacherLogin') {
+            handleTeacherLogin();
+        } else {
+            setGameState(selection);
+        }
+    };
     
     const handleStartSolo = (prompt, criteria, duration) => {
-        const newPlayerId = `solo_${Date.now()}`;
-        setPlayerId(newPlayerId);
-        setGameData({ prompt, criteria, duration, startTime: new Date() });
+        const soloGameData = {
+            id: `solo_${Date.now()}`,
+            hostId: playerId,
+            prompt,
+            criteria,
+            duration,
+            startTime: new Date(),
+            status: 'in-progress',
+            players: { [playerId]: { nickname: 'You', story: { title: '', text: '' }, analysis: null } }
+        };
+        setGameData(soloGameData);
         setGameState(GameState.InGame);
     };
 
-    const handleCreateGame = async (hostId, prompt, criteria, duration) => {
-        const teacherId = hostId; // For game creation, host and teacher are the same.
-        const newGameId = await createGame(hostId, prompt, criteria, duration, teacherId);
-        setGameId(newGameId);
-        setPlayerId(hostId);
-        await joinGame(newGameId, hostId, { nickname: `${user.displayName} (Host)`, isHost: true });
-        setGameState(GameState.Lobby);
-    };
-
-    const handleJoinSubmit = async (code, nickname) => {
-        const guestPlayerId = `player_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-        setPlayerId(guestPlayerId);
-        setGameId(code);
-        await joinGame(code, guestPlayerId, { nickname });
-        setGameState(GameState.Lobby);
-    };
-
-    const handleStartGame = () => startGame(gameId);
-    const handleEndGame = () => finishGame(gameId);
-    const handleSignOut = async () => { await signOutUser(); setGameState(GameState.Home); setUser(null); };
-    const handleTeacherLogin = async () => {
-        if (user) {
-            setGameState(GameState.TeacherDashboard);
-        } else {
-            try {
-                await signInWithGoogle();
-                // onAuthStateChanged will handle setting user and navigating
-                setGameState(GameState.TeacherDashboard);
-            } catch (error) {
-                console.error("Teacher sign-in error:", error);
-            }
+    const handleSoloTimeUp = (story, analysis) => {
+        if (analysis.totalScore > soloHighScore) {
+            setSoloHighScore(analysis.totalScore);
+            localStorage.setItem('soloHighScore', analysis.totalScore);
         }
+        setGameData(prev => ({ ...prev, players: { ...prev.players, [playerId]: { ...prev.players[playerId], story, analysis } } }));
+        setGameState(GameState.Results);
     };
-
-    const resetGame = (goToCreate = false) => {
-        if (gameSubRef.current) gameSubRef.current();
-        setGameId(null); setPlayerId(null); setGameData(null);
-        if (goToCreate && user) {
-            setGameState(GameState.CreateGameSetup);
-        } else if (user) {
-            setGameState(GameState.TeacherDashboard);
-        } else {
-            setGameState(GameState.Home);
-        }
-    };
+    
+    const handleScoreUpdate = useCallback(async (analysis) => {
+      // For multiplayer, update score in real-time
+      if (gameData && gameData.status !== 'in-progress' && !gameData.id?.startsWith('solo')) {
+        await updatePlayerAnalysis(gameId, playerId, analysis);
+      }
+    }, [gameId, playerId, gameData]);
     
     const renderContent = () => {
         if (authLoading) return <div className="flex justify-center items-center h-screen"><LoadingSpinner /></div>;
         
         switch (gameState) {
-            case GameState.Home: return <HomeScreen onSolo={() => setGameState(GameState.SoloSetup)} onSentence={() => setGameState(GameState.SentenceBuilder)} onTeacher={handleTeacherLogin} onJoinGame={() => setGameState(GameState.JoinGameSetup)} />;
-            case GameState.SoloSetup: return <PracticeSetupScreen onStart={handleStartSolo} onBack={resetGame} />;
-            case GameState.CreateGameSetup: return <CreateGameSetupScreen onCreate={(prompt, criteria, duration) => handleCreateGame(user.uid, prompt, criteria, duration)} onBack={() => setGameState(GameState.TeacherDashboard)} />;
-            case GameState.JoinGameSetup: return <JoinGameScreen onJoin={handleJoinSubmit} onBack={resetGame} />;
-            case GameState.Lobby: return <LobbyScreen gameId={gameId} gameData={gameData} playerId={playerId} onStartGame={handleStartGame} onLeaveGame={resetGame} />;
-            case GameState.InGame: return gameData.status === 'in-progress' || gameState === GameState.InGame ? <GameScreen gameData={gameData} playerId={playerId} onTimeUp={gameData.id === 'solo' ? handleEndSoloGame : handleEndMultiplayerGame} onScoreUpdate={(analysis) => updatePlayerAnalysis(gameId, playerId, analysis)} onGoHome={resetGame} /> : <div className="flex justify-center items-center h-screen"><LoadingSpinner /></div>;
-            case GameState.Results: return <ResultsScreen gameData={gameData} playerId={playerId} onPlayAgain={resetGame} onGoHome={resetGame} soloHighScore={soloHighScore} onRetryPrompt={gameData.id === 'solo' ? () => handleStartSolo(gameData.prompt, gameData.criteria, gameData.duration) : undefined} />;
-            case GameState.TeacherDashboard: return user ? <TeacherDashboard user={user} onSignOut={handleSignOut} onBack={resetGame} /> : <div className="p-4">Redirecting...</div>;
-            case GameState.SentenceBuilder: return <SentenceBuilderScreen onBack={resetGame} />;
-            default: return <HomeScreen />;
+            case GameState.Home:
+                return <HomeScreen onSelect={handleSelectHome} />;
+            case GameState.SentenceBuilder:
+                 return <SentenceBuilderScreen onBack={goHome} />;
+            case GameState.SoloSetup:
+                return <PracticeSetupScreen onStart={handleStartSolo} onBack={goHome} />;
+            case GameState.CreateGameSetup:
+                return <CreateGameSetupScreen onCreate={handleCreateGame} onBack={goHome} user={user} />;
+            case GameState.JoinGameSetup:
+                return <JoinGameSetupScreen onJoin={handleJoinGame} onBack={goHome} />;
+            case GameState.Lobby:
+                return <LobbyScreen gameId={gameId} gameData={gameData} playerId={playerId} onStartGame={() => startGame(gameId)} onLeaveGame={goHome} />;
+            case GameState.InGame:
+                if (gameData?.hostId === playerId && gameData.status === 'in-progress' && !gameData.id.startsWith('solo')) {
+                    return <HostScreen gameId={gameId} gameData={gameData} onEndGame={() => finishGame(gameId)} />;
+                }
+                return <GameScreen gameData={gameData} playerId={playerId} onTimeUp={gameData.id.startsWith('solo') ? handleSoloTimeUp : () => {}} onGoHome={goHome} onScoreUpdate={handleScoreUpdate}/>;
+            case GameState.Results:
+                 return <ResultsScreen gameData={gameData} playerId={playerId} onPlayAgain={goHome} onGoHome={goHome} onRetryPrompt={() => setGameState(GameState.InGame)} soloHighScore={soloHighScore} />;
+            case GameState.TeacherDashboard:
+                return <TeacherDashboard user={user} onSignOut={handleSignOut} onGoHome={goHome} />;
+            default:
+                return <HomeScreen onSelect={setGameState} />;
         }
     };
-    
-    return <div className="min-h-screen p-4 sm:p-8 flex items-center justify-center">{renderContent()}</div>;
+
+    return (
+        <div className="min-h-screen w-full flex items-center justify-center p-4 sm:p-6 lg:p-8">
+            {renderContent()}
+        </div>
+    );
 }
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
