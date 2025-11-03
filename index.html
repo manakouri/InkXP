@@ -217,7 +217,7 @@ const updateLeaderboard = async (newEntry) => {
         const existingScores = doc.data().scores || [];
         
         // Self-healing: Filter out any malformed data from the existing scores.
-        const cleanScores = existingScores.filter(entry => entry && typeof entry === 'object' && !Array.isArray(entry));
+        const cleanScores = existingScores.filter(entry => entry && typeof entry === 'object' && typeof entry.score === 'number');
 
         cleanScores.push(newEntry);
         cleanScores.sort((a, b) => b.score - a.score);
