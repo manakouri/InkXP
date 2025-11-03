@@ -209,16 +209,23 @@ const updateLeaderboard = async (newEntry) => {
     const leaderboardRef = db.collection('leaderboard').doc('sentenceLab');
     return db.runTransaction(async (transaction) => {
         const doc = await transaction.get(leaderboardRef);
+        
         let scores = [];
         if (doc.exists) {
             scores = doc.data().scores || [];
         }
-        
+
         scores.push(newEntry);
         scores.sort((a, b) => b.score - a.score);
         const topScores = scores.slice(0, 10);
 
-        transaction.set(leaderboardRef, { scores: topScores }, { merge: true });
+        if (doc.exists) {
+            transaction.update(leaderboardRef, { scores: topScores });
+        } else {
+            // This handles the case where the leaderboard document doesn't exist yet.
+            transaction.create(leaderboardRef, { scores: topScores });
+        }
+        
         return topScores;
     });
 };
