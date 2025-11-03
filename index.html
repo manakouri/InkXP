@@ -1052,8 +1052,14 @@ const SentenceBuilderScreen = ({ onBack }) => {
     );
 
     const handleRegisterScore = async (initials) => {
+      try {
         await updateLeaderboard({ score, initials, createdAt: firebase.firestore.Timestamp.now() });
+      } catch (error) {
+        console.error("Failed to update leaderboard:", error);
+        // Optionally show an error message to the user
+      } finally {
         setShowLeaderboardModal(false);
+      }
     };
 
     return (
