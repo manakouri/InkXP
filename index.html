@@ -19,7 +19,8 @@
   "imports": {
     "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
     "react": "https://aistudiocdn.com/react@^19.2.0",
-    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.27.0"
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.27.0",
+    "firebase-admin": "https://aistudiocdn.com/firebase-admin@^13.5.0"
   }
 }
 </script>
@@ -206,27 +207,8 @@ const getLeaderboardStream = (callback) => {
 };
 
 const updateLeaderboard = async (newEntry) => {
-    const leaderboardRef = db.collection('leaderboard').doc('sentenceLab');
-    return db.runTransaction(async (transaction) => {
-        const doc = await transaction.get(leaderboardRef);
-
-        if (!doc.exists) {
-            throw new Error("Leaderboard document 'sentenceLab' not found. Please create it manually in Firestore.");
-        }
-
-        const existingScores = doc.data().scores || [];
-        
-        // Self-healing: Filter out any malformed data from the existing scores.
-        const cleanScores = existingScores.filter(entry => entry && typeof entry === 'object' && typeof entry.score === 'number');
-
-        cleanScores.push(newEntry);
-        cleanScores.sort((a, b) => b.score - a.score);
-        const topScores = cleanScores.slice(0, 10);
-
-        transaction.update(leaderboardRef, { scores: topScores });
-        
-        return topScores;
-    });
+    // This function now calls the secure backend Netlify function.
+    return callApi('updateLeaderboard', newEntry);
 };
 
 
@@ -1037,7 +1019,7 @@ const SentenceBuilderScreen = ({ onBack }) => {
             <h3 className="text-xl font-bold text-slate-800 mb-4 text-center">Global Top 10</h3>
             <ol className="space-y-2">
                 {scores
-                    .filter(entry => entry && typeof entry.score === 'number')
+                    .filter(entry => entry && typeof entry.score === 'number' && !isNaN(entry.score))
                     .map((entry, index) => (
                     <li key={index} className={`p-2 rounded-md flex justify-between items-center ${yourScore === entry.score ? 'bg-amber-200' : 'bg-slate-50'}`}>
                         <span className="font-semibold text-slate-700">
@@ -1061,7 +1043,7 @@ const SentenceBuilderScreen = ({ onBack }) => {
 
     const handleRegisterScore = async (initials) => {
       try {
-        await updateLeaderboard({ score, initials, createdAt: firebase.firestore.Timestamp.now() });
+        await updateLeaderboard({ score, initials });
       } catch (error) {
         console.error("Failed to update leaderboard:", error);
         // Optionally show an error message to the user

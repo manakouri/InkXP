@@ -1,4 +1,17 @@
 import { GoogleGenAI, Type } from "@google/genai";
+import * as admin from 'firebase-admin';
+
+// Initialize Firebase Admin SDK
+// This will use the service account credentials from the environment variables in Netlify
+try {
+  if (admin.apps.length === 0) {
+    admin.initializeApp();
+  }
+} catch (e) {
+  console.error('Firebase admin initialization error', e);
+}
+const db = admin.firestore();
+
 
 if (!process.env.API_KEY) {
     throw new Error("The API_KEY environment variable is not set.");
@@ -48,6 +61,45 @@ Respond ONLY with a valid JSON object.`;
     return { qualityScore: clampedScore, feedback: result.feedback };
 };
 
+const updateLeaderboardTask = async (payload) => {
+    const { score, initials } = payload;
+    if (!score || !initials) throw new Error("Score and initials are required.");
+
+    const leaderboardRef = db.collection('leaderboard').doc('sentenceLab');
+
+    await db.runTransaction(async (transaction) => {
+        const doc = await transaction.get(leaderboardRef);
+
+        const newEntry = {
+            score: Number(score),
+            initials: initials,
+            createdAt: admin.firestore.FieldValue.serverTimestamp()
+        };
+
+        if (!doc.exists) {
+            transaction.set(leaderboardRef, { scores: [newEntry] });
+            return;
+        }
+
+        const data = doc.data();
+        const existingScores = data.scores || [];
+
+        // Self-healing filter
+        const cleanScores = existingScores.filter(entry => 
+            entry && typeof entry === 'object' && typeof entry.score === 'number' && !isNaN(entry.score)
+        );
+
+        cleanScores.push(newEntry);
+        cleanScores.sort((a, b) => b.score - a.score);
+        const topScores = cleanScores.slice(0, 10);
+
+        transaction.update(leaderboardRef, { scores: topScores });
+    });
+
+    return { success: true, message: "Leaderboard updated successfully." };
+};
+
+
 export const handler = async (event) => {
     if (event.httpMethod !== 'POST') {
         return { statusCode: 405, body: JSON.stringify({ error: 'Method Not Allowed' }) };
@@ -60,6 +112,9 @@ export const handler = async (event) => {
         switch (task) {
             case 'getSentenceFeedback':
                 result = await getFeedback(payload);
+                break;
+            case 'updateLeaderboard':
+                result = await updateLeaderboardTask(payload);
                 break;
             default:
                 throw new Error("Invalid task specified");
