@@ -765,7 +765,7 @@ const PracticeSetupScreen = ({ onStart, onBack }) => {
 };
 
 
-const CreateGameSetupScreen = ({ onCreate, onBack, user }) => {
+const CreateGameSetupScreen = ({ onCreate, onBack }) => {
     const [duration, setDuration] = useState(600);
     const [prompt, setPrompt] = useState(null);
 
@@ -781,7 +781,7 @@ const CreateGameSetupScreen = ({ onCreate, onBack, user }) => {
         const alwaysCriteria = ALL_SCORING_CRITERIA.filter(c => c.type === 'always').map(c => c.id);
         const randomCriteria = ALL_SCORING_CRITERIA.filter(c => c.type === 'random').sort(() => 0.5 - Math.random()).slice(0, 3).map(c => c.id);
         const criteria = [...alwaysCriteria, ...randomCriteria];
-        onCreate(prompt, criteria, duration, user.uid);
+        onCreate(prompt, criteria, duration);
     };
 
     return (
@@ -1262,10 +1262,12 @@ function App() {
         setGameState(GameState.InGame);
     };
 
-    const handleCreateGame = async (prompt, criteria, duration, teacherId) => {
-        const newGameId = await createGame(playerId, prompt, criteria, duration, teacherId);
+    const handleCreateGame = async (hostId, prompt, criteria, duration) => {
+        const teacherId = hostId; // For game creation, host and teacher are the same.
+        const newGameId = await createGame(hostId, prompt, criteria, duration, teacherId);
         setGameId(newGameId);
-        await joinGame(newGameId, playerId, { nickname: `${user.displayName} (Host)`, isHost: true });
+        setPlayerId(hostId);
+        await joinGame(newGameId, hostId, { nickname: `${user.displayName} (Host)`, isHost: true });
         setGameState(GameState.Lobby);
     };
 
@@ -1312,7 +1314,7 @@ function App() {
         switch (gameState) {
             case GameState.Home: return <HomeScreen onSolo={() => setGameState(GameState.SoloSetup)} onSentence={() => setGameState(GameState.SentenceBuilder)} onTeacher={handleTeacherLogin} onJoinGame={() => setGameState(GameState.JoinGameSetup)} />;
             case GameState.SoloSetup: return <PracticeSetupScreen onStart={handleStartSolo} onBack={resetGame} />;
-            case GameState.CreateGameSetup: return <CreateGameSetupScreen onCreate={(p, c, d) => { setPlayerId(user.uid); handleCreateGame(p, c, d, user.uid); }} onBack={() => setGameState(GameState.TeacherDashboard)} user={user} />;
+            case GameState.CreateGameSetup: return <CreateGameSetupScreen onCreate={(prompt, criteria, duration) => handleCreateGame(user.uid, prompt, criteria, duration)} onBack={() => setGameState(GameState.TeacherDashboard)} />;
             case GameState.JoinGameSetup: return <JoinGameScreen onJoin={handleJoinSubmit} onBack={resetGame} />;
             case GameState.Lobby: return <LobbyScreen gameId={gameId} gameData={gameData} playerId={playerId} onStartGame={handleStartGame} onLeaveGame={resetGame} />;
             case GameState.InGame: return gameData.status === 'in-progress' || gameState === GameState.InGame ? <GameScreen gameData={gameData} playerId={playerId} onTimeUp={gameData.id === 'solo' ? handleEndSoloGame : handleEndMultiplayerGame} onScoreUpdate={(analysis) => updatePlayerAnalysis(gameId, playerId, analysis)} onGoHome={resetGame} /> : <div className="flex justify-center items-center h-screen"><LoadingSpinner /></div>;
