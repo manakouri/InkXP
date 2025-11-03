@@ -114,11 +114,16 @@ const callApi = async (task, payload) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ task, payload }),
     });
+    // The response from the server function is always JSON, even for errors.
+    const body = await response.json();
     if (!response.ok) {
-        const errorBody = await response.json().catch(() => ({ error: `API call failed with status ${response.status}` }));
-        throw new Error(errorBody.error || `API call failed with status ${response.status}`);
+        throw new Error(body.error || `API call failed with status ${response.status}`);
     }
-    return response.json();
+    // For updateLeaderboard, the body might contain a custom error message for duplicates.
+    if (task === 'updateLeaderboard' && !body.success) {
+        throw new Error(body.message || "Failed to update leaderboard.");
+    }
+    return body;
 };
 
 const getSentenceFeedback = async (rootSentence, userSentence) => {
@@ -979,7 +984,7 @@ const LeaderboardView = ({ scores, onBack, title }) => {
     );
 };
 
-const SentenceBuilderScreen = () => {
+const SentenceBuilderScreen = ({ playerId }) => {
     const [gameState, setGameState] = useState('setup'); // 'setup', 'writing', 'submitted'
     const [sentenceRoot, setSentenceRoot] = useState(null);
     const [userSentence, setUserSentence] = useState('');
@@ -1034,7 +1039,13 @@ const SentenceBuilderScreen = () => {
     const handleRegisterScore = async (initials) => {
         if (!result || !initials) return;
         try {
-            await updateLeaderboard({ score: result.totalScore, initials: initials.toUpperCase() });
+            await updateLeaderboard({
+                score: result.totalScore,
+                initials: initials.toUpperCase(),
+                userSentence: userSentence,
+                playerId: playerId,
+            });
+            alert("Your score has been submitted to the leaderboard!");
         } catch (error) {
             console.error("Failed to update leaderboard:", error);
             alert(`Failed to update leaderboard: ${error.message}`);
@@ -1415,7 +1426,7 @@ function App() {
             case GameState.Home:
                 return <HomeScreen onSelect={handleSelectHome} />;
             case GameState.SentenceBuilder:
-                 return <SentenceBuilderScreen onBack={goHome} />;
+                 return <SentenceBuilderScreen onBack={goHome} playerId={playerId} />;
             case GameState.SoloSetup:
                 return <PracticeSetupScreen onStart={handleStartSolo} onBack={goHome} />;
             case GameState.CreateGameSetup:

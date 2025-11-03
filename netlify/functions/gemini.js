@@ -1,5 +1,6 @@
 const { GoogleGenAI, Type } = require("@google/genai");
 const admin = require('firebase-admin');
+const crypto = require('crypto');
 
 // Initialize Firebase Admin SDK
 try {
@@ -67,14 +68,76 @@ Respond ONLY with a valid JSON object in the specified format. Do not add any ex
     return JSON.parse(jsonText);
 };
 
+const checkSimilarity = async (payload) => {
+    const { newSentence, previousSentences } = payload;
+    if (!newSentence || !previousSentences || previousSentences.length === 0) {
+        return { is_similar: false };
+    }
+
+    const prompt = `You are an AI judge for a creative writing game. A player has submitted a new sentence. Compare it to their list of previous high-scoring sentences.
+
+Your task is to determine if the new sentence is just a minor tweak or a semantically identical rephrasing of any of the previous sentences. A minor tweak would be changing one or two words (e.g., 'huge' to 'big'), adding a comma, or slightly reordering the words without changing the core idea.
+
+New Sentence: "${newSentence}"
+
+Previous Sentences:
+${previousSentences.map(s => `- "${s}"`).join('\n')}
+
+Is the new sentence just a minor, uncreative tweak of any of the previous sentences? Respond ONLY with a valid JSON object.`;
+
+    const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: prompt,
+        config: {
+            responseMimeType: "application/json",
+            responseSchema: {
+                type: Type.OBJECT,
+                properties: {
+                    is_similar: { type: Type.BOOLEAN, description: "True if the new sentence is a minor tweak, false otherwise." },
+                    reason: { type: Type.STRING, description: "A brief explanation for your decision." }
+                },
+                required: ['is_similar', 'reason']
+            }
+        }
+    });
+    
+    const jsonText = response.text.trim();
+    return JSON.parse(jsonText);
+};
+
+
 const updateLeaderboardTask = async (payload) => {
-    const { score, initials } = payload;
-    if (!score || !initials) throw new Error("Score and initials are required.");
-
+    const { score, initials, userSentence, playerId } = payload;
+    if (!score || !initials || !userSentence || !playerId) {
+        throw new Error("Score, initials, userSentence, and playerId are required.");
+    }
+    
+    const sentenceHash = crypto.createHash('sha256').update(userSentence.trim().toLowerCase()).digest('hex');
     const leaderboardRef = db.collection('leaderboard').doc('sentenceLab');
+    const submissionsRef = db.collection('playerSubmissions');
 
+    // Layer 1: Check for exact duplicate for this player
+    const exactQuery = submissionsRef.where('playerId', '==', playerId).where('sentenceHash', '==', sentenceHash);
+    const exactSnapshot = await exactQuery.get();
+    if (!exactSnapshot.empty) {
+        return { success: false, message: "This exact sentence has already been submitted." };
+    }
+
+    // Layer 2: Check for semantic similarity
+    const previousSubmissionsQuery = submissionsRef.where('playerId', '==', playerId).orderBy('score', 'desc').limit(5);
+    const previousSubmissionsSnapshot = await previousSubmissionsQuery.get();
+    
+    if (!previousSubmissionsSnapshot.empty) {
+        const previousSentences = previousSubmissionsSnapshot.docs.map(doc => doc.data().sentenceText);
+        const similarityResult = await checkSimilarity({ newSentence: userSentence, previousSentences });
+        if (similarityResult.is_similar) {
+            return { success: false, message: "This sentence is too similar to one of your previous high scores." };
+        }
+    }
+
+    // If all checks pass, proceed to update leaderboard and log submission
     await db.runTransaction(async (transaction) => {
-        const doc = await transaction.get(leaderboardRef);
+        const leaderboardDoc = await transaction.get(leaderboardRef);
 
         const newEntry = {
             score: Number(score),
@@ -82,24 +145,34 @@ const updateLeaderboardTask = async (payload) => {
             createdAt: admin.firestore.Timestamp.now()
         };
 
-        if (!doc.exists) {
-            transaction.set(leaderboardRef, { scores: [newEntry] });
-            return;
+        let existingScores = [];
+        if (leaderboardDoc.exists) {
+            const data = leaderboardDoc.data();
+            // Self-healing filter to remove malformed entries
+            existingScores = (data.scores || []).filter(entry => 
+                entry && typeof entry === 'object' && typeof entry.score === 'number' && !isNaN(entry.score)
+            );
         }
 
-        const data = doc.data();
-        const existingScores = data.scores || [];
-
-        // Self-healing filter to remove malformed entries
-        const cleanScores = existingScores.filter(entry => 
-            entry && typeof entry === 'object' && typeof entry.score === 'number' && !isNaN(entry.score)
-        );
-
-        cleanScores.push(newEntry);
-        cleanScores.sort((a, b) => b.score - a.score);
-        const topScores = cleanScores.slice(0, 10);
-
-        transaction.update(leaderboardRef, { scores: topScores });
+        existingScores.push(newEntry);
+        existingScores.sort((a, b) => b.score - a.score);
+        const topScores = existingScores.slice(0, 10);
+        
+        if (!leaderboardDoc.exists) {
+           transaction.set(leaderboardRef, { scores: topScores });
+        } else {
+           transaction.update(leaderboardRef, { scores: topScores });
+        }
+        
+        // Add to player submissions log
+        const newSubmissionRef = submissionsRef.doc();
+        transaction.set(newSubmissionRef, {
+            playerId,
+            sentenceHash,
+            sentenceText: userSentence,
+            score: Number(score),
+            createdAt: admin.firestore.Timestamp.now()
+        });
     });
 
     return { success: true, message: "Leaderboard updated successfully." };
