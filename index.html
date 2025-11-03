@@ -211,17 +211,18 @@ const updateLeaderboard = async (newEntry) => {
         const doc = await transaction.get(leaderboardRef);
 
         if (!doc.exists) {
-            // This case should not be reached if the document is pre-seeded.
-            // This transaction will safely fail if it is, preventing errors.
             throw new Error("Leaderboard document 'sentenceLab' not found. Please create it manually in Firestore.");
         }
 
-        const scores = doc.data().scores || [];
-        scores.push(newEntry);
-        scores.sort((a, b) => b.score - a.score);
-        const topScores = scores.slice(0, 10);
+        const existingScores = doc.data().scores || [];
+        
+        // Self-healing: Filter out any malformed data from the existing scores.
+        const cleanScores = existingScores.filter(entry => entry && typeof entry === 'object' && !Array.isArray(entry));
 
-        // Now we only ever update the existing document.
+        cleanScores.push(newEntry);
+        cleanScores.sort((a, b) => b.score - a.score);
+        const topScores = cleanScores.slice(0, 10);
+
         transaction.update(leaderboardRef, { scores: topScores });
         
         return topScores;
