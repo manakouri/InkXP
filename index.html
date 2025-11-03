@@ -209,22 +209,20 @@ const updateLeaderboard = async (newEntry) => {
     const leaderboardRef = db.collection('leaderboard').doc('sentenceLab');
     return db.runTransaction(async (transaction) => {
         const doc = await transaction.get(leaderboardRef);
-        
-        let scores = [];
-        if (doc.exists) {
-            scores = doc.data().scores || [];
+
+        if (!doc.exists) {
+            // This case should not be reached if the document is pre-seeded.
+            // This transaction will safely fail if it is, preventing errors.
+            throw new Error("Leaderboard document 'sentenceLab' not found. Please create it manually in Firestore.");
         }
 
+        const scores = doc.data().scores || [];
         scores.push(newEntry);
         scores.sort((a, b) => b.score - a.score);
         const topScores = scores.slice(0, 10);
 
-        if (doc.exists) {
-            transaction.update(leaderboardRef, { scores: topScores });
-        } else {
-            // This handles the case where the leaderboard document doesn't exist yet.
-            transaction.set(leaderboardRef, { scores: topScores });
-        }
+        // Now we only ever update the existing document.
+        transaction.update(leaderboardRef, { scores: topScores });
         
         return topScores;
     });
