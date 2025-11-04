@@ -1371,6 +1371,9 @@ function App() {
     const [authLoading, setAuthLoading] = useState(true);
     const [soloHighScore, setSoloHighScore] = useState(() => Number(localStorage.getItem('soloHighScore')) || 0);
 
+    const gameDataRef = useRef(gameData);
+    gameDataRef.current = gameData;
+
     useEffect(() => {
         const unsubscribe = onAuthChange(firebaseUser => {
             if (firebaseUser) {
@@ -1489,11 +1492,17 @@ function App() {
     };
     
     const handlePlayerStateUpdate = useCallback(async (story, analysis) => {
-      if (gameData && gameData.status === 'in-progress' && !gameData.id?.startsWith('solo')) {
+      const currentGamedata = gameDataRef.current;
+      if (currentGamedata && currentGamedata.status === 'in-progress' && !currentGamedata.id?.startsWith('solo')) {
         await submitResult(gameId, playerId, story, analysis);
       }
-    }, [gameId, playerId, gameData]);
+    }, [gameId, playerId]);
     
+    const handleMultiplayerGameEnd = (story, analysis) => {
+        handlePlayerStateUpdate(story, analysis); // Perform final save
+        setGameState(GameState.Results);
+    };
+
     const renderContent = () => {
         if (authLoading) return <div className="flex justify-center items-center h-screen"><LoadingSpinner /></div>;
         
@@ -1523,7 +1532,7 @@ function App() {
                 if (isHostView) {
                     return <HostScreen gameId={gameId} gameData={gameData} onEndGame={() => finishGame(gameId)} />;
                 }
-                return <GameScreen gameData={gameData} playerId={playerId} onTimeUp={gameData.id?.startsWith('solo') ? handleSoloTimeUp : handlePlayerStateUpdate} onGoHome={goHome} onPlayerStateUpdate={handlePlayerStateUpdate}/>;
+                return <GameScreen gameData={gameData} playerId={playerId} onTimeUp={gameData.id?.startsWith('solo') ? handleSoloTimeUp : handleMultiplayerGameEnd} onGoHome={goHome} onPlayerStateUpdate={handlePlayerStateUpdate}/>;
             case GameState.Results:
                  const isSoloGame = gameData?.id?.startsWith('solo');
                  const isHost = gameData?.hostId === playerId;
