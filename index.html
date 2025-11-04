@@ -588,11 +588,16 @@ const GameScreen = ({ gameData, playerId, onTimeUp, onGoHome, onScoreUpdate }) =
         }
     }, [gameData.id, playerId]);
 
+    const storyRef = useRef({ title, text });
+    storyRef.current = { title, text };
+    const fullCriteriaRef = useRef(fullCriteria);
+    fullCriteriaRef.current = fullCriteria;
+
     useEffect(() => {
         if (gameData.status === 'finished' && !hasFired.current) {
-             handleEndMultiplayerGame({ title, text }, analyzeScore(text, fullCriteria));
+             handleEndMultiplayerGame(storyRef.current, analyzeScore(storyRef.current.text, fullCriteriaRef.current));
         }
-    }, [gameData.status, title, text, fullCriteria, handleEndMultiplayerGame]);
+    }, [gameData.status, handleEndMultiplayerGame]);
 
     const onTimeUpRef = useRef(onTimeUp); onTimeUpRef.current = onTimeUp;
     const handleTimeUp = useCallback(() => onTimeUpRef.current({ title, text }, analyzeScore(text, fullCriteria)), [title, text, fullCriteria]);
@@ -946,8 +951,10 @@ const TeacherDashboard = ({ user, onSignOut, onGoHome, onCreateGame }) => {
                             </div>
                             <h3 className="text-lg font-bold mb-3">Student Submissions</h3>
                             <div className="space-y-4 max-h-[45vh] overflow-y-auto pr-2">
-                                {Object.values(selectedGame.players).length > 0 ? Object.values(selectedGame.players).map((player, idx) => (
-                                    <div key={idx} className="bg-white p-4 rounded-lg shadow">
+                                {Object.entries(selectedGame.players).length > 0 ? Object.entries(selectedGame.players)
+                                    .sort(([, a], [, b]) => (a.nickname || '').localeCompare(b.nickname || ''))
+                                    .map(([playerId, player]) => (
+                                    <div key={playerId} className="bg-white p-4 rounded-lg shadow">
                                         <div className="flex justify-between items-start mb-2">
                                             <div>
                                                 <p className="font-bold text-slate-800">{player.nickname}</p>
