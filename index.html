@@ -191,7 +191,13 @@ const joinGame = async (gameCode, playerId, playerInfo) => {
     return gameData;
 };
 
-const getGameStream = (gameCode, callback) => db.collection('games').doc(gameCode).onSnapshot((doc) => callback(doc.data()));
+const getGameStream = (gameCode, callback) => db.collection('games').doc(gameCode).onSnapshot((doc) => {
+    if (doc.exists) {
+        callback({ id: doc.id, ...doc.data() });
+    } else {
+        callback(null);
+    }
+});
 
 const getGamesForTeacher = (teacherId, callback) => {
   const q = db.collection("games")
@@ -1462,10 +1468,10 @@ function App() {
                 }
                 return <LobbyScreen gameId={gameId} gameData={gameData} playerId={playerId} onStartGame={() => startGame(gameId)} onLeaveGame={goHome} />;
             case GameState.InGame:
-                if (gameData?.hostId === playerId && gameData.status === 'in-progress' && !gameData.id.startsWith('solo')) {
+                if (gameData?.hostId === playerId && gameData.status === 'in-progress' && !gameData.id?.startsWith('solo')) {
                     return <HostScreen gameId={gameId} gameData={gameData} onEndGame={() => finishGame(gameId)} />;
                 }
-                return <GameScreen gameData={gameData} playerId={playerId} onTimeUp={gameData.id.startsWith('solo') ? handleSoloTimeUp : () => {}} onGoHome={goHome} onScoreUpdate={handleScoreUpdate}/>;
+                return <GameScreen gameData={gameData} playerId={playerId} onTimeUp={gameData.id?.startsWith('solo') ? handleSoloTimeUp : () => {}} onGoHome={goHome} onScoreUpdate={handleScoreUpdate}/>;
             case GameState.Results:
                  return <ResultsScreen gameData={gameData} playerId={playerId} onPlayAgain={goHome} onGoHome={goHome} onRetryPrompt={() => setGameState(GameState.InGame)} soloHighScore={soloHighScore} />;
             case GameState.TeacherDashboard:
