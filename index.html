@@ -242,13 +242,6 @@ const submitResult = async (gameCode, playerId, story, analysis) => {
   });
 };
 
-const updatePlayerAnalysis = async (gameCode, playerId, analysis) => {
-  const gameRef = db.collection('games').doc(gameCode);
-  await gameRef.update({
-      [`players.${playerId}.analysis`]: analysis,
-  });
-};
-
 const finishGame = async (gameCode) => {
   await db.collection('games').doc(gameCode).update({ status: 'finished' });
 };
@@ -453,15 +446,81 @@ const TimeAlert = ({ message }) => {
     );
 };
 
-const ResultsScreen = ({ gameData, playerId, onPlayAgain, onGoHome, onRetryPrompt, soloHighScore }) => {
+const ResultsScreen = ({ gameData, playerId, onPlayAgain, onGoHome, onRetryPrompt, soloHighScore, isHost, onGoToDashboard }) => {
+    const [viewingPlayerId, setViewingPlayerId] = useState(null);
+
+    const sortedPlayers = useMemo(() => Object.entries(gameData.players)
+        .map(([id, data]) => ({ id, ...data, totalScore: data.analysis?.totalScore || 0 }))
+        .sort((a, b) => b.totalScore - a.totalScore), [gameData.players]);
+
+    const viewingPlayer = viewingPlayerId ? gameData.players[viewingPlayerId] : null;
+
+    if (isHost) {
+        return (
+            <div className="w-full max-w-7xl mx-auto">
+                <h2 className="text-3xl font-bold text-emerald-600 mb-2 text-center">Game Over!</h2>
+                <p className="text-slate-600 mb-6 text-center">Here are the final results for your students.</p>
+                
+                 <div className="bg-sky-50 p-4 rounded-lg border border-sky-200 mb-6 text-center">
+                    <p className="font-semibold text-sky-700">Prompt:</p>
+                    <p className="text-slate-800">{gameData.prompt.text}</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div className="md:col-span-1 bg-gradient-to-br from-white to-sky-100 p-6 rounded-2xl shadow-2xl border border-white/40">
+                         <h3 className="text-lg font-bold text-slate-500 uppercase tracking-wider mb-3">Final Leaderboard</h3>
+                           <ul className="space-y-2">
+                            {sortedPlayers.map((player, index) => (
+                               <li key={player.id}>
+                                <button onClick={() => setViewingPlayerId(player.id)} className={`w-full text-left p-3 rounded-md flex justify-between items-center transition-colors ${viewingPlayerId === player.id ? 'bg-sky-200' : 'bg-slate-50 hover:bg-sky-100'}`}>
+                                 <span className="font-semibold text-slate-700">{index + 1}. {player.nickname}</span>
+                                 <span className="font-bold text-sky-600">{player.totalScore.toLocaleString()}</span>
+                               </button>
+                               </li>
+                            ))}
+                           </ul>
+                    </div>
+                     <div className="md:col-span-2 bg-gradient-to-br from-white to-sky-100 p-6 rounded-2xl shadow-2xl border border-white/40">
+                        {viewingPlayer ? (
+                             <div>
+                                <h3 className="text-xl font-bold mb-2 text-slate-800">{viewingPlayer.story?.title || "Untitled Story"}</h3>
+                                <p className="text-sm font-semibold text-emerald-600 mb-4">By: {viewingPlayer.nickname} - Score: {viewingPlayer.analysis?.totalScore?.toLocaleString() || 'N/A'}</p>
+                                <div className="prose max-w-none text-slate-700 whitespace-pre-wrap bg-slate-100 p-4 rounded-md mb-4 max-h-60 overflow-y-auto">{viewingPlayer.story?.text || "No submission."}</div>
+                                {viewingPlayer.analysis && (
+                                     <div>
+                                      <h4 className="text-lg font-bold mb-2 text-slate-800">Score Breakdown</h4>
+                                       <ul className="space-y-1 text-sm">
+                                          {viewingPlayer.analysis.breakdown.map((item) => (
+                                            <li key={item.id} className="flex justify-between items-center p-1.5 bg-slate-50 rounded-md">
+                                                <span className="text-slate-700">{item.name} ({item.count})</span>
+                                                <span className="font-semibold text-emerald-600">+{item.score.toLocaleString()}</span>
+                                            </li>
+                                          ))}
+                                      </ul>
+                                  </div>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="flex items-center justify-center h-full">
+                                <p className="text-slate-500 text-lg">Select a player to view their submission.</p>
+                            </div>
+                        )}
+                     </div>
+                </div>
+
+                <div className="flex items-center justify-center gap-4 mt-8">
+                    <Button onClick={onGoToDashboard} size="large">Back to Dashboard</Button>
+                    <Button onClick={onGoHome} variant="secondary" size="large">Home</Button>
+                </div>
+            </div>
+        );
+    }
+  
+  // Player View
   const myPlayer = gameData.players[playerId];
   const myAnalysis = myPlayer?.analysis;
   const myFinalStory = myPlayer?.story;
   const isSolo = onRetryPrompt !== undefined;
-
-  const sortedPlayers = Object.entries(gameData.players)
-    .map(([id, data]) => ({ id, ...data, totalScore: data.analysis?.totalScore || 0 }))
-    .sort((a, b) => b.totalScore - a.totalScore);
 
   return (
       <div className="flex flex-col items-center">
@@ -537,7 +596,7 @@ const ResultsScreen = ({ gameData, playerId, onPlayAgain, onGoHome, onRetryPromp
   );
 };
 
-const GameScreen = ({ gameData, playerId, onTimeUp, onGoHome, onScoreUpdate }) => {
+const GameScreen = ({ gameData, playerId, onTimeUp, onGoHome, onPlayerStateUpdate }) => {
     const fullCriteria = useMemo(() => {
       if (!gameData || !gameData.criteria) return [];
       return gameData.criteria.map(id => ALL_SCORING_CRITERIA.find(c => c.id === id)).filter(Boolean);
@@ -548,12 +607,12 @@ const GameScreen = ({ gameData, playerId, onTimeUp, onGoHome, onScoreUpdate }) =
     const [planningText, setPlanningText] = useState('');
     const [scoreAnalysis, setScoreAnalysis] = useState(() => analyzeScore('', fullCriteria));
     const [isScoreAnimating, setIsScoreAnimating] = useState(false);
-    const hasFired = useRef(false);
     const prevScoreRef = useRef(0);
     const [timeAlert, setTimeAlert] = useState('');
     const wordCount = useMemo(() => text.trim().split(/\s+/).filter(Boolean).length, [text]);
     
-    const onScoreUpdateRef = useRef(onScoreUpdate); onScoreUpdateRef.current = onScoreUpdate;
+    const onPlayerStateUpdateRef = useRef(onPlayerStateUpdate); 
+    onPlayerStateUpdateRef.current = onPlayerStateUpdate;
 
     const showAlert = useCallback((message) => {
         setTimeAlert(message);
@@ -571,33 +630,17 @@ const GameScreen = ({ gameData, playerId, onTimeUp, onGoHome, onScoreUpdate }) =
         const handler = setTimeout(() => {
             const analysis = analyzeScore(text, fullCriteria);
             setScoreAnalysis(analysis);
-            if (onScoreUpdateRef.current) onScoreUpdateRef.current(analysis);
+            if (onPlayerStateUpdateRef.current) {
+                onPlayerStateUpdateRef.current({ title, text }, analysis);
+            }
             if (analysis.totalScore > prevScoreRef.current) {
                 setIsScoreAnimating(true);
                 setTimeout(() => setIsScoreAnimating(false), 300);
             }
             prevScoreRef.current = analysis.totalScore;
-        }, 500);
+        }, 2000); // Save progress every 2 seconds
         return () => clearTimeout(handler);
-    }, [text, fullCriteria]);
-
-    const handleEndMultiplayerGame = useCallback(async (story, analysis) => {
-        if (!hasFired.current) {
-            hasFired.current = true;
-            await submitResult(gameData.id, playerId, story, analysis);
-        }
-    }, [gameData.id, playerId]);
-
-    const storyRef = useRef({ title, text });
-    storyRef.current = { title, text };
-    const fullCriteriaRef = useRef(fullCriteria);
-    fullCriteriaRef.current = fullCriteria;
-
-    useEffect(() => {
-        if (gameData.status === 'finished' && !hasFired.current) {
-             handleEndMultiplayerGame(storyRef.current, analyzeScore(storyRef.current.text, fullCriteriaRef.current));
-        }
-    }, [gameData.status, handleEndMultiplayerGame]);
+    }, [text, title, fullCriteria]);
 
     const onTimeUpRef = useRef(onTimeUp); onTimeUpRef.current = onTimeUp;
     const handleTimeUp = useCallback(() => onTimeUpRef.current({ title, text }, analyzeScore(text, fullCriteria)), [title, text, fullCriteria]);
@@ -650,9 +693,11 @@ const GameScreen = ({ gameData, playerId, onTimeUp, onGoHome, onScoreUpdate }) =
 };
 
 const HostScreen = ({ gameId, gameData, onEndGame }) => {
-  const sortedPlayers = Object.entries(gameData.players)
-    .map(([id, data]) => ({ id, ...data, totalScore: data.analysis?.totalScore || 0 }))
-    .sort((a, b) => b.totalScore - a.totalScore);
+    const sortedPlayers = useMemo(() => {
+        return Object.entries(gameData.players)
+            .map(([id, data]) => ({ id, ...data, totalScore: data.analysis?.totalScore || 0 }))
+            .sort((a, b) => (a.nickname || '').localeCompare(b.nickname || ''));
+    }, [gameData.players]);
 
   const handleCopyCode = () => navigator.clipboard.writeText(gameId);
 
@@ -1443,10 +1488,9 @@ function App() {
         setGameState(GameState.Results);
     };
     
-    const handleScoreUpdate = useCallback(async (analysis) => {
-      // For multiplayer, update score in real-time
+    const handlePlayerStateUpdate = useCallback(async (story, analysis) => {
       if (gameData && gameData.status === 'in-progress' && !gameData.id?.startsWith('solo')) {
-        await updatePlayerAnalysis(gameId, playerId, analysis);
+        await submitResult(gameId, playerId, story, analysis);
       }
     }, [gameId, playerId, gameData]);
     
@@ -1475,14 +1519,23 @@ function App() {
                 }
                 return <LobbyScreen gameId={gameId} gameData={gameData} playerId={playerId} onStartGame={() => startGame(gameId)} onLeaveGame={goHome} />;
             case GameState.InGame:
-                const isHostView = gameData?.hostId === playerId && !gameData?.id?.startsWith('solo');
+                const isHostView = gameData?.hostId === playerId && !gameData.id?.startsWith('solo');
                 if (isHostView) {
                     return <HostScreen gameId={gameId} gameData={gameData} onEndGame={() => finishGame(gameId)} />;
                 }
-                return <GameScreen gameData={gameData} playerId={playerId} onTimeUp={gameData.id?.startsWith('solo') ? handleSoloTimeUp : () => {}} onGoHome={goHome} onScoreUpdate={handleScoreUpdate}/>;
+                return <GameScreen gameData={gameData} playerId={playerId} onTimeUp={gameData.id?.startsWith('solo') ? handleSoloTimeUp : () => {}} onGoHome={goHome} onPlayerStateUpdate={handlePlayerStateUpdate}/>;
             case GameState.Results:
                  const isSoloGame = gameData?.id?.startsWith('solo');
-                 return <ResultsScreen gameData={gameData} playerId={playerId} onPlayAgain={goHome} onGoHome={goHome} onRetryPrompt={isSoloGame ? () => setGameState(GameState.InGame) : undefined} soloHighScore={soloHighScore} />;
+                 const isHost = gameData?.hostId === playerId;
+                 return <ResultsScreen 
+                    gameData={gameData} 
+                    playerId={playerId} 
+                    isHost={isHost}
+                    onPlayAgain={goHome} 
+                    onGoHome={goHome} 
+                    onGoToDashboard={() => setGameState(GameState.TeacherDashboard)}
+                    onRetryPrompt={isSoloGame ? () => setGameState(GameState.InGame) : undefined} 
+                    soloHighScore={soloHighScore} />;
             case GameState.TeacherDashboard:
                 return <TeacherDashboard user={user} onSignOut={handleSignOut} onGoHome={goHome} onCreateGame={() => setGameState(GameState.CreateGameSetup)} />;
             default:
