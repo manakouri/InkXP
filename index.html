@@ -1468,8 +1468,7 @@ function App() {
                 }
                 return <LobbyScreen gameId={gameId} gameData={gameData} playerId={playerId} onStartGame={() => startGame(gameId)} onLeaveGame={goHome} />;
             case GameState.InGame:
-                // A logged-in teacher is the host of a multiplayer game. Everyone else is a player.
-                const isHostView = user?.isTeacher && gameData && !gameData.id?.startsWith('solo');
+                const isHostView = gameData?.hostId === playerId && !gameData?.id?.startsWith('solo');
                 if (isHostView) {
                     return <HostScreen gameId={gameId} gameData={gameData} onEndGame={() => finishGame(gameId)} />;
                 }
