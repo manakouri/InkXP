@@ -873,7 +873,7 @@ const JoinGameSetupScreen = ({ onJoin, onBack }) => {
     );
 };
 
-const TeacherDashboard = ({ user, onSignOut, onGoHome }) => {
+const TeacherDashboard = ({ user, onSignOut, onGoHome, onCreateGame }) => {
     const [games, setGames] = useState([]);
     const [selectedGame, setSelectedGame] = useState(null);
 
@@ -897,6 +897,7 @@ const TeacherDashboard = ({ user, onSignOut, onGoHome }) => {
             <div className="flex justify-between items-center mb-6">
                  <h1 className="text-3xl font-bold text-slate-800">Teacher Dashboard</h1>
                  <div>
+                    <Button onClick={onCreateGame} className="mr-4">Create New Game</Button>
                     <Button onClick={onGoHome} variant="secondary" className="mr-4">Home</Button>
                     <Button onClick={onSignOut}>Sign Out</Button>
                 </div>
@@ -984,7 +985,7 @@ const LeaderboardView = ({ scores, onBack, title }) => {
     );
 };
 
-const SentenceBuilderScreen = ({ playerId }) => {
+const SentenceBuilderScreen = ({ playerId, onBack }) => {
     const [gameState, setGameState] = useState('setup'); // 'setup', 'writing', 'submitted'
     const [sentenceRoot, setSentenceRoot] = useState(null);
     const [userSentence, setUserSentence] = useState('');
@@ -1175,7 +1176,7 @@ const SentenceBuilderScreen = ({ playerId }) => {
                 </div>
                 
                 <div className="flex items-center justify-center gap-4">
-                    <Button onClick={() => setGameState('setup')} variant="secondary" size="large">Back to Home</Button>
+                    <Button onClick={onBack} variant="secondary" size="large">Back to Home</Button>
                     <Button onClick={() => setShowLeaderboard(true)} variant="secondary" size="large">Leaderboard</Button>
                     <Button onClick={startNewChallenge} size="large">New Sentence</Button>
                 </div>
@@ -1221,7 +1222,7 @@ const SentenceBuilderScreen = ({ playerId }) => {
                     )}
                 
                     <div className="mt-8 flex items-center justify-between">
-                        <Button type="button" onClick={() => setGameState('setup')} variant="secondary" size="large">Back to Home</Button>
+                        <Button type="button" onClick={onBack} variant="secondary" size="large">Back to Home</Button>
                         <div className="flex items-center gap-4">
                             {!showKete && <Button type="button" onClick={handleNextStep} size="large">Next Step</Button>}
                             {showKete && <Button type="submit" size="large" disabled={isLoading}>{isLoading ? <LoadingSpinner/> : "Submit for Analysis"}</Button>}
@@ -1443,7 +1444,7 @@ function App() {
             case GameState.Results:
                  return <ResultsScreen gameData={gameData} playerId={playerId} onPlayAgain={goHome} onGoHome={goHome} onRetryPrompt={() => setGameState(GameState.InGame)} soloHighScore={soloHighScore} />;
             case GameState.TeacherDashboard:
-                return <TeacherDashboard user={user} onSignOut={handleSignOut} onGoHome={goHome} />;
+                return <TeacherDashboard user={user} onSignOut={handleSignOut} onGoHome={goHome} onCreateGame={() => setGameState(GameState.CreateGameSetup)} />;
             default:
                 return <HomeScreen onSelect={setGameState} />;
         }
