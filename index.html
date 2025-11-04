@@ -1523,7 +1523,7 @@ function App() {
                 if (isHostView) {
                     return <HostScreen gameId={gameId} gameData={gameData} onEndGame={() => finishGame(gameId)} />;
                 }
-                return <GameScreen gameData={gameData} playerId={playerId} onTimeUp={gameData.id?.startsWith('solo') ? handleSoloTimeUp : () => {}} onGoHome={goHome} onPlayerStateUpdate={handlePlayerStateUpdate}/>;
+                return <GameScreen gameData={gameData} playerId={playerId} onTimeUp={gameData.id?.startsWith('solo') ? handleSoloTimeUp : handlePlayerStateUpdate} onGoHome={goHome} onPlayerStateUpdate={handlePlayerStateUpdate}/>;
             case GameState.Results:
                  const isSoloGame = gameData?.id?.startsWith('solo');
                  const isHost = gameData?.hostId === playerId;
