@@ -1452,6 +1452,14 @@ function App() {
             case GameState.JoinGameSetup:
                 return <JoinGameSetupScreen onJoin={handleJoinGame} onBack={goHome} />;
             case GameState.Lobby:
+                if (!gameData) {
+                    return (
+                        <div className="flex flex-col items-center justify-center text-center">
+                            <LoadingSpinner />
+                            <p className="mt-4 text-slate-600">Entering Lobby...</p>
+                        </div>
+                    );
+                }
                 return <LobbyScreen gameId={gameId} gameData={gameData} playerId={playerId} onStartGame={() => startGame(gameId)} onLeaveGame={goHome} />;
             case GameState.InGame:
                 if (gameData?.hostId === playerId && gameData.status === 'in-progress' && !gameData.id.startsWith('solo')) {
