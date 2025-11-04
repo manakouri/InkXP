@@ -903,7 +903,7 @@ const TeacherDashboard = ({ user, onSignOut, onGoHome, onCreateGame }) => {
             });
             return () => unsubscribe();
         }
-    }, [user?.uid]);
+    }, [user?.uid, selectedGame]);
 
     const handleSelectGame = (game) => setSelectedGame(game);
     const getPlayerCount = (game) => Object.keys(game?.players || {}).length;
@@ -1438,7 +1438,7 @@ function App() {
     
     const handleScoreUpdate = useCallback(async (analysis) => {
       // For multiplayer, update score in real-time
-      if (gameData && gameData.status !== 'in-progress' && !gameData.id?.startsWith('solo')) {
+      if (gameData && gameData.status === 'in-progress' && !gameData.id?.startsWith('solo')) {
         await updatePlayerAnalysis(gameId, playerId, analysis);
       }
     }, [gameId, playerId, gameData]);
@@ -1468,12 +1468,15 @@ function App() {
                 }
                 return <LobbyScreen gameId={gameId} gameData={gameData} playerId={playerId} onStartGame={() => startGame(gameId)} onLeaveGame={goHome} />;
             case GameState.InGame:
-                if (gameData?.hostId === playerId && gameData.status === 'in-progress' && !gameData.id?.startsWith('solo')) {
+                // A logged-in teacher is the host of a multiplayer game. Everyone else is a player.
+                const isHostView = user?.isTeacher && gameData && !gameData.id?.startsWith('solo');
+                if (isHostView) {
                     return <HostScreen gameId={gameId} gameData={gameData} onEndGame={() => finishGame(gameId)} />;
                 }
                 return <GameScreen gameData={gameData} playerId={playerId} onTimeUp={gameData.id?.startsWith('solo') ? handleSoloTimeUp : () => {}} onGoHome={goHome} onScoreUpdate={handleScoreUpdate}/>;
             case GameState.Results:
-                 return <ResultsScreen gameData={gameData} playerId={playerId} onPlayAgain={goHome} onGoHome={goHome} onRetryPrompt={() => setGameState(GameState.InGame)} soloHighScore={soloHighScore} />;
+                 const isSoloGame = gameData?.id?.startsWith('solo');
+                 return <ResultsScreen gameData={gameData} playerId={playerId} onPlayAgain={goHome} onGoHome={goHome} onRetryPrompt={isSoloGame ? () => setGameState(GameState.InGame) : undefined} soloHighScore={soloHighScore} />;
             case GameState.TeacherDashboard:
                 return <TeacherDashboard user={user} onSignOut={handleSignOut} onGoHome={goHome} onCreateGame={() => setGameState(GameState.CreateGameSetup)} />;
             default:
