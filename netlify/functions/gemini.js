@@ -1,3 +1,4 @@
+
 const { GoogleGenAI, Type } = require("@google/genai");
 const admin = require('firebase-admin');
 const crypto = require('crypto');
@@ -124,14 +125,21 @@ const updateLeaderboardTask = async (payload) => {
     }
 
     // Layer 2: Check for semantic similarity
-    const previousSubmissionsQuery = submissionsRef.where('playerId', '==', playerId).orderBy('score', 'desc').limit(5);
+    // Fetch all of a player's submissions and sort in memory to avoid needing a composite index.
+    const previousSubmissionsQuery = submissionsRef.where('playerId', '==', playerId);
     const previousSubmissionsSnapshot = await previousSubmissionsQuery.get();
     
     if (!previousSubmissionsSnapshot.empty) {
-        const previousSentences = previousSubmissionsSnapshot.docs.map(doc => doc.data().sentenceText);
-        const similarityResult = await checkSimilarity({ newSentence: userSentence, previousSentences });
-        if (similarityResult.is_similar) {
-            return { success: false, message: "This sentence is too similar to one of your previous high scores." };
+        const allSubmissions = previousSubmissionsSnapshot.docs.map(doc => doc.data());
+        allSubmissions.sort((a, b) => b.score - a.score);
+        const topSubmissions = allSubmissions.slice(0, 5);
+        const previousSentences = topSubmissions.map(sub => sub.sentenceText);
+
+        if (previousSentences.length > 0) {
+            const similarityResult = await checkSimilarity({ newSentence: userSentence, previousSentences });
+            if (similarityResult.is_similar) {
+                return { success: false, message: "This sentence is too similar to one of your previous high scores." };
+            }
         }
     }
 
