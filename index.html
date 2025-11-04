@@ -627,20 +627,23 @@ const GameScreen = ({ gameData, playerId, onTimeUp, onGoHome, onPlayerStateUpdat
     }, [gameData.duration, showAlert]);
 
     useEffect(() => {
+        // This effect now only handles local UI updates for the score and word count.
+        // It runs frequently for a responsive feel, but DOES NOT write to the database.
+        // The database write is now handled only once when the timer runs out.
         const handler = setTimeout(() => {
             const analysis = analyzeScore(text, fullCriteria);
             setScoreAnalysis(analysis);
-            if (onPlayerStateUpdateRef.current) {
-                onPlayerStateUpdateRef.current({ title, text }, analysis);
-            }
+            
+            // The call to onPlayerStateUpdateRef.current which saves to the database has been removed from here.
+
             if (analysis.totalScore > prevScoreRef.current) {
                 setIsScoreAnimating(true);
                 setTimeout(() => setIsScoreAnimating(false), 300);
             }
             prevScoreRef.current = analysis.totalScore;
-        }, 2000); // Save progress every 2 seconds
+        }, 500); // Update local score display every 500ms
         return () => clearTimeout(handler);
-    }, [text, title, fullCriteria]);
+    }, [text, fullCriteria]);
 
     const onTimeUpRef = useRef(onTimeUp); onTimeUpRef.current = onTimeUp;
     const handleTimeUp = useCallback(() => onTimeUpRef.current({ title, text }, analyzeScore(text, fullCriteria)), [title, text, fullCriteria]);
