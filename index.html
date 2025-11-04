@@ -596,10 +596,10 @@ const ResultsScreen = ({ gameData, playerId, onPlayAgain, onGoHome, onRetryPromp
   );
 };
 
-const GameScreen = ({ gameData, playerId, onTimeUp, onGoHome, onPlayerStateUpdate }) => {
+const GameScreen = ({ gameData, playerId, onTimeUp, onGoHome }) => {
     const fullCriteria = useMemo(() => {
-      if (!gameData || !gameData.criteria) return [];
-      return gameData.criteria.map(id => ALL_SCORING_CRITERIA.find(c => c.id === id)).filter(Boolean);
+        if (!gameData || !gameData.criteria) return [];
+        return gameData.criteria.map(id => ALL_SCORING_CRITERIA.find(c => c.id === id)).filter(Boolean);
     }, [gameData]);
 
     const [title, setTitle] = useState('');
@@ -610,9 +610,6 @@ const GameScreen = ({ gameData, playerId, onTimeUp, onGoHome, onPlayerStateUpdat
     const prevScoreRef = useRef(0);
     const [timeAlert, setTimeAlert] = useState('');
     const wordCount = useMemo(() => text.trim().split(/\s+/).filter(Boolean).length, [text]);
-    
-    const onPlayerStateUpdateRef = useRef(onPlayerStateUpdate); 
-    onPlayerStateUpdateRef.current = onPlayerStateUpdate;
 
     const showAlert = useCallback((message) => {
         setTimeAlert(message);
@@ -625,17 +622,12 @@ const GameScreen = ({ gameData, playerId, onTimeUp, onGoHome, onPlayerStateUpdat
         if (totalDuration >= 10 * 60 && secondsLeft === fiveMinMark) showAlert('5 minutes remaining!');
         if (secondsLeft === twoMinMark) showAlert('2 minutes to go!');
     }, [gameData.duration, showAlert]);
-
+    
+    // This effect now only handles local UI updates for the score and word count.
     useEffect(() => {
-        // This effect now only handles local UI updates for the score and word count.
-        // It runs frequently for a responsive feel, but DOES NOT write to the database.
-        // The database write is now handled only once when the timer runs out.
         const handler = setTimeout(() => {
             const analysis = analyzeScore(text, fullCriteria);
             setScoreAnalysis(analysis);
-            
-            // The call to onPlayerStateUpdateRef.current which saves to the database has been removed from here.
-
             if (analysis.totalScore > prevScoreRef.current) {
                 setIsScoreAnimating(true);
                 setTimeout(() => setIsScoreAnimating(false), 300);
@@ -645,8 +637,24 @@ const GameScreen = ({ gameData, playerId, onTimeUp, onGoHome, onPlayerStateUpdat
         return () => clearTimeout(handler);
     }, [text, fullCriteria]);
 
-    const onTimeUpRef = useRef(onTimeUp); onTimeUpRef.current = onTimeUp;
-    const handleTimeUp = useCallback(() => onTimeUpRef.current({ title, text }, analyzeScore(text, fullCriteria)), [title, text, fullCriteria]);
+    const onTimeUpRef = useRef(onTimeUp); 
+    onTimeUpRef.current = onTimeUp;
+    
+    // The final save is triggered once here, when the timer runs out.
+    const handleTimeUp = useCallback(async () => {
+        const finalStory = { title, text };
+        const finalAnalysis = analyzeScore(text, fullCriteria);
+        
+        // Save to DB if it's a multiplayer game
+        if (gameData && !gameData.id?.startsWith('solo')) {
+            await submitResult(gameData.id, playerId, finalStory, finalAnalysis);
+        }
+        
+        // Signal the parent component that time is up, passing the final state.
+        onTimeUpRef.current(finalStory, finalAnalysis);
+
+    }, [title, text, fullCriteria, gameData, playerId]);
+
     const planningPlaceholder = "Jot down your ideas...\n- Beginning: \n- Middle (The Problem): \n- End (The Solution): \n- Senses to include: ";
 
     return (
@@ -728,7 +736,7 @@ const HostScreen = ({ gameId, gameData, onEndGame }) => {
                 {sortedPlayers.map((player, index) => (
                    <li key={player.id} className="p-3 rounded-md flex justify-between items-center bg-slate-50">
                      <span className="font-semibold text-slate-700">{index + 1}. {player.nickname}</span>
-                     <span className="font-bold text-sky-600">{player.totalScore.toLocaleString()}</span>
+                     <span className="font-bold text-sky-600">{player.analysis?.totalScore?.toLocaleString() || 0}</span>
                    </li>
                 ))}
                </ol>
@@ -1317,29 +1325,51 @@ const SentenceBuilderScreen = ({ playerId, onBack }) => {
 };
 
 const HomeScreen = ({ onSelect }) => {
-     const OptionCard = ({ icon, title, description, onClick }) => (
-        <button onClick={onClick} className="w-full bg-white/60 backdrop-blur-sm border border-white/30 rounded-2xl p-6 text-left shadow-lg hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500">
-            <div className="flex items-center gap-5">
-                 <div className="bg-sky-100 p-3 rounded-xl">{icon}</div>
-                 <div>
-                    <h3 className="text-xl font-bold text-slate-800">{title}</h3>
-                    <p className="text-slate-600 text-sm mt-1">{description}</p>
+    const OptionCard = ({ icon, title, description, onClick, accentColor }) => (
+        <button 
+            onClick={onClick} 
+            className={`relative w-full bg-white/60 backdrop-blur-sm border border-white/30 rounded-2xl p-6 text-left shadow-lg hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-300 ease-in-out focus:outline-none focus-visible:ring-4 ${accentColor.ring} group overflow-hidden`}
+        >
+            <div className={`absolute -top-8 -right-8 w-24 h-24 rounded-full transition-transform duration-500 ease-out group-hover:scale-150 ${accentColor.bg} opacity-20`}></div>
+            <div className="relative z-10">
+                <div className={`p-4 rounded-xl inline-block mb-4 ${accentColor.bg} bg-opacity-20`}>
+                    {icon}
                 </div>
+                <h3 className="text-xl font-bold text-slate-800">{title}</h3>
+                <p className="text-slate-600 text-sm mt-1">{description}</p>
             </div>
         </button>
     );
 
-    const iconStyles = "w-10 h-10 text-sky-600";
+    const accentColors = {
+        solo: { bg: 'bg-sky-500', ring: 'focus-visible:ring-sky-400' },
+        sentence: { bg: 'bg-emerald-500', ring: 'focus-visible:ring-emerald-400' },
+        teacher: { bg: 'bg-violet-500', ring: 'focus-visible:ring-violet-400' },
+        join: { bg: 'bg-amber-500', ring: 'focus-visible:ring-amber-400' },
+    };
+
+    const iconStyles = "w-10 h-10";
     const icons = {
-        solo: <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={iconStyles}><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" /></svg>,
-        sentence: <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={iconStyles}><path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" /></svg>,
-        teacher: <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={iconStyles}><path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.627 48.627 0 0 1 12 20.904a48.627 48.627 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.57 50.57 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443m-7.007 11.55A5.981 5.981 0 0 0 6.75 15.75v-1.5" /></svg>,
-        join: <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={iconStyles}><path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m-7.5-2.962 3.992-3.992a.75.75 0 0 1 1.06 0l3.992 3.992" /><path strokeLinecap="round" strokeLinejoin="round" d="M12 3v17.25m0 0c-1.472 0-2.882.265-4.185.75M12 20.25c1.472 0 2.882.265 4.185.75M18.75 20.25c1.623 0 3.19-.623 4.372-1.732a4.5 4.5 0 0 0-8.744 0c1.182 1.11 2.749 1.732 4.372 1.732Z" /></svg>,
+        solo: <svg xmlns="http://www.w3.org/2000/svg" className={`${iconStyles} text-sky-700`} fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+        </svg>,
+        sentence: <svg xmlns="http://www.w3.org/2000/svg" className={`${iconStyles} text-emerald-700`} fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 012.827-5.119l2.846-.813a4.5 4.5 0 015.119 2.827l.813 2.846-.813 2.846a4.5 4.5 0 01-5.119 2.827l-2.846.813a4.5 4.5 0 01-2.827-5.119z" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 1.5v.75m0 19.5v.75m7.5-12h.75m-19.5 0h.75M4.5 12h.75m13.5 0h.75M12 4.5v.75m0 13.5v.75m-4.629-10.871l-.53.53m11.13 10.042l-.53.53M4.5 4.5l.53.53m10.042 11.13l.53.53" />
+        </svg>,
+        teacher: <svg xmlns="http://www.w3.org/2000/svg" className={`${iconStyles} text-violet-700`} fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-4.663c.11-.256.217-.512.321-.766M15 19.128a9.38 9.38 0 002.625.372" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4.934 12.148a2.25 2.25 0 100-4.296 2.25 2.25 0 000 4.296zM15.342 12.148a2.25 2.25 0 100-4.296 2.25 2.25 0 000 4.296z" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M10.159 6.032a2.25 2.25 0 100-4.296 2.25 2.25 0 000 4.296z" />
+        </svg>,
+        join: <svg xmlns="http://www.w3.org/2000/svg" className={`${iconStyles} text-amber-700`} fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6A2.25 2.25 0 005.25 5.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+        </svg>,
     };
 
     return (
-        <div className="text-center px-4 py-8">
-            <header className="mb-12">
+        <div className="w-full max-w-4xl mx-auto px-4 py-8">
+            <header className="text-center mb-12">
                  <div className="flex items-center justify-center gap-4">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-12 h-12 text-sky-700">
                         <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
@@ -1348,17 +1378,35 @@ const HomeScreen = ({ onSelect }) => {
                 </div>
                 <p className="text-slate-600 mt-2 text-lg">Level up your writing experience.</p>
             </header>
-            <main className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-                <div className="space-y-6">
-                    <h2 className="text-2xl font-bold text-slate-700">Single Player</h2>
-                    <OptionCard icon={icons.solo} title="Solo Practice" description="Write a story based on a random prompt and get a score." onClick={() => onSelect(GameState.SoloSetup)} />
-                    <OptionCard icon={icons.sentence} title="Sentence Lab" description="Upgrade a simple sentence to make it more powerful." onClick={() => onSelect(GameState.SentenceBuilder)} />
-                </div>
-                <div className="space-y-6">
-                    <h2 className="text-2xl font-bold text-slate-700">Multiplayer</h2>
-                     <OptionCard icon={icons.teacher} title="Teacher Login" description="Create and manage games for your students." onClick={() => onSelect('teacherLogin')} />
-                    <OptionCard icon={icons.join} title="Join Game" description="Enter a code to join a game hosted by your teacher." onClick={() => onSelect(GameState.JoinGameSetup)} />
-                </div>
+            <main className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                 <OptionCard 
+                    icon={icons.solo} 
+                    title="Solo Practice" 
+                    description="Write a story based on a random prompt and get a score." 
+                    onClick={() => onSelect(GameState.SoloSetup)}
+                    accentColor={accentColors.solo}
+                />
+                <OptionCard 
+                    icon={icons.sentence} 
+                    title="Sentence Lab" 
+                    description="Upgrade a simple sentence to make it more powerful." 
+                    onClick={() => onSelect(GameState.SentenceBuilder)}
+                    accentColor={accentColors.sentence}
+                />
+                <OptionCard 
+                    icon={icons.teacher} 
+                    title="Teacher Dashboard"
+                    description="Create, manage, and review games for your students."
+                    onClick={() => onSelect('teacherLogin')}
+                    accentColor={accentColors.teacher}
+                />
+                <OptionCard 
+                    icon={icons.join} 
+                    title="Join Game" 
+                    description="Enter a code to join a game hosted by your teacher." 
+                    onClick={() => onSelect(GameState.JoinGameSetup)}
+                    accentColor={accentColors.join}
+                />
             </main>
         </div>
     );
@@ -1373,9 +1421,6 @@ function App() {
     const [user, setUser] = useState(null);
     const [authLoading, setAuthLoading] = useState(true);
     const [soloHighScore, setSoloHighScore] = useState(() => Number(localStorage.getItem('soloHighScore')) || 0);
-
-    const gameDataRef = useRef(gameData);
-    gameDataRef.current = gameData;
 
     useEffect(() => {
         const unsubscribe = onAuthChange(firebaseUser => {
@@ -1400,7 +1445,7 @@ function App() {
 
     useEffect(() => {
         let unsubscribe;
-        if (gameState === GameState.Lobby || (gameState === GameState.InGame && gameId)) {
+        if ((gameState === GameState.Lobby || gameState === GameState.InGame || gameState === GameState.Results) && gameId && !gameId.startsWith('solo')) {
             unsubscribe = getGameStream(gameId, (data) => {
                 if (!data) {
                     setGameState(GameState.Home);
@@ -1409,18 +1454,23 @@ function App() {
                     return;
                 }
                 setGameData(data);
-                if (data.status === 'in-progress') {
+                if (data.status === 'in-progress' && gameState !== GameState.InGame) {
                     setGameState(GameState.InGame);
                 }
-                if (data.status === 'finished') {
-                    setGameState(GameState.Results);
+                if (data.status === 'finished' && gameState !== GameState.Results) {
+                     // Check if the current player's data is available before switching to results
+                    if (data.players && data.players[playerId] && data.players[playerId].analysis) {
+                        setGameState(GameState.Results);
+                    } else if (data.hostId === playerId) { // Host can always see results
+                        setGameState(GameState.Results);
+                    }
                 }
             });
         }
         return () => {
             if (unsubscribe) unsubscribe();
         };
-    }, [gameState, gameId]);
+    }, [gameState, gameId, playerId]);
 
     const goHome = useCallback(() => {
         setGameState(GameState.Home);
@@ -1434,9 +1484,10 @@ function App() {
             return;
         }
         const newGameId = await createGame(user.uid, prompt, criteria, duration, user.uid);
+        await joinGame(newGameId, playerId, { nickname: user.displayName || 'Host', isGuest: false });
         setGameId(newGameId);
         setGameState(GameState.Lobby);
-    }, [user]);
+    }, [user, playerId]);
 
     const handleJoinGame = useCallback(async (code, nickname) => {
         await joinGame(code, playerId, { nickname, isGuest: !user });
@@ -1464,7 +1515,11 @@ function App() {
 
     const handleSelectHome = (selection) => {
         if (selection === 'teacherLogin') {
-            handleTeacherLogin();
+            if (user && user.isTeacher) {
+                setGameState(GameState.TeacherDashboard);
+            } else {
+                handleTeacherLogin();
+            }
         } else {
             setGameState(selection);
         }
@@ -1490,19 +1545,16 @@ function App() {
             setSoloHighScore(analysis.totalScore);
             localStorage.setItem('soloHighScore', analysis.totalScore);
         }
-        setGameData(prev => ({ ...prev, players: { ...prev.players, [playerId]: { ...prev.players[playerId], story, analysis } } }));
+        setGameData(prev => ({ ...prev, status: 'finished', players: { ...prev.players, [playerId]: { ...prev.players[playerId], story, analysis } } }));
         setGameState(GameState.Results);
     };
     
-    const handlePlayerStateUpdate = useCallback(async (story, analysis) => {
-      const currentGamedata = gameDataRef.current;
-      if (currentGamedata && currentGamedata.status === 'in-progress' && !currentGamedata.id?.startsWith('solo')) {
-        await submitResult(gameId, playerId, story, analysis);
-      }
-    }, [gameId, playerId]);
-    
-    const handleMultiplayerGameEnd = (story, analysis) => {
-        handlePlayerStateUpdate(story, analysis); // Perform final save
+    const handleMultiplayerTimeUp = (story, analysis) => {
+        // The final results are already submitted by GameScreen on timeout
+        // Just need to update the local state for immediate display
+        setGameData(prev => ({...prev, players: {...prev.players, [playerId]: {...prev.players[playerId], story, analysis }}}));
+        // The onSnapshot listener will eventually move us to the Results screen when the game status changes to 'finished'
+        // But we can navigate there optimistically for the current user.
         setGameState(GameState.Results);
     };
 
@@ -1517,7 +1569,7 @@ function App() {
             case GameState.SoloSetup:
                 return <PracticeSetupScreen onStart={handleStartSolo} onBack={goHome} />;
             case GameState.CreateGameSetup:
-                return <CreateGameSetupScreen onCreate={handleCreateGame} onBack={goHome} user={user} />;
+                return <CreateGameSetupScreen onCreate={handleCreateGame} onBack={() => setGameState(GameState.TeacherDashboard)} user={user} />;
             case GameState.JoinGameSetup:
                 return <JoinGameSetupScreen onJoin={handleJoinGame} onBack={goHome} />;
             case GameState.Lobby:
@@ -1535,18 +1587,19 @@ function App() {
                 if (isHostView) {
                     return <HostScreen gameId={gameId} gameData={gameData} onEndGame={() => finishGame(gameId)} />;
                 }
-                return <GameScreen gameData={gameData} playerId={playerId} onTimeUp={gameData.id?.startsWith('solo') ? handleSoloTimeUp : handleMultiplayerGameEnd} onGoHome={goHome} onPlayerStateUpdate={handlePlayerStateUpdate}/>;
+                return <GameScreen gameData={gameData} playerId={playerId} onTimeUp={gameData.id?.startsWith('solo') ? handleSoloTimeUp : handleMultiplayerTimeUp} onGoHome={goHome} />;
             case GameState.Results:
                  const isSoloGame = gameData?.id?.startsWith('solo');
                  const isHost = gameData?.hostId === playerId;
+                 const handlePlayAgain = isSoloGame ? () => setGameState(GameState.SoloSetup) : goHome;
                  return <ResultsScreen 
                     gameData={gameData} 
                     playerId={playerId} 
                     isHost={isHost}
-                    onPlayAgain={goHome} 
+                    onPlayAgain={handlePlayAgain}
                     onGoHome={goHome} 
                     onGoToDashboard={() => setGameState(GameState.TeacherDashboard)}
-                    onRetryPrompt={isSoloGame ? () => setGameState(GameState.InGame) : undefined} 
+                    onRetryPrompt={isSoloGame ? () => handleStartSolo(gameData.prompt, gameData.criteria, gameData.duration) : undefined} 
                     soloHighScore={soloHighScore} />;
             case GameState.TeacherDashboard:
                 return <TeacherDashboard user={user} onSignOut={handleSignOut} onGoHome={goHome} onCreateGame={() => setGameState(GameState.CreateGameSetup)} />;
