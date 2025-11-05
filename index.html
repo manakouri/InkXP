@@ -948,23 +948,19 @@ const TeacherDashboard = ({ user, onSignOut, onGoHome, onCreateGame }) => {
         if (user?.uid) {
             const unsubscribe = getGamesForTeacher(user.uid, (fetchedGames) => {
                 setGames(fetchedGames);
-                if (!selectedGame && fetchedGames.length > 0) {
-                    setSelectedGame(fetchedGames[0]);
-                } else if (selectedGame) {
-                    // Update selected game data if it's in the new list
-                    const updatedSelectedGame = fetchedGames.find(g => g.id === selectedGame.id);
-                    if (updatedSelectedGame) {
-                        setSelectedGame(updatedSelectedGame);
-                    } else if (fetchedGames.length > 0) {
-                        setSelectedGame(fetchedGames[0]);
-                    } else {
-                        setSelectedGame(null);
+                // This logic ensures the selected game stays in sync with the live data
+                // without causing the listener to resubscribe unnecessarily.
+                setSelectedGame(prevSelectedGame => {
+                    if (prevSelectedGame) {
+                        const updatedGame = fetchedGames.find(g => g.id === prevSelectedGame.id);
+                        return updatedGame || (fetchedGames.length > 0 ? fetchedGames[0] : null);
                     }
-                }
+                    return fetchedGames.length > 0 ? fetchedGames[0] : null;
+                });
             });
             return () => unsubscribe();
         }
-    }, [user?.uid, selectedGame]);
+    }, [user?.uid]);
 
     const handleSelectGame = (game) => setSelectedGame(game);
     const getPlayerCount = (game) => Object.keys(game?.players || {}).length;
@@ -1558,12 +1554,10 @@ function App() {
     };
     
     const handleMultiplayerTimeUp = (story, analysis) => {
-        // The final results are already submitted by GameScreen on timeout
-        // Just need to update the local state for immediate display
-        setGameData(prev => ({...prev, players: {...prev.players, [playerId]: {...prev.players[playerId], story, analysis }}}));
-        // The onSnapshot listener will eventually move us to the Results screen when the game status changes to 'finished'
-        // But we can navigate there optimistically for the current user.
-        setGameState(GameState.Results);
+        // Submission is handled in GameScreen's handleTimeUp.
+        // We now rely solely on the onSnapshot listener to receive the
+        // updated gameData and navigate to the results screen. This prevents a race condition
+        // where a local optimistic update is overwritten by a stale Firestore update.
     };
 
     const renderContent = () => {
