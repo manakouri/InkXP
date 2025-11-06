@@ -1,7 +1,7 @@
-// Fix: Import React and hooks, and ReactDOM for rendering.
+
+
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import ReactDOM from 'react-dom/client';
-// Fix: Import Firebase modules for v8 SDK syntax.
 import firebase from 'firebase/app';
 import 'firebase/auth';
 import 'firebase/firestore';
@@ -323,7 +323,6 @@ const analyzeScore = (text, criteria) => {
 
 // PDF Utility
 const downloadPDF = (nickname, story, prompt) => {
-    // Fix: Cast window to `any` to access jspdf property without a TypeScript error.
     const { jsPDF } = (window as any).jspdf;
     const doc = new jsPDF();
     const title = story?.title || 'Untitled Story';
@@ -340,7 +339,6 @@ const downloadPDF = (nickname, story, prompt) => {
 // React Components
 const LoadingSpinner = () => <div className="w-8 h-8 border-4 border-sky-200 border-t-sky-600 rounded-full animate-spin"></div>;
 
-// Fix: Add explicit types for Timer props and make onTick optional.
 const Timer = ({ startTime, duration, onTimeUp, onTick }: { startTime: any, duration: any, onTimeUp: () => void, onTick?: (remaining: number) => void }) => {
     const [secondsLeft, setSecondsLeft] = useState(Number(duration));
     const onTimeUpRef = useRef(onTimeUp); onTimeUpRef.current = onTimeUp;
@@ -363,9 +361,9 @@ const Timer = ({ startTime, duration, onTimeUp, onTick }: { startTime: any, dura
     return <div className="text-5xl font-bold tracking-tighter"><span>{minutes.toString().padStart(2, '0')}</span><span className="animate-pulse">:</span><span>{remainingSeconds.toString().padStart(2, '0')}</span></div>;
 };
 
-// Fix: Add explicit prop types to Button to resolve numerous TypeScript errors.
+// Fix: Made children optional to fix widespread type errors.
 const Button = ({ children, className = '', variant = 'primary', size = 'medium', ...props }: {
-    children: React.ReactNode;
+    children?: React.ReactNode;
     className?: string;
     variant?: 'primary' | 'secondary' | 'danger';
     size?: 'small' | 'medium' | 'large';
@@ -398,8 +396,8 @@ const NicknamePrompt = ({ onNicknameSubmit }) => {
     );
 };
 
-// Fix: Add explicit types for Tooltip props.
-const Tooltip = ({ children, text }: { children: React.ReactNode; text: string }) => (
+// Fix: Made children optional to fix type error.
+const Tooltip = ({ children, text }: { children?: React.ReactNode; text: string }) => (
     <div className="relative flex items-center group">
         {children}
         <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max max-w-xs p-2 text-sm text-white bg-slate-800 rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 pointer-events-none">
@@ -421,7 +419,6 @@ const TimeAlert = ({ message }) => {
 const ResultsScreen = ({ gameData, playerId, onPlayAgain, onGoHome, onRetryPrompt, soloHighScore, isHost, onGoToDashboard, finalCheckedWords }) => {
     const [viewingPlayerId, setViewingPlayerId] = useState(null);
 
-    // Fix: Cast `data` to `any` to resolve spread and property access errors on unknown type.
     const sortedPlayers = useMemo(() => Object.entries(gameData.players)
         .map(([id, data]) => ({ id, ...(data as any), totalScore: (data as any).analysis?.totalScore || 0 }))
         .sort((a, b) => b.totalScore - a.totalScore), [gameData.players]);
@@ -781,7 +778,6 @@ const GameScreen = ({ gameData, playerId, onTimeUp, onGoHome }) => {
 };
 
 const HostScreen = ({ gameId, gameData, onEndGame }) => {
-    // Fix: Cast `data` to `any` to resolve spread and property access errors on unknown type.
     const sortedPlayers = useMemo(() => {
         return Object.entries(gameData.players)
             .map(([id, data]) => ({ id, ...(data as any), totalScore: (data as any).analysis?.totalScore || 0 }))
@@ -840,7 +836,6 @@ const LobbyScreen = ({ gameId, gameData, playerId, onStartGame, onLeaveGame }) =
                 <div className="space-y-3 max-h-60 overflow-y-auto bg-slate-50 p-4 rounded-lg border">
                     {Object.entries(gameData.players).map(([id, player]) => (
                         <div key={id} className={`flex items-center justify-between p-3 rounded-md ${id === playerId ? 'bg-sky-100' : 'bg-white'}`}>
-                            {/* Fix: Cast `player` to `any` to access `nickname` property. */}
                             <p className="font-semibold text-slate-800">{(player as any).nickname || 'Joining...'}</p>
                              {isHost && id !== playerId && ( <Button onClick={() => handleRemovePlayer(id)} variant="danger" size="small">Remove</Button> )}
                         </div>
@@ -1002,7 +997,7 @@ const JoinGameSetupScreen = ({ onJoin, onBack }) => {
                     <input type="text" value={nickname} onChange={(e) => setNickname(e.target.value)} className="w-full p-3 border border-slate-300 rounded-lg shadow-inner focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-shadow duration-200 text-lg text-center" placeholder="Your Name" maxLength={25} required />
                     {error && <p className="text-red-500 text-sm">{error}</p>}
                     <div className="pt-4 flex flex-col sm:flex-row gap-4">
-                        <Button onClick={onBack} variant="secondary" size="large" className="w-full" disabled={isLoading}>Back</Button>
+                        <Button type="button" onClick={onBack} variant="secondary" size="large" className="w-full" disabled={isLoading}>Back</Button>
                         <Button type="submit" size="large" className="w-full" disabled={isLoading}>{isLoading ? <LoadingSpinner /> : 'Join Game'}</Button>
                     </div>
                 </form>
@@ -1075,24 +1070,18 @@ const TeacherDashboard = ({ user, onSignOut, onGoHome, onCreateGame }) => {
                             <h3 className="text-lg font-bold mb-3">Student Submissions</h3>
                             <div className="space-y-4 max-h-[45vh] overflow-y-auto pr-2">
                                 {Object.entries(selectedGame.players).length > 0 ? Object.entries(selectedGame.players)
-                                    // Fix: Cast player objects `a` and `b` to `any` to access `nickname`.
                                     .sort(([, a], [, b]) => ((a as any).nickname || '').localeCompare((b as any).nickname || ''))
                                     .map(([playerId, player]) => (
                                     <div key={playerId} className="bg-white p-4 rounded-lg shadow">
                                         <div className="flex justify-between items-start mb-2">
                                             <div>
-                                                {/* Fix: Cast `player` to `any` to access properties. */}
                                                 <p className="font-bold text-slate-800">{(player as any).nickname}</p>
-                                                {/* Fix: Cast `player` to `any` to access properties. */}
                                                 <p className="text-sm font-semibold text-emerald-600">Score: {(player as any).analysis?.totalScore?.toLocaleString() || 'N/A'}</p>
                                             </div>
-                                            {/* Fix: Cast `player` to `any` to access properties. */}
                                             <Button onClick={() => downloadPDF((player as any).nickname, (player as any).story, selectedGame.prompt)} size="small" variant="secondary">Download PDF</Button>
                                         </div>
                                          <div className="prose prose-sm max-w-none text-slate-600 whitespace-pre-wrap bg-slate-50 p-3 rounded-md border">
-                                            {/* Fix: Cast `player` to `any` to access properties. */}
                                             <h4 className="font-bold">{(player as any).story?.title || "Untitled Story"}</h4>
-                                            {/* Fix: Cast `player` to `any` to access properties. */}
                                             {(player as any).story?.text || "No submission."}
                                         </div>
                                     </div>
@@ -1249,7 +1238,6 @@ const SentenceBuilderScreen = ({ playerId, onBack }) => {
 
         if (totalScore > highScore) {
             setHighScore(totalScore);
-            // Fix: Convert number to string for localStorage.setItem
             localStorage.setItem('sentenceLabHighScore', totalScore.toString());
         }
         
@@ -1344,8 +1332,8 @@ const SentenceBuilderScreen = ({ playerId, onBack }) => {
         );
     }
     
-    // Fix: Add prop types for KeteWord component.
-    const KeteWord = ({ word }: { word: string }) => (
+// Fix: Used React.FC to correctly type the component props and handle React-specific props like 'key'.
+    const KeteWord: React.FC<{ word: string }> = ({ word }) => (
       <span className="bg-sky-100 text-sky-800 px-3 py-1 rounded-full text-sm font-semibold">
           {word}
       </span>
@@ -1377,7 +1365,8 @@ const SentenceBuilderScreen = ({ playerId, onBack }) => {
                                 ))}
                             </div>
                             <div className="flex flex-wrap gap-2">
-                                {KETE_WORDS[activeTab].map(word => <KeteWord key={word} word={word} />)}
+                                {/* Fix: Explicitly type 'word' to resolve TypeScript inference issue. */}
+                                {KETE_WORDS[activeTab].map((word: string, index) => <KeteWord key={index} word={word} />)}
                             </div>
                         </div>
                     )}

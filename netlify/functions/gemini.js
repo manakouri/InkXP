@@ -1,4 +1,5 @@
 
+
 const { GoogleGenAI, Type } = require("@google/genai");
 const admin = require('firebase-admin');
 const crypto = require('crypto');
@@ -78,7 +79,8 @@ const checkSpelling = async (payload) => {
 Respond ONLY with a valid JSON object.`;
 
     const response = await ai.models.generateContent({
-        model: "gemini-2.5-pro",
+        // Fix: Changed model to gemini-2.5-flash for better performance and cost-efficiency on this simple task.
+        model: "gemini-2.5-flash",
         contents: prompt,
         config: {
             responseMimeType: "application/json",
