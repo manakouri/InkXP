@@ -1,0 +1,1705 @@
+// Fix: Import React and hooks, and ReactDOM for rendering.
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import ReactDOM from 'react-dom/client';
+// Fix: Import Firebase modules for v8 SDK syntax.
+import firebase from 'firebase/app';
+import 'firebase/auth';
+import 'firebase/firestore';
+
+// GameState Constants
+const GameState = Object.freeze({
+    Home: 0,
+    SoloSetup: 1,
+    CreateGameSetup: 2,
+    JoinGameSetup: 3,
+    Lobby: 4,
+    InGame: 5,
+    Results: 6,
+    TeacherDashboard: 7,
+    SentenceBuilder: 8,
+});
+
+// Writing Category Constants
+const WritingCategory = Object.freeze({
+    Narrative: "Narrative",
+    Persuasive: "Persuasive",
+    Informative: "Informative",
+    Editing: "Editing",
+});
+
+// Word & Prompt Constants
+const NARRATIVE_PROMPTS = [
+    { category: "Mystery & Discovery", text: "My fingers closed around a smooth, cool stone in the riverbed. It wasn't just any rock; it was pounamu, carved in a perfect spiral. As I lifted it out of the water, the stone grew strangely warm in my hand, and a deep, pulsing hum vibrated up my arm." },
+    { category: "Mystery & Discovery", text: "The old bach at the end of the beach had been empty for years. But one night during a storm, I saw a light flickering in the window. I crept closer, wiped the salty spray from the glass, and peered inside. The room was empty, but sitting on the table was a single, steaming cup of tea." },
+    { category: "Mystery & Discovery", text: "No one ever went into the old sports shed; Mr. Henderson kept it locked. But as I chased a stray netball, I saw the padlock was broken, lying on the grass. I nudged the door open with my foot, revealing a set of dusty stairs leading down into pure darkness." },
+    { category: "Mystery & Discovery", text: "While helping Dad in the garden, my spade hit something hard. It wasn't a rock. I dug around it and pulled out a rusty metal box. It was locked, but there was a strange symbol carved on the lid, the same symbol I'd seen on the old statue in the park." },
+    { category: "Mystery & Discovery", text: "I found an old key in the pocket of a second-hand coat. It didn't look like a normal house key. It was ornate and heavy. I wonder what it unlocks..." },
+    { category: "Mystery & Discovery", text: "A message in a bottle washed up on the shore. The paper was old and the writing was faded, but I could just make out the words: 'Help me, I'm trapped on...'" },
+    { category: "Adventure & Action", text: "'Stay on the track!' our teacher yelled. I just stepped off the path for a second to see a cool fungus. When I looked up, the rest of my school camp group had vanished. I called out, but the only reply was the call of a distant morepork, even though it was the middle of the day." },
+    { category: "Adventure & Action", text: "The rugby ball soared high into the air. I leaped, my fingers stretching, ready for the winning catch. But just as I was about to grab it, a cheeky pīwakawaka swooped down and pecked the ball, sending it spinning in a completely different direction." },
+    { category: "Adventure & Action", text: "The ground started to shake violently. I grabbed onto the nearest tree as a huge crack appeared in the earth, revealing a glowing cave below." },
+    { category: "Adventure & Action", text: "I was kayaking down a calm river when the current suddenly picked up speed. I was being pulled towards a waterfall I didn't know existed!" },
+    { category: "Fantasy & Sci-Fi", text: "My koro always told stories about the taniwha in the river. I thought he was just joking. But when I dropped my jandal in the water, a huge, scaly head with glowing red eyes rose from the rapids. It wasn't looking at my jandal; it was looking right at me." },
+    { category: "Fantasy & Sci-Fi", text: "I was drawing in my notebook when my pencil started to move on its own. It wasn't just scribbling; it was drawing a map. A map that showed a secret door hidden somewhere inside my own school." },
+    { category: "Fantasy & Sci-Fi", text: "One morning, I woke up and found that everything in my room was floating. My bed, my toys, even my cat was gently bumping against the ceiling, looking very confused. I tried to stand up, and my feet lifted right off the floor." },
+    { category: "Fantasy & Sci-Fi", text: "I planted a strange seed I found in the forest. Overnight, it grew into a towering beanstalk that disappeared into the clouds." },
+    { category: "Fantasy & Sci-Fi", text: "A small, friendly robot appeared at my door. It held up a sign that read: 'I am lost. Can you help me find my way back to the year 2099?'" },
+    { category: "Real-Life & Emotional", text: "The moving van was packed. This was my last look at my old house. I waved goodbye to the pōhutukawa tree I used to climb and got in the car. As we drove past the dairy for the last time, I saw my best friend, Hemi, sprinting after the car, yelling and waving a small box I had never seen before." },
+    { category: "Real-Life & Emotional", text: "It was my turn to speak in front of the whole school assembly. My knees were knocking together and my palms were sweaty. I took a deep breath, looked at my best friend in the crowd, and opened my mouth to..." },
+    { category: "Real-Life & Emotional", text: "My first day at a new school. I didn't know anyone. As I walked into the playground, a ball rolled towards my feet..." },
+    { category: "Real-Life & Emotional", text: "I worked for weeks to save up for a new bike. The day I finally bought it, I saw a kid from my class looking at it with sad eyes. Their old bike was broken and rusty." },
+    { category: "Humour", text: "My lunchbox was missing. I looked everywhere. Finally, I heard a strange munching sound coming from the lost property bin. I peered inside and saw the school's pet goat, Gus, wearing my hat and happily eating my sandwiches." },
+    { category: "Humour", text: "I tried to bake a cake for my mum's birthday, but I accidentally used salt instead of sugar. Her face when she took the first bite was priceless." },
+    { category: "Humour", text: "Our class pet, a hamster named Nibbles, escaped from his cage. We found him in the library, sleeping on a tiny book he'd made into a bed." }
+];
+const ADJECTIVES = ['able', 'bad', 'best', 'better', 'big', 'black', 'blue', 'bright', 'busy', 'certain', 'clear', 'clean', 'cold', 'common', 'complete', 'cool', 'dark', 'dead', 'different', 'difficult', 'early', 'easy', 'empty', 'entire', 'fair', 'far', 'fast', 'few', 'final', 'fine', 'free', 'fresh', 'full', 'good', 'great', 'green', 'happy', 'hard', 'high', 'hot', 'huge', 'human', 'important', 'interesting', 'kind', 'large', 'last', 'late', 'light', 'little', 'long', 'low', 'main', 'major', 'many', 'mean', 'mental', 'modern', 'national', 'natural', 'near', 'new', 'next', 'nice', 'old', 'orange', 'only', 'open', 'other', 'past', 'personal', 'poor', 'possible', 'powerful', 'private', 'public', 'quick', 'quiet', 'real', 'recent', 'red', 'right', 'round', 'same', 'serious', 'short', 'similar', 'simple', 'single', 'small', 'soft', 'special', 'strong', 'sure', 'tall', 'true', 'warm', 'white', 'whole', 'wonderful', 'young', 'yellow', 'ancient', 'beautiful', 'brave', 'calm', 'charming', 'clever', 'crazy', 'creepy', 'cruel', 'curious', 'cute', 'dangerous', 'deep', 'delicious', 'delightful', 'dirty', 'dry', 'dull', 'eager', 'elegant', 'enormous', 'evil', 'expensive', 'famous', 'fancy', 'fantastic', 'fierce', 'filthy', 'fluffy', 'foolish', 'fragile', 'friendly', 'funny', 'gentle', 'giant', 'gorgeous', 'graceful', 'grumpy', 'handsome', 'healthy', 'helpful', 'horrible', 'innocent', 'jolly', 'juicy', 'lazy', 'lively', 'lonely', 'loud', 'lovely', 'lucky', 'magnificent', 'massive', 'mild', 'mysterious', 'nasty', 'naughty', 'nervous', 'noisy', 'perfect', 'plain', 'pleasant', 'precious', 'proud', 'purple', 'silly', 'sleepy', 'slimy', 'slow', 'sparkling', 'strange', 'sweet', 'tasty', 'terrible', 'thankful', 'thirsty', 'tiny', 'ugly', 'unusual', 'violet', 'wandering', 'weak', 'weary', 'wicked', 'wise', 'witty', 'worried', 'zany', 'absurd', 'active', 'adorable', 'adventurous', 'aggressive', 'agitated', 'alert', 'aloof', 'ambitious', 'annoyed', 'anxious', 'arrogant', 'ashamed', 'astonishing', 'attractive', 'average', 'awful', 'awkward', 'bashful', 'bewildered', 'billowing', 'bitter', 'bizarre', 'blazing', 'blissful', 'boiling', 'bouncy', 'breathtaking', 'breezy', 'broken', 'bumpy', 'burning', 'bustling', 'cautious', 'celestial', 'chaotic', 'cheerful', 'chilly', 'clumsy', 'colossal', 'combative', 'comfortable', 'concerned', 'condemned', 'confused', 'courageous', 'cowardly', 'cozy', 'crabby', 'crisp', 'cuddly', 'cultured', 'damp', 'dapper', 'daring', 'dashing', 'dauntless', 'dazzling', 'defeated', 'defiant', 'determined', 'disgusted', 'distinct', 'disturbed', 'dizzy', 'drab', 'drained', 'dreadful', 'dreary', 'dubious', 'eerie', 'elated', 'enchanting', 'encouraging', 'energetic', 'enraged', 'enthusiastic', 'envious', 'exasperated', 'excited', 'exhilarated', 'exuberant', 'fabulous', 'faint', 'faithful', 'fake', 'fanatical', 'fearless', 'feisty', 'ferocious', 'festive', 'fiery', 'filthy', 'flat', 'flimsy', 'fluffy', 'fluttering', 'foamy', 'forgetful', 'frantic', 'freezing', 'frightened', 'frosty', 'fuming', 'furious', 'fuzzy', 'gaudy', 'ghastly', 'gleaming', 'gleeful', 'glittering', 'glorious', 'glossy', 'golden', 'goofy', 'grand', 'greedy', 'grieving', 'grimy', 'grotesque', 'grubby', 'gusty', 'hairy', 'hazy', 'heavenly', 'hefty', 'helpless', 'hilarious', 'hissing', 'hollow', 'homely', 'hopeful', 'howling', 'hulking', 'humble', 'humorous', 'hungry', 'hurt', 'hushed', 'icy', 'ideal', 'ill', 'immense', 'imperfect', 'inquisitive', 'irate', 'itchy', 'jittery', 'joyful', 'joyous', 'jubilant', 'jumpy', 'keen', 'lame', 'lanky', 'lavish', 'lethal', 'listless', 'livid', 'loathsome', 'luminous', 'luscious', 'lush', 'luxurious', 'magical', 'majestic', 'marvelous', 'meek', 'melancholy', 'melodic', 'melted', 'merciful', 'messy', 'metallic', 'mighty', 'miniature', 'mischievous', 'miserable', 'misty', 'motionless', 'muddy', 'murky', 'mushy', 'muted', 'mythical', 'needy', 'numb', 'nutty', 'obedient', 'obnoxious', 'odd', 'ornate', 'outrageous', 'panicky', 'panoramic', 'parallel', 'parched', 'peaceful', 'peppery', 'perky', 'perplexed', 'petite', 'phony', 'piercing', 'pink', 'placid', 'plump', 'pointless', 'polite', 'posh', 'prickly', 'puzzled', 'quaint', 'quivering', 'radiant', 'ragged', 'rambunctious', 'raspy', 'ratty', 'reassured', 'rejoicing', 'relaxed', 'relieved', 'remarkable', 'remorseful', 'repulsive', 'resonant', 'restless', 'restrained', 'rich', 'ripe', 'robust', 'rosy', 'rotten', 'rough', 'rowdy', 'rustic', 'sad', 'salty', 'sarcastic', 'sassy', 'satisfied', 'savory', 'scaly', 'scarce', 'scared', 'scary', 'scattered', 'scrawny', 'screeching', 'scruffy', 'selfish', 'serene', 'shaggy', 'shaky', 'shallow', 'sharp', 'shiny', 'shivering', 'shocked', 'shrill', 'shy', 'silent', 'silky', 'skinny', 'smoggy', 'smoky', 'smooth', 'smug', 'soggy', 'solid', 'somber', 'soothing', 'sore', 'sour', 'sparkling', 'spicy', 'spiky', 'splendid', 'spooky', 'spotless', 'spotty', 'square', 'squeaky', 'stale', 'statuesque', 'steaming', 'sticky', 'stiff', 'stingy', 'stormy', 'stout', 'straight', 'striped', 'stuffy', 'stunning', 'subtle', 'successful', 'succulent', 'sulky', 'sunny', 'superb', 'superficial', 'superior', 'swanky', 'sweltering', 'swift', 'talented', 'tame', 'tan', 'tart', 'taut', 'tearful', 'tedious', 'teeny', 'tender', 'tense', 'tepid', 'testy', 'thin', 'thoughtful', 'thoughtless', 'threatening', 'thrifty', 'thrilled', 'thundering', 'tight', 'timely', 'timid', 'torpid', 'tough', 'towering', 'tranquil', 'tremendous', 'tricky', 'troubled', 'tumultuous', 'turbulent', 'ubiquitous', 'unarmed', 'unbecoming', 'unbiased', 'uncommon', 'uncovered', 'uneven', 'uninterested', 'unique', 'unkempt', 'unknown', 'unusual', 'unwieldy', 'upbeat', 'upset', 'uptight', 'vast', 'vexed', 'vibrant', 'vicious', 'victorious', 'virtuous', 'vivacious', 'vivid', 'voiceless', 'volatile', 'voracious', 'wacky', 'watchful', 'watery', 'wavy', 'wealthy', 'whimsical', 'whopping', 'wild', 'windy', 'wiry', 'wonderful', 'wooden', 'worn', 'worthless', 'wrathful', 'wretched', 'wrong', 'yummy', 'zealous'];
+const SENSORY_WORDS = { sight: ['bleak', 'blurred', 'bright', 'clear', 'colourful', 'crooked', 'dark', 'dazzling', 'dim', 'drab', 'dusky', 'faded', 'fiery', 'glistening', 'gloomy', 'glowing', 'hazy', 'murky', 'shimmering', 'sparkling', 'shadowy', 'vibrant', 'golden', 'silvery', 'transparent', 'glossy', 'matte', 'streaked', 'checkered', 'dotted', 'striped', 'blazing', 'blurry', 'brilliant', 'cloudy', 'crystalline', 'ebony', 'emerald', 'flashing', 'flickering', 'fluorescent', 'foggy', 'gaudy', 'ghostly', 'gleaming', 'glinting', 'glittering', 'grainy', 'grimy', 'illuminated', 'in-focus', 'in-shadow', 'incandescent', 'iridescent', 'ivory', 'jet-black', 'luminous', 'lustrous', 'misty', 'monochromatic', 'mottled', 'muddy', 'opalescent', 'opaque', 'out-of-focus', 'pale', 'patchy', 'pearly', 'phosphorescent', 'pitch-black', 'polished', 'prismatic', 'radiant', 'reflective', 'rosy', 'ruby', 'rusty', 'sapphire', 'saturated', 'scarlet', 'sepia', 'smoky', 'smudged', 'sooty', 'speckled', 'spotless', 'spotted', 'starry', 'steamy', 'sun-bleached', 'sun-drenched', 'sun-kissed', 'swirling', 'tarnished', 'textured', 'translucent', 'variegated', 'velvety-black', 'vivid', 'washed-out', 'watery', 'wavy', 'waxen', 'weather-beaten', 'wispy', 'worn'], sound: ['banging', 'blaring', 'buzzing', 'chiming', 'clanging', 'crashing', 'creaking', 'deafening', 'echoing', 'fizzing', 'grinding', 'gurgling', 'hissing', 'howling', 'humming', 'hushed', 'piercing', 'rasping', 'rattling', 'ringing', 'roaring', 'rumbling', 'rustling', 'screeching', 'sizzling', 'slamming', 'snapping', 'splashing', 'thudding', 'thumping', 'tinkling', 'wailing', 'whimpering', 'whirring', 'whispering', 'melodious', 'shrill', 'silent', 'thundering', 'babbling', 'barking', 'bawling', 'baying', 'bellowing', 'bleating', 'booming', 'cackling', 'chattering', 'cheeping', 'chirping', 'clacking', 'clicking', 'clinking', 'clucking', 'cooing', 'coughing', 'croaking', 'crowing', 'crying', 'droning', 'drumming', 'exploding', 'flapping', 'footsteps', 'gasping', 'giggling', 'groaning', 'growling', 'grunting', 'guffawing', 'hiccuping', 'hollering', 'hooting', 'jingling', 'knocking', 'laughing', 'lapping', 'lilting', 'moaning', 'murmuring', 'muttering', 'neighing', 'panting', 'pattering', 'pealing', 'piping', 'popping', 'purring', 'quacking', 'rapping', 'reverberating', 'rippling', 'rustling', 'scratching', 'screaming', 'shouting', 'shrieking', 'sighing', 'sloshing', 'smacking', 'snarling', 'sniffling', 'snoozing', 'snoring', 'snorting', 'sobbing', 'splattering', 'splintering', 'squawking', 'squeaking', 'squealing', 'squishing', 'stammering', 'stomping', 'swishing', 'tapping', 'thwacking', 'ticking', 'tolling', 'tooting', 'trilling', 'tweeting', 'ululating', 'vibrating', 'warbling', 'wheezing', 'whining', 'whistling', 'whooshing', 'yelling', 'yelping', 'yipping', 'yodeling', 'zap', 'zing', 'zip', 'zoom', 'bam', 'bang', 'bash', 'beep', 'biff', 'boing', 'boink', 'bonk', 'bong', 'boom', 'boosh', 'bump', 'burp', 'clank', 'clap', 'clatter', 'clink', 'clomp', 'clunk', 'crack', 'crackle', 'crunch', 'ding', 'dong', 'drip', 'fizz', 'flump', 'glug', 'gong', 'honk', 'jangle', 'jingle', 'kerplunk', 'klang', 'klunk', 'oof', 'ouch', 'plink', 'plop', 'plunk', 'pow', 'puff', 'pitter-patter', 'ring', 'rip', 'slam', 'slap', 'smash', 'snip', 'splash', 'splat', 'squelch', 'squish', 'swat', 'swoosh', 'thud', 'thump', 'thwack', 'tick-tock', 'twang', 'vroom', 'whack', 'wham', 'whomp', 'whump', 'zlonk'], smell: ['acrid', 'aromatic', 'burnt', 'damp', 'earthy', 'fishy', 'floral', 'fragrant', 'fresh', 'meaty', 'mouldy', 'musky', 'musty', 'perfumed', 'pungent', 'putrid', 'rancid', 'reeking', 'rotten', 'salty', 'smoky', 'sour', 'spicy', 'stale', 'sweet', 'tangy', 'woody', 'pine', 'scented', 'odourless', 'acrid', 'antiseptic', 'balmy', 'briny', 'buttery', 'camphoric', 'caramelized', 'caustic', 'charred', 'chemical', 'chlorinated', 'chocolaty', 'cigar', 'cinnamon', 'citrus', 'clean', 'cloying', 'coastal', 'coffee', 'cologne', 'cool', 'creamy', 'crisp', 'curried', 'decaying', 'delectable', 'delicate', 'deodorized', 'dilly', 'disgusting', 'doughey', 'dry', 'dusty', 'eggy', 'ethereal', 'faint', 'fecal', 'fermented', 'feverish', 'fetid', 'fiery', 'floury', 'flowery', 'foul', 'foxy', 'fruity', 'fumes', 'fumy', 'fungal', 'gamy', 'garlicky', 'gaseous', 'gingery', 'greasy', 'grassy', 'heady', 'herbal', 'honeyed', 'hot', 'humid', 'incense', 'industrial', 'intoxicating', 'lactic', 'leathery', 'lemony', 'light', 'lilac', 'loamy', 'malty', 'marine', 'medicinal', 'mellow', 'mild', 'mildewed', 'milky', 'minty', 'moist', 'mossy', 'mouth-watering', 'muddy', 'musky', 'nauseating', 'new-car', 'nutty', 'oaky', 'oceanic', 'oily', 'old-book', 'oniony', 'overpowering', 'ozone', 'peaty', 'peppery', 'petrol', 'piney', 'piquant', 'plank', 'plastic', 'powdery', 'prickly', 'protein', 'pulpy', 'putrid', 'quince', 'rain-soaked', 'rancid', 'rank', 'raw', 'refreshing', 'resinous', 'rich', 'ripe', 'roasted', 'robust', 'rosy', 'rubbery', 'saccharine', 'saline', 'sanitized', 'savoury', 'septic', 'sharp', 'sickly', 'skunky', 'soapy', 'soothing', 'soupy', 'sour-milk', 'soapy', 'soothing', 'soupy', 'sour-milk', 'soya', 'spoiled', 'stagnant', 'steamy', 'sterile', 'stinging', 'strong', 'subtle', 'sugary', 'sulfuric', 'sweaty', 'syrupy', 'tainted', 'tarry', 'terpenic', 'toasted', 'tobacco', 'unscented', 'vanilla', 'vegetal', 'vile', 'vinegary', 'volcanic', 'warm', 'waxy', 'wet-dog', 'yeasty', 'zesty'], touch: ['blistering', 'bristly', 'bubbling', 'chilled', 'clammy', 'coarse', 'cool', 'damp', 'freezing', 'frigid', 'frosty', 'fuzzy', 'gooey', 'gritty', 'hairy', 'icy', 'jagged', 'lukewarm', 'numb', 'prickly', 'pulsing', 'rough', 'scalding', 'silky', 'slimy', 'slippery', 'smooth', 'soaked', 'sodden', 'spiky', 'spongy', 'steaming', 'sticky', 'stinging', 'tepid', 'thorny', 'throbbing', 'velvety', 'warm', 'waxy', 'wet', 'woolly', 'sharp', 'blunt', 'feathery', 'abrasive', 'airy', 'alive', 'barbed', 'bending', 'biting', 'bloated', 'boiling', 'bony', 'bouncy', 'bumpy', 'burning', 'bushy', 'buttery', 'calloused', 'chalky', 'cinder', 'clay-like', 'close', 'cloud-like', 'clumpy', 'cluttered', 'compact', 'congested', 'corduroy', 'cottony', 'crawling', 'crisp', 'cushioned', 'cushy', 'delicate', 'dense', 'doughy', 'downy', 'drenched', 'dry', 'dusty', 'elastic', 'embossed', 'engraved', 'etched', 'even', 'fibrous', 'fiery', 'fine-grained', 'firm', 'flat', 'fleshy', 'flimsy', 'fluffy', 'fluid', 'flushed', 'foamy', 'foggy', 'folded', 'fragile', 'furry', 'gelatinous', 'glassy', 'glutinous', 'gnarled', 'grainy', 'greasy', 'gummy', 'hard', 'hollow', 'hot', 'humid', 'impenetrable', 'indelible', 'inflated', 'in-the-way', 'ironed', 'irritating', 'ivory', 'kinky', 'knitted', 'knobby', 'knotted', 'lacy', 'laminated', 'lathery', 'leathery', 'level', 'light', 'limp', 'lined', 'long-haired', 'loose', 'lumpy', 'malleable', 'matted', 'metallic', 'moist', 'mossy', 'muddy', 'mushy', 'oily', 'open', 'padded', 'papery', 'parched', 'pasted', 'pasty', 'pebbly', 'penetrating', 'plastic', 'pliable', 'plump', 'plush', 'polished', 'puckered', 'puffy', 'pulpy', 'pungent', 'quilted', 'raised', 'raspy', 'raw', 'resilient', 'ribbed', 'rigid', 'rocky', 'rubbery', 'rugged', 'rumpled', 'rusty', 'sandy', 'satin', 'scabrous', 'scaly', 'scorching', 'scraped', 'scratched', 'scruffy', 'sculpted', 'searing', 'shaggy', 'shaky', 'shallow', 'shivering', 'short-haired', 'silken', 'sizzling', 'slick', 'slushy', 'soapy', 'soft', 'soggy', 'solid', 'soothing', 'springy', 'starched', 'stiff', 'stony', 'straw-like', 'stretchy', 'stringy', 'structured', 'stuffy', 'sturdy', 'suede', 'sugary', 'sunken', 'supple', 'taut', 'tender', 'tense', 'thick', 'thin', 'tickling', 'tight', 'tingling', 'tough', 'uneven', 'unstable', 'upholstered', 'vibrating', 'viscous', 'yielding'], taste: ['acidic', 'bitter', 'bland', 'briny', 'chalky', 'cheesy', 'citrusy', 'creamy', 'crisp', 'crumbly', 'fiery', 'flavourful', 'fruity', 'gingery', 'hearty', 'honeyed', 'hot', 'juicy', 'meaty', 'minty', 'overripe', 'peppery', 'pickled', 'rich', 'ripe', 'roasted', 'salty', 'savoury', 'sharp', 'smoky', 'sour', 'spicy', 'stale', 'sugary', 'sweet', 'tangy', 'tart', 'watery', 'zesty', 'delicious', 'disgusting', 'alkaline', 'ambrosial', 'appetizing', 'astringent', 'buttery', 'caramelized', 'caustic', 'charred', 'chocolaty', 'cinnamony', 'cloying', 'coarse', 'cool', 'curried', 'dank', 'doughy', 'dry', 'dulcet', 'eggy', 'fermented', 'foul', 'fresh', 'full-bodied', 'gamy', 'garlicky', 'gelatinous', 'gingery', 'glutinous', 'grainy', 'greasy', 'gritty', 'harsh', 'heady', 'herbal', 'infused', 'insipid', 'intense', 'leathery', 'lemony', 'light', 'mellow', 'metallic', 'mild', 'milky', 'moist', 'molten', 'mouth-watering', 'nectarous', 'nutty', 'oily', 'palatable', 'piquant', 'plastic', 'powdery', 'pulpy', 'pungent', 'raw', 'refreshing', 'resinous', 'robust', 'rubbery', 'saccharine', 'saline', 'scrumptious', 'seasoned', 'sharp', 'sickly', 'soapy', 'soothing', 'sour-milk', 'strong', 'succulent', 'syrupy', 'tainted', 'tasteless', 'thick', 'thin', 'toasted', 'tough', 'unappetizing', 'unflavored', 'unripe', 'vanilla', 'velvety', 'vinegary', 'weak', 'yeasty', 'yummy'] };
+const ALL_SENSORY_WORDS = Object.values(SENSORY_WORDS).flat();
+const ONOMATOPOEIA_WORDS = ['zap', 'zing', 'zip', 'zoom', 'bam', 'bang', 'bash', 'beep', 'biff', 'boing', 'boink', 'bonk', 'bong', 'boom', 'boosh', 'bump', 'burp', 'clank', 'clap', 'clatter', 'clink', 'clomp', 'clunk', 'crack', 'crackle', 'crunch', 'ding', 'dong', 'drip', 'fizz', 'flump', 'glug', 'gong', 'honk', 'jangle', 'jingle', 'kerplunk', 'klang', 'klunk', 'oof', 'ouch', 'plink', 'plop', 'plunk', 'pow', 'puff', 'pitter-patter', 'ring', 'rip', 'slam', 'slap', 'smash', 'snip', 'splash', 'splat', 'squelch', 'squish', 'swat', 'swoosh', 'thud', 'thump', 'thwack', 'tick-tock', 'twang', 'vroom', 'whack', 'wham', 'whomp', 'whump', 'zlonk'];
+const CONJUNCTIONS = ['for', 'and', 'nor', 'but', 'or', 'yet', 'so', 'after', 'although', 'as', 'as if', 'as long as', 'as much as', 'as soon as', 'as though', 'because', 'before', 'by the time', 'even if', 'even though', 'if', 'in case', 'in order that', 'lest', 'now that', 'once', 'only if', 'provided that', 'since', 'so that', 'than', 'that', 'though', 'till', 'unless', 'until', 'when', 'whenever', 'where', 'whereas', 'wherever', 'whether', 'while', 'both...and', 'either...or', 'neither...nor', 'not only...but also', 'whether...or'];
+const TRANSITIONAL_WORDS = ['after', 'afterward', 'all of a sudden', 'as soon as', 'at first', 'at last', 'at that moment', 'before', 'by the time', 'concurrently', 'earlier', 'eventually', 'finally', 'first', 'following', 'from that point on', 'immediately', 'in the beginning', 'in the meantime', 'instantly', 'just then', 'later', 'later on', 'meanwhile', 'next', 'not long after', 'now', 'once', 'presently', 'second', 'shortly after', 'simultaneously', 'since', 'soon', 'suddenly', 'then', 'third', 'until', 'when', 'while', 'above all', 'additionally', 'also', 'and', 'another', 'as well', 'besides', 'especially', 'furthermore', 'in addition', 'in fact', 'indeed', 'more importantly', 'moreover', 'not only... but also', 'of course', 'specifically', 'then again', 'too', 'truly', 'although', 'but', 'despite', 'even so', 'even though', 'however', 'in contrast', 'instead', 'nevertheless', 'nonetheless', 'on the contrary', 'on the other hand', 'otherwise', 'still', 'though', 'unlike', 'whereas', 'yet', 'accordingly', 'as a result', 'because', 'consequently', 'due to', 'for this reason', 'hence', 'so', 'therefore', 'thus', 'above', 'across', 'around', 'behind', 'below', 'beside', 'beyond', 'here', 'nearby', 'opposite', 'over', 'under', 'for example', 'for instance', 'in other words', 'that is', 'to illustrate', 'in conclusion', 'in summary', 'to sum up'];
+const SENTENCE_ROOTS = [
+    { root: "The cat sat.", verb: "sat" }, { root: "The dog barked.", verb: "barked" }, { root: "The bird flew.", verb: "flew" }, { root: "The sun shone.", verb: "shone" }, { root: "The car moved.", verb: "moved" }, { root: "The girl ran.", verb: "ran" }, { root: "The boy jumped.", verb: "jumped" }, { root: "The river flowed.", verb: "flowed" }, { root: "The tree stood.", verb: "stood" }, { root: "The baby cried.", verb: "cried" }, { root: "The door opened.", verb: "opened" }, { root: "The bell rang.", verb: "rang" }, { root: "The horse galloped.", verb: "galloped" }, { root: "The man walked.", verb: "walked" }, { root: "The flower grew.", verb: "grew" }, { root: "The phone rang.", verb: "rang" }, { root: "The ball bounced.", verb: "bounced" }, { root: "The star twinkled.", verb: "twinkled" }, { root: "The train arrived.", verb: "arrived" }, { root: "The child laughed.", verb: "laughed" }, { root: "The wind blew.", verb: "blew" }, { root: "The leaves fell.", verb: "fell" }, { root: "The moon glowed.", verb: "glowed" }, { root: "The water splashed.", verb: "splashed" }, { root: "The fire crackled.", verb: "crackled" }, { root: "The light flickered.", verb: "flickered" }, { root: "The engine roared.", verb: "roared" }, { root: "The ice melted.", verb: "melted" }, { root: "The machine hummed.", verb: "hummed" }, { root: "The boat sailed.", verb: "sailed" }, { root: "The clock ticked.", verb: "ticked" }, { root: "The snake slithered.", verb: "slithered" }, { root: "The ground shook.", verb: "shook" }, { root: "The music played.", verb: "played" }, { root: "The crowd cheered.", verb: "cheered" }, { root: "The child slept.", verb: "slept" }, { root: "The giant stomped.", verb: "stomped" }, { root: "The rain dropped.", verb: "dropped" }, { root: "The thunder boomed.", verb: "boomed" }, { root: "The rocket launched.", verb: "launched" }, { root: "The glass broke.", verb: "broke" }, { root: "The secret was revealed.", verb: "revealed" }, { root: "The ship sank.", verb: "sank" }, { root: "The city slept.", verb: "slept" }, { root: "The volcano erupted.", verb: "erupted" }, { root: "The hero appeared.", verb: "appeared" }, { root: "The shadow moved.", verb: "moved" }, { root: "The path twisted.", verb: "twisted" }, { root: "The room was silent.", verb: "was" }, { root: "The kettle whistled.", verb: "whistled" }, { root: "The audience clapped.", verb: "clapped" }, { root: "The world changed.", verb: "changed" }, { root: "The plan worked.", verb: "worked" }, { root: "The bread baked.", verb: "baked" }, { root: "The seed sprouted.", verb: "sprouted" }, { root: "The voice whispered.", verb: "whispered" }, { root: "The computer crashed.", verb: "crashed" }, { root: "The mystery deepened.", verb: "deepened" }, { root: "The flag waved.", verb: "waved" }, { root: "The tide turned.", verb: "turned" }, { root: "The answer emerged.", verb: "emerged" }
+];
+const KETE_WORDS = {
+    'Describing Words': ['ancient', 'big', 'brave', 'bright', 'calm', 'colourful', 'creepy', 'curious', 'dangerous', 'dark', 'delicious', 'enormous', 'fluffy', 'friendly', 'gentle', 'giant', 'grumpy', 'huge', 'lonely', 'loud', 'massive', 'mysterious', 'quiet', 'shaggy', 'small', 'sparkling', 'strange', 'sunny', 'sweet', 'tiny', 'weary'],
+    'Action Words': ['ambled', 'crawled', 'crept', 'cried', 'danced', 'darted', 'dashed', 'drifted', 'exploded', 'floated', 'flew', 'glided', 'hopped', 'hurried', 'leaped', 'raced', 'ran', 'roared', 'rushed', 'scampered', 'screamed', 'shouted', 'skipped', 'soared', 'sprinted', 'stormed', 'strolled', 'wandered', 'whispered', 'yelled', 'zoomed'],
+    'How/When/Where Phrases': ['across the field', 'after school', 'all of a sudden', 'at the park', 'behind the door', 'down the street', 'early in the morning', 'in the afternoon', 'inside the box', 'late at night', 'like a rocket', 'near the river', 'on the weekend', 'over the fence', 'quickly', 'quietly', 'slowly', 'suddenly', 'through the forest', 'under the bed', 'with excitement'],
+    'Sensory Details': ['a delicious smell', 'a loud crash', 'a sharp sting', 'a sweet taste', 'bright colours', 'cold wind', 'crunchy leaves', 'fluffy clouds', 'freezing water', 'hot sun', 'rough bark', 'silky smooth', 'the sound of waves', 'warm sand', 'with a high-pitched yip']
+};
+const BANNED_WORDS = ['ASS', 'BUT', 'DIK', 'FAG', 'FUK', 'GAY', 'SEX', 'TIT', 'CNT', 'POO', 'BUM', 'WEE']; // Simple profanity filter
+
+// Gemini API Service
+const callApi = async (task, payload) => {
+    const response = await fetch('/.netlify/functions/gemini', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ task, payload }),
+    });
+    // The response from the server function is always JSON, even for errors.
+    const body = await response.json();
+    if (!response.ok) {
+        throw new Error(body.error || `API call failed with status ${response.status}`);
+    }
+    // For updateLeaderboard, the body might contain a custom error message for duplicates.
+    if (task === 'updateLeaderboard' && !body.success) {
+        throw new Error(body.message || "Failed to update leaderboard.");
+    }
+    return body;
+};
+
+const getSentenceFeedback = async (rootSentence, userSentence) => {
+    try {
+        return await callApi('getSentenceFeedback', { rootSentence, userSentence });
+    } catch (error) {
+        console.error("Error getting sentence feedback:", error);
+        return {
+            coherenceScore: 1.0,
+            vividnessScore: 0.5,
+            figurativeLanguageScore: 0.0,
+            complexityScore: 0.5,
+            feedback: "Great job on your sentence!"
+        };
+    }
+};
+
+// Firebase Service
+const firebaseConfig = {
+  apiKey: "AIzaSyAVUseBH0axB3fVUOg7rgALJBvq4N4N-1M",
+  authDomain: "inkxp-569a6.firebaseapp.com",
+  projectId: "inkxp-569a6",
+  storageBucket: "inkxp-569a6.firebasestorage.app",
+  messagingSenderId: "578474339685",
+  appId: "1:578474339685:web:9f7b26c637beea31c0458c"
+};
+const app = firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore(app);
+const auth = firebase.auth(app);
+const googleProvider = new firebase.auth.GoogleAuthProvider();
+
+const onAuthChange = (callback) => auth.onAuthStateChanged(callback);
+const signInWithGoogle = () => auth.signInWithPopup(googleProvider);
+const signOutUser = () => auth.signOut();
+
+const generateGameCode = () => Math.random().toString(36).substring(2, 8).toUpperCase();
+
+const createGame = async (hostId, prompt, criteria, duration, teacherId) => {
+    const gameCode = generateGameCode();
+    const gameRef = db.collection('games').doc(gameCode);
+    const gameData = {
+        hostId, prompt, criteria, duration, teacherId,
+        status: 'waiting',
+        players: {},
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+    await gameRef.set(gameData);
+    return gameCode;
+};
+
+const joinGame = async (gameCode, playerId, playerInfo) => {
+    const gameRef = db.collection('games').doc(gameCode);
+    const gameSnap = await gameRef.get();
+    if (!gameSnap.exists) throw new Error("Game not found!");
+    const gameData = gameSnap.data();
+    if (gameData.status === 'finished') throw new Error("This game has already finished.");
+    
+    const playerData = {
+        ...playerInfo,
+        story: { title: '', text: '' },
+        analysis: null
+    };
+    
+    await gameRef.update({ [`players.${playerId}`]: playerData });
+    return gameData;
+};
+
+const getGameStream = (gameCode, callback) => db.collection('games').doc(gameCode).onSnapshot((doc) => {
+    if (doc.exists) {
+        callback({ id: doc.id, ...doc.data() });
+    } else {
+        callback(null);
+    }
+});
+
+const getGamesForTeacher = (teacherId, callback) => {
+  const q = db.collection("games")
+      .where("teacherId", "==", teacherId)
+      .orderBy("createdAt", "desc");
+  return q.onSnapshot((querySnapshot) => {
+      const games = [];
+      querySnapshot.forEach((doc) => {
+          games.push({ id: doc.id, ...doc.data() });
+      });
+      callback(games);
+  });
+};
+
+const getLeaderboardStream = (callback) => {
+    const leaderboardRef = db.collection('leaderboard').doc('sentenceLab');
+    return leaderboardRef.onSnapshot(doc => {
+        if (doc.exists) {
+            callback(doc.data().scores || []);
+        } else {
+            callback([]);
+        }
+    });
+};
+
+const updateLeaderboard = async (newEntry) => {
+    // This function now calls the secure backend Netlify function.
+    return callApi('updateLeaderboard', newEntry);
+};
+
+
+const startGame = async (gameCode) => await db.collection('games').doc(gameCode).update({
+  status: 'in-progress',
+  startTime: firebase.firestore.FieldValue.serverTimestamp()
+});
+
+const submitResult = async (gameCode, playerId, story, analysis) => {
+  const gameRef = db.collection('games').doc(gameCode);
+  await gameRef.update({
+      [`players.${playerId}.story`]: story,
+      [`players.${playerId}.analysis`]: analysis,
+  });
+};
+
+const finishGame = async (gameCode) => {
+  await db.collection('games').doc(gameCode).update({ status: 'finished' });
+};
+
+const removePlayerFromGame = async (gameCode, playerIdToRemove) => {
+    const gameRef = db.collection('games').doc(gameCode);
+    await gameRef.update({
+        [`players.${playerIdToRemove}`]: firebase.firestore.FieldValue.delete()
+    });
+};
+
+// Scoring Service
+const countWords = (text, words) => {
+    if (!text) return 0;
+    const lowerText = text.toLowerCase();
+    let count = 0;
+    for (const word of words) {
+        const regex = new RegExp(`\\b${word.toLowerCase().replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}\\b`, 'g');
+        const matches = lowerText.match(regex);
+        if (matches) {
+            count += matches.length;
+        }
+    }
+    return count;
+};
+
+const ALL_SCORING_CRITERIA = [
+    {
+        id: 'dialogue', name: 'Dialogue', type: 'always',
+        description: 'Using dialogue with correct punctuation (e.g., "Hello," she said.)', points: 1500,
+        check: (text) => {
+             if (!text) return 0;
+            const dialoguePatterns = [ /"[^"]*," \w+ (said|asked|yelled|whispered|exclaimed|snapped|replied|muttered)\./i, /\w+ (said|asked|yelled|whispered|exclaimed|snapped|replied|muttered), "[^"]*[\.?!]"/i, /"[^"]*," \w+ (said|asked|yelled|whispered|exclaimed|snapped|replied|muttered), "[^"]*[\.?!]"/i, /"[^"]+[\.?!]"/ ];
+            return dialoguePatterns.some(pattern => pattern.test(text)) ? 1 : 0;
+        }
+    },
+    {
+        id: 'paragraphs', name: 'Paragraphs', type: 'always',
+        description: 'Leaving a blank line to start a new paragraph', points: 1500,
+        check: (text) => (text && /(?:\r\n|\n){2,}/.test(text.trim())) ? 1 : 0
+    },
+    {
+        id: 'sentence', name: 'Punctuated Sentences', type: 'always',
+        description: 'For each correctly punctuated sentence (. ! ?) with a capital letter', points: 100,
+        check: (text) => {
+            if (!text) return 0;
+            const potentialSentences = text.split(/(?<=[.!?])\s+/);
+            return potentialSentences.filter(s => {
+                const trimmed = s.trim();
+                return trimmed && /^[A-Z]/.test(trimmed) && /[.!?]$/.test(trimmed);
+            }).length;
+        }
+    },
+    {
+        id: 'complexSentence', name: 'Complex Sentences', type: 'random',
+        description: 'For each complex sentence using a joining word', points: 100,
+        check: (text) => countWords(text, CONJUNCTIONS)
+    },
+    {
+        id: 'simile', name: 'Similes', type: 'random',
+        description: 'For each simile used (e.g., "like a lion" or "as fast as a cheetah")', points: 100,
+        check: (text) => {
+             if (!text) return 0;
+            const likeCount = (text.match(/\b\w+\s+like\s+\w+\b/gi) || []).length;
+            const asAsCount = (text.match(/\bas\s+\w+\s+as\s+(a|an)\s+\w+\b/gi) || []).length;
+            return likeCount + asAsCount;
+        }
+    },
+    {
+        id: 'transitional', name: 'Transitional Words', type: 'random',
+        description: 'For each transitional word or phrase used to link ideas', points: 100,
+        check: (text) => countWords(text, TRANSITIONAL_WORDS)
+    },
+    {
+        id: 'sensory', name: 'Sensory Detail', type: 'random',
+        description: 'For each sensory detail used (sight, sound, smell, touch, taste)', points: 100,
+        check: (text) => countWords(text, ALL_SENSORY_WORDS)
+    },
+    {
+        id: 'adjectives', name: 'Adjectives', type: 'random',
+        description: `For each adjective used`, points: 100,
+        check: (text) => countWords(text, ADJECTIVES)
+    },
+    {
+        id: 'languageFeatures', name: 'Language Features', type: 'random',
+        description: 'For each use of alliteration or onomatopoeia', points: 100,
+        check: (text) => {
+            if (!text) return 0;
+            const onomatopoeiaCount = countWords(text, ONOMATOPOEIA_WORDS);
+            const textWithoutPunctuation = text.toLowerCase().replace(/[.,!?;:"]/g, '');
+            const words = textWithoutPunctuation.split(/\s+/).filter(w => w.length > 0);
+            let alliterationCount = 0;
+            const stopWords = new Set(['a', 'an', 'the', 'in', 'on', 'at', 'is', 'it', 'and', 'or', 'but']);
+            for (let i = 0; i < words.length - 1; i++) {
+                const word1 = words[i]; const word2 = words[i+1];
+                if (!stopWords.has(word1) && !stopWords.has(word2) && word1.length > 1 && word2.length > 1 && word1.charAt(0) === word2.charAt(0)) {
+                    alliterationCount++; i++; 
+                }
+            }
+            return onomatopoeiaCount + alliterationCount;
+        }
+    }
+];
+
+const analyzeScore = (text, criteria) => {
+    let totalScore = 0;
+    const breakdown = criteria.map(criterion => {
+        const count = criterion.check(text);
+        const score = count * criterion.points;
+        totalScore += score;
+        return { id: criterion.id, name: criterion.name, count, score };
+    });
+    if (breakdown.length === 0) return { totalScore: 0, breakdown: [], highestScoring: { name: 'N/A', score: 0}, lowestScoring: { name: 'N/A', score: 0}};
+    const sortedByScore = [...breakdown].sort((a, b) => b.score - a.score);
+    return { totalScore, breakdown, highestScoring: sortedByScore[0], lowestScoring: sortedByScore[sortedByScore.length - 1] };
+};
+
+// PDF Utility
+const downloadPDF = (nickname, story, prompt) => {
+    // Fix: Cast window to `any` to access jspdf property without a TypeScript error.
+    const { jsPDF } = (window as any).jspdf;
+    const doc = new jsPDF();
+    const title = story?.title || 'Untitled Story';
+    const text = story?.text || 'No text submitted.';
+
+    doc.setFontSize(22); doc.setFont('helvetica', 'bold'); doc.text(title, 105, 20, { align: 'center' });
+    doc.setFontSize(14); doc.setFont('helvetica', 'normal'); doc.text(`By: ${nickname}`, 105, 30, { align: 'center' });
+    doc.setFontSize(10); doc.setTextColor(150); doc.text(`Prompt: ${prompt.text}`, 10, 45, { maxWidth: 190 });
+    doc.setLineWidth(0.5); doc.line(10, 55, 200, 55);
+    doc.setFontSize(12); doc.setTextColor(0); doc.text(doc.splitTextToSize(text, 190), 10, 65);
+    doc.save(`InkXP_Story_${nickname.replace(/\s/g, '_')}.pdf`);
+};
+
+// React Components
+const LoadingSpinner = () => <div className="w-8 h-8 border-4 border-sky-200 border-t-sky-600 rounded-full animate-spin"></div>;
+
+// Fix: Add explicit types for Timer props and make onTick optional.
+const Timer = ({ startTime, duration, onTimeUp, onTick }: { startTime: any, duration: any, onTimeUp: () => void, onTick?: (remaining: number) => void }) => {
+    const [secondsLeft, setSecondsLeft] = useState(Number(duration));
+    const onTimeUpRef = useRef(onTimeUp); onTimeUpRef.current = onTimeUp;
+    const onTickRef = useRef(onTick); onTickRef.current = onTick;
+
+    useEffect(() => {
+        if (!startTime) { setSecondsLeft(Number(duration)); return; }
+        const intervalId = setInterval(() => {
+            const gameStartTime = (startTime.toDate ? startTime.toDate() : startTime).getTime();
+            const elapsed = Math.floor((Date.now() - gameStartTime) / 1000);
+            const remaining = Number(duration) - elapsed;
+            if (remaining <= 0) { setSecondsLeft(0); onTimeUpRef.current(); clearInterval(intervalId); } 
+            else { setSecondsLeft(remaining); if (onTickRef.current) onTickRef.current(remaining); }
+        }, 1000);
+        return () => clearInterval(intervalId);
+    }, [startTime, duration]);
+
+    const minutes = Math.floor(secondsLeft / 60);
+    const remainingSeconds = secondsLeft % 60;
+    return <div className="text-5xl font-bold tracking-tighter"><span>{minutes.toString().padStart(2, '0')}</span><span className="animate-pulse">:</span><span>{remainingSeconds.toString().padStart(2, '0')}</span></div>;
+};
+
+// Fix: Add explicit prop types to Button to resolve numerous TypeScript errors.
+const Button = ({ children, className = '', variant = 'primary', size = 'medium', ...props }: {
+    children: React.ReactNode;
+    className?: string;
+    variant?: 'primary' | 'secondary' | 'danger';
+    size?: 'small' | 'medium' | 'large';
+    [x: string]: any;
+}) => {
+    const baseStyles = 'font-bold rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition-transform duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed transform active:scale-95';
+    const variantStyles = { 
+      primary: 'bg-gradient-to-r from-sky-500 to-sky-600 text-white hover:from-sky-600 hover:to-sky-700 focus:ring-sky-500 disabled:hover:from-sky-500 disabled:hover:to-sky-600', 
+      secondary: 'bg-slate-200 text-slate-800 hover:bg-slate-300 focus:ring-slate-400 disabled:hover:bg-slate-200', 
+      danger: 'bg-red-500 text-white hover:bg-red-600 focus:ring-red-400' 
+    };
+    const sizeStyles = { small: 'py-1.5 px-3 text-sm', medium: 'py-2 px-5 text-base', large: 'py-3 px-8 text-lg' };
+    return <button className={`${baseStyles} ${variantStyles[variant]} ${sizeStyles[size]} ${className}`} {...props}>{children}</button>;
+};
+
+const NicknamePrompt = ({ onNicknameSubmit }) => {
+    const [nickname, setNickname] = useState('');
+    const handleSubmit = (e) => { e.preventDefault(); if (nickname.trim()) { onNicknameSubmit(nickname.trim()); } };
+    return (
+        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="bg-white p-8 rounded-xl shadow-2xl w-full max-w-sm text-center">
+                <h2 className="text-2xl font-bold text-slate-800 mb-4">Enter Player Name(s)</h2>
+                <p className="text-slate-600 mb-6">If playing together on this device, separate names with a comma (e.g., Rachel F, Sam C).</p>
+                <form onSubmit={handleSubmit}>
+                    <input type="text" value={nickname} onChange={(e) => setNickname(e.target.value)} className="w-full p-3 border border-slate-300 rounded-lg shadow-inner focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-shadow duration-200 text-lg text-center" placeholder="e.g. Rachel F, Sam C" maxLength={50} required />
+                    <Button type="submit" size="large" className="mt-6 w-full">Let's Go!</Button>
+                </form>
+            </div>
+        </div>
+    );
+};
+
+// Fix: Add explicit types for Tooltip props.
+const Tooltip = ({ children, text }: { children: React.ReactNode; text: string }) => (
+    <div className="relative flex items-center group">
+        {children}
+        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max max-w-xs p-2 text-sm text-white bg-slate-800 rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 pointer-events-none">
+            {text}
+            <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-x-4 border-x-transparent border-t-4 border-t-slate-800"></div>
+        </div>
+    </div>
+);
+
+const TimeAlert = ({ message }) => {
+    if (!message) return null;
+    return (
+        <div className="fixed top-5 left-1/2 -translate-x-1/2 bg-amber-400 text-amber-900 font-bold px-6 py-3 rounded-full shadow-lg animate-bounce z-50">
+            {message}
+        </div>
+    );
+};
+
+const ResultsScreen = ({ gameData, playerId, onPlayAgain, onGoHome, onRetryPrompt, soloHighScore, isHost, onGoToDashboard, finalCheckedWords }) => {
+    const [viewingPlayerId, setViewingPlayerId] = useState(null);
+
+    // Fix: Cast `data` to `any` to resolve spread and property access errors on unknown type.
+    const sortedPlayers = useMemo(() => Object.entries(gameData.players)
+        .map(([id, data]) => ({ id, ...(data as any), totalScore: (data as any).analysis?.totalScore || 0 }))
+        .sort((a, b) => b.totalScore - a.totalScore), [gameData.players]);
+
+    const viewingPlayer = viewingPlayerId ? gameData.players[viewingPlayerId] : null;
+
+    if (isHost) {
+        return (
+            <div className="w-full max-w-7xl mx-auto">
+                <h2 className="text-3xl font-bold text-emerald-600 mb-2 text-center">Game Over!</h2>
+                <p className="text-slate-600 mb-6 text-center">Here are the final results for your students.</p>
+                
+                 <div className="bg-sky-50 p-4 rounded-lg border border-sky-200 mb-6 text-center">
+                    <p className="font-semibold text-sky-700">Prompt:</p>
+                    <p className="text-slate-800">{gameData.prompt.text}</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div className="md:col-span-1 bg-gradient-to-br from-white to-sky-100 p-6 rounded-2xl shadow-2xl border border-white/40">
+                         <h3 className="text-lg font-bold text-slate-500 uppercase tracking-wider mb-3">Final Leaderboard</h3>
+                           <ul className="space-y-2">
+                            {sortedPlayers.map((player, index) => (
+                               <li key={player.id}>
+                                <button onClick={() => setViewingPlayerId(player.id)} className={`w-full text-left p-3 rounded-md flex justify-between items-center transition-colors ${viewingPlayerId === player.id ? 'bg-sky-200' : 'bg-slate-50 hover:bg-sky-100'}`}>
+                                 <span className="font-semibold text-slate-700">{index + 1}. {player.nickname}</span>
+                                 <span className="font-bold text-sky-600">{player.totalScore.toLocaleString()}</span>
+                               </button>
+                               </li>
+                            ))}
+                           </ul>
+                    </div>
+                     <div className="md:col-span-2 bg-gradient-to-br from-white to-sky-100 p-6 rounded-2xl shadow-2xl border border-white/40">
+                        {viewingPlayer ? (
+                             <div>
+                                <h3 className="text-xl font-bold mb-2 text-slate-800">{viewingPlayer.story?.title || "Untitled Story"}</h3>
+                                <p className="text-sm font-semibold text-emerald-600 mb-4">By: {viewingPlayer.nickname} - Score: {viewingPlayer.analysis?.totalScore?.toLocaleString() || 'N/A'}</p>
+                                <div className="prose max-w-none text-slate-700 whitespace-pre-wrap bg-slate-100 p-4 rounded-md mb-4 max-h-60 overflow-y-auto">{viewingPlayer.story?.text || "No submission."}</div>
+                                {viewingPlayer.analysis && (
+                                     <div>
+                                      <h4 className="text-lg font-bold mb-2 text-slate-800">Score Breakdown</h4>
+                                       <ul className="space-y-1 text-sm">
+                                          {viewingPlayer.analysis.breakdown.map((item) => (
+                                            <li key={item.id} className="flex justify-between items-center p-1.5 bg-slate-50 rounded-md">
+                                                <span className="text-slate-700">{item.name} ({item.count})</span>
+                                                <span className="font-semibold text-emerald-600">+{item.score.toLocaleString()}</span>
+                                            </li>
+                                          ))}
+                                      </ul>
+                                  </div>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="flex items-center justify-center h-full">
+                                <p className="text-slate-500 text-lg">Select a player to view their submission.</p>
+                            </div>
+                        )}
+                     </div>
+                </div>
+
+                <div className="flex items-center justify-center gap-4 mt-8">
+                    <Button onClick={onGoToDashboard} size="large">Back to Dashboard</Button>
+                    <Button onClick={onGoHome} variant="secondary" size="large">Home</Button>
+                </div>
+            </div>
+        );
+    }
+  
+  // Player View
+  const myPlayer = gameData.players[playerId];
+  const myAnalysis = myPlayer?.analysis;
+  const myFinalStory = myPlayer?.story;
+  const isSolo = onRetryPrompt !== undefined;
+
+  return (
+      <div className="flex flex-col items-center">
+          <h2 className="text-3xl font-bold text-emerald-600 mb-2">Time's Up!</h2>
+          <p className="text-slate-600 mb-6">Fantastic effort! Here are the final scores.</p>
+          <div className="w-full grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-2 bg-gradient-to-br from-white to-sky-100 p-6 rounded-2xl shadow-2xl border border-white/40">
+                  <h3 className="text-xl font-bold mb-2 text-slate-800">{myFinalStory?.title || "Untitled Story"}</h3>
+                  <p className="text-sm font-semibold text-sky-600 mb-4">{gameData.prompt.text}</p>
+                  <div className="prose max-w-none text-slate-700 whitespace-pre-wrap bg-slate-100 p-4 rounded-md">{myFinalStory?.text || "You didn't write anything this time. Try again!"}</div>
+              </div>
+              <div className="lg:col-span-1 space-y-6">
+                  {isSolo ? (
+                     <div className="bg-gradient-to-br from-white to-sky-100 p-6 rounded-2xl shadow-2xl border border-white/40 text-center">
+                         <h3 className="text-lg font-bold text-slate-500 uppercase tracking-wider mb-3">High Score</h3>
+                         <p className="text-4xl font-bold text-amber-500">{soloHighScore.toLocaleString()}</p>
+                     </div>
+                  ) : (
+                      <div className="bg-gradient-to-br from-white to-sky-100 p-6 rounded-2xl shadow-2xl border border-white/40">
+                           <h3 className="text-lg font-bold text-slate-500 uppercase tracking-wider mb-3">Leaderboard</h3>
+                           <ol className="space-y-2">
+                            {sortedPlayers.map((player, index) => (
+                               <li key={player.id} className={`p-2 rounded-md flex justify-between items-center ${player.id === playerId ? 'bg-sky-100' : 'bg-slate-50'}`}>
+                                 <span className="font-semibold text-slate-700">{index + 1}. {player.nickname}</span>
+                                 <span className="font-bold text-sky-600">{player.totalScore.toLocaleString()}</span>
+                               </li>
+                            ))}
+                           </ol>
+                      </div>
+                  )}
+                  {myAnalysis && (
+                      <div className="bg-gradient-to-br from-white to-sky-100 p-6 rounded-2xl shadow-2xl border border-white/40">
+                          <h3 className="text-xl font-bold mb-4 text-slate-800">Your Score Breakdown</h3>
+                           <ul className="space-y-2">
+                              {myAnalysis.breakdown.map((item) => {
+                                  const criterion = ALL_SCORING_CRITERIA.find(c => c.id === item.id);
+                                  return (
+                                    <li key={item.id} className="flex justify-between items-center text-sm p-2 bg-slate-50 rounded-md">
+                                        <Tooltip text={criterion?.description || 'No description available.'}>
+                                            <div className="flex items-center gap-1.5 cursor-help">
+                                                <span className="text-slate-700">{item.name} ({item.count})</span>
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-slate-400"><path strokeLinecap="round" strokeLinejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" /></svg>
+                                            </div>
+                                        </Tooltip>
+                                        <span className="font-semibold text-emerald-600">+{item.score.toLocaleString()}</span>
+                                    </li>
+                                  );
+                              })}
+                               <li className="flex justify-between items-center text-base font-bold p-2 bg-sky-100 rounded-md mt-4">
+                                      <span className="text-sky-800">Total Score</span>
+                                      <span className="text-sky-800">{myAnalysis.totalScore.toLocaleString()}</span>
+                                  </li>
+                          </ul>
+                      </div>
+                  )}
+                  {isSolo && finalCheckedWords && finalCheckedWords.length > 0 && (
+                      <div className="bg-gradient-to-br from-white to-sky-100 p-6 rounded-2xl shadow-2xl border border-white/40">
+                          <h3 className="text-xl font-bold mb-4 text-slate-800">Words to Practice</h3>
+                          <ul className="space-y-2">
+                              {finalCheckedWords.map((word, index) => (
+                                  <li key={index} className="p-2 bg-slate-100 rounded-md text-slate-700 font-semibold text-center">
+                                      {word}
+                                  </li>
+                              ))}
+                          </ul>
+                      </div>
+                  )}
+              </div>
+          </div>
+          <div className="flex items-center gap-4 mt-8">
+              {isSolo ? (
+                <>
+                    <Button onClick={onGoHome} variant="secondary" size="large">Back to Home</Button>
+                    <Button onClick={onRetryPrompt} variant="secondary" size="large">Try Same Prompt</Button>
+                    <Button onClick={onPlayAgain} size="large">New Prompt</Button>
+                </>
+              ) : (
+                <>
+                    <Button onClick={onPlayAgain} size="large">Play Again</Button>
+                    <Button onClick={onGoHome} variant="secondary" size="large">Back to Home</Button>
+                </>
+              )}
+          </div>
+      </div>
+  );
+};
+
+const WordWizard = ({ onWordChecked }) => {
+    const [userInput, setUserInput] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState('');
+    const [suggestions, setSuggestions] = useState([]);
+
+    const handleCheckSpelling = async (e) => {
+        e.preventDefault();
+        if (!userInput.trim()) return;
+
+        setIsLoading(true);
+        setError('');
+        setSuggestions([]);
+
+        try {
+            const result = await callApi('checkSpelling', { userInput });
+            if (result.suggestions && result.suggestions.length > 0) {
+                setSuggestions(result.suggestions);
+                onWordChecked(result.suggestions[0].word); 
+            } else {
+                setError("Sorry, I couldn't figure that one out. Try another word!");
+            }
+        } catch (err) {
+            setError("Something went wrong. Please try again in a moment.");
+            console.error("Word Wizard error:", err);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    return (
+        <div className="bg-gradient-to-br from-white to-sky-100 p-6 rounded-2xl shadow-2xl border border-white/40">
+            <div className="flex items-center gap-3 mb-4">
+                 <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-violet-500" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M11.02,2.126a.5.5,0,0,0-.96,0l-1.8,4.8a.5.5,0,0,1-.46-.34H2.4a.5.5,0,0,0-.34.886l3.9,3.4a.5.5,0,0,1,.18.54l-1.5,4.9a.5.5,0,0,0,.76.588L10,14.636l4.02,2.9a.5.5,0,0,0,.76-.588l-1.5-4.9a.5.5,0,0,1,.18-.54l3.9-3.4a.5.5,0,0,0-.34-.886H11.28a.5.5,0,0,1-.46-.34Z" />
+                </svg>
+                <h3 className="text-xl font-bold text-slate-800">Word Wizard</h3>
+            </div>
+            <p className="text-sm text-slate-600 mb-3">Sound it out! Type how you think it's spelled.</p>
+            <form onSubmit={handleCheckSpelling}>
+                <input 
+                    type="text" 
+                    value={userInput} 
+                    onChange={(e) => setUserInput(e.target.value)} 
+                    className="w-full p-2 border border-slate-300 rounded-lg shadow-inner focus:ring-2 focus:ring-sky-500 mb-3"
+                    placeholder="e.g. byutiful"
+                    disabled={isLoading}
+                />
+                <Button type="submit" size="medium" className="w-full" disabled={isLoading}>
+                    {isLoading ? <LoadingSpinner /> : 'Check Spelling'}
+                </Button>
+            </form>
+            <div className="mt-4 min-h-[60px]">
+                {error && <p className="text-red-500 text-sm">{error}</p>}
+                {suggestions.length > 0 && (
+                    <div>
+                        <p className="font-semibold text-slate-700">Did you mean...</p>
+                        <ul className="mt-1 space-y-2">
+                            {suggestions.slice(0, 2).map((s, index) => (
+                                <li key={index} className="text-sm text-slate-600 bg-sky-50 p-2 rounded-md">
+                                    <strong className="text-sky-700">{s.word}</strong>: {s.definition}
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
+
+const GameScreen = ({ gameData, playerId, onTimeUp, onGoHome }) => {
+    const fullCriteria = useMemo(() => {
+        if (!gameData || !gameData.criteria) return [];
+        return gameData.criteria.map(id => ALL_SCORING_CRITERIA.find(c => c.id === id)).filter(Boolean);
+    }, [gameData]);
+
+    const [title, setTitle] = useState('');
+    const [text, setText] = useState('');
+    const [planningText, setPlanningText] = useState('');
+    const [scoreAnalysis, setScoreAnalysis] = useState(() => analyzeScore('', fullCriteria));
+    const [isScoreAnimating, setIsScoreAnimating] = useState(false);
+    const prevScoreRef = useRef(0);
+    const [timeAlert, setTimeAlert] = useState('');
+    const wordCount = useMemo(() => text.trim().split(/\s+/).filter(Boolean).length, [text]);
+    const [checkedWords, setCheckedWords] = useState([]);
+
+    const handleWordChecked = useCallback((word) => {
+        setCheckedWords(prev => [...new Set([...prev, word])]);
+    }, []);
+
+    const showAlert = useCallback((message) => {
+        setTimeAlert(message);
+        setTimeout(() => setTimeAlert(''), 4000);
+    }, []);
+
+    const handleTick = useCallback((secondsLeft) => {
+        const totalDuration = Number(gameData.duration);
+        const fiveMinMark = 5 * 60; const twoMinMark = 2 * 60;
+        if (totalDuration >= 10 * 60 && secondsLeft === fiveMinMark) showAlert('5 minutes remaining!');
+        if (secondsLeft === twoMinMark) showAlert('2 minutes to go!');
+    }, [gameData.duration, showAlert]);
+    
+    // This effect handles local UI updates for the score and word count.
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            const analysis = analyzeScore(text, fullCriteria);
+            setScoreAnalysis(analysis);
+            if (analysis.totalScore > prevScoreRef.current) {
+                setIsScoreAnimating(true);
+                setTimeout(() => setIsScoreAnimating(false), 300);
+            }
+            prevScoreRef.current = analysis.totalScore;
+        }, 500); // Update local score display every 500ms
+        return () => clearTimeout(handler);
+    }, [text, fullCriteria]);
+    
+    // This effect handles periodic saves to Firestore for the host's live view.
+    useEffect(() => {
+        // Only run for multiplayer games
+        if (!gameData || gameData.id?.startsWith('solo')) return;
+
+        const intervalId = setInterval(() => {
+            const currentStory = { title, text };
+            // We only need to save the analysis for the host view, not the full story text yet.
+            const currentAnalysis = analyzeScore(text, fullCriteria);
+            submitResult(gameData.id, playerId, currentStory, currentAnalysis);
+        }, 30000); // Save every 30 seconds
+
+        return () => clearInterval(intervalId);
+    }, [gameData, playerId, title, text, fullCriteria]);
+
+    const onTimeUpRef = useRef(onTimeUp); 
+    onTimeUpRef.current = onTimeUp;
+    
+    // The final save is triggered once here, when the timer runs out.
+    const handleTimeUp = useCallback(async () => {
+        const finalStory = { title, text };
+        const finalAnalysis = analyzeScore(text, fullCriteria);
+        
+        // Final save to DB if it's a multiplayer game
+        if (gameData && !gameData.id?.startsWith('solo')) {
+            await submitResult(gameData.id, playerId, finalStory, finalAnalysis);
+        }
+        
+        // Signal the parent component that time is up, passing the final state.
+        onTimeUpRef.current(finalStory, finalAnalysis, checkedWords);
+
+    }, [title, text, fullCriteria, gameData, playerId, checkedWords]);
+
+    const planningPlaceholder = "Jot down your ideas...\n- Beginning: \n- Middle (The Problem): \n- End (The Solution): \n- Senses to include: ";
+
+    return (
+      <>
+        <TimeAlert message={timeAlert} />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2">
+                <div className="relative bg-gradient-to-br from-white to-sky-100 p-6 rounded-2xl shadow-2xl border border-white/40 mb-4">
+                    <Button onClick={onGoHome} variant="secondary" size="small" className="absolute top-4 right-4">Quit Game</Button>
+                    <div className="flex items-start gap-6">
+                        <div className="flex-grow">
+                            <p className="text-sm font-semibold text-sky-600 mb-2">{gameData.prompt.category}</p>
+                            <p className="text-lg text-slate-700 pr-20">{gameData.prompt.text}</p>
+                        </div>
+                    </div>
+                </div>
+                 <div className="mb-4">
+                    <label htmlFor="planning-area" className="block text-sm font-bold text-slate-700 mb-1">Planning</label>
+                    <textarea id="planning-area" value={planningText} onChange={(e) => setPlanningText(e.target.value)} className="w-full h-28 p-2 border border-slate-300 rounded-lg shadow-inner focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-shadow duration-200 text-sm" placeholder={planningPlaceholder} aria-label="Planning area" />
+                </div>
+                <div className="mb-4">
+                    <label htmlFor="story-title" className="block text-sm font-bold text-slate-700 mb-1">Story Title</label>
+                    <input id="story-title" type="text" value={title} onChange={(e) => setTitle(e.target.value)} className="w-full p-3 border border-slate-300 rounded-lg shadow-inner focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-shadow duration-200 text-lg" placeholder="Enter your title here" />
+                </div>
+                <textarea value={text} onChange={(e) => setText(e.target.value)} className="w-full min-h-[400px] p-4 border border-slate-300 rounded-lg shadow-inner focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-shadow duration-200" placeholder="Start writing your story here..." aria-label="Story writing area" spellCheck="false" autoComplete="off" autoCorrect="off" autoCapitalize="off" />
+            </div>
+            <div className="lg:col-span-1">
+                <div className="sticky top-8 space-y-6">
+                    <div className="bg-sky-600 text-white p-4 rounded-lg shadow-lg text-center"><p className="text-lg font-semibold">Time Remaining</p><Timer startTime={gameData.startTime} duration={gameData.duration} onTimeUp={handleTimeUp} onTick={handleTick} /></div>
+                    <div className="bg-emerald-600 text-white p-4 rounded-lg shadow-lg text-center"><p className="text-lg font-semibold">Your Score</p><p className={`text-5xl font-bold tracking-tighter transition-transform duration-300 ease-out ${isScoreAnimating ? 'scale-125' : 'scale-100'}`}>{scoreAnalysis.totalScore.toLocaleString()}</p></div>
+                    <div className="bg-violet-600 text-white p-4 rounded-lg shadow-lg text-center"><p className="text-lg font-semibold">Word Count</p><p className="text-5xl font-bold tracking-tighter">{wordCount}</p></div>
+                    <WordWizard onWordChecked={handleWordChecked} />
+                    <div className="bg-gradient-to-br from-white to-sky-100 p-6 rounded-2xl shadow-2xl border border-white/40">
+                        <h3 className="text-xl font-bold mb-4 text-slate-800 border-b pb-2">Scoring Goals</h3>
+                        <ul className="space-y-1">
+                            {fullCriteria.map((criterion) => {
+                                const item = scoreAnalysis.breakdown.find(b => b.id === criterion.id) || { count: 0 };
+                                const hasAchieved = item.count > 0;
+                                return <li key={criterion.id} className={`p-2 rounded-md transition-all duration-300 flex justify-between items-center ${hasAchieved ? 'bg-emerald-50' : 'bg-transparent'}`} aria-live="polite"><span className="text-sm text-slate-600 pr-2"><span className={`font-bold ${hasAchieved ? 'text-emerald-700' : 'text-slate-500'}`}>+{criterion.points.toLocaleString()} pts:</span> {criterion.description}</span><span className={`font-bold text-xs px-2 py-0.5 rounded-full transition-all duration-300 flex-shrink-0 ${hasAchieved ? 'bg-emerald-200 text-emerald-800 scale-110' : 'bg-slate-100 text-slate-500'}`}>{item.count}</span></li>;
+                            })}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+      </>
+    );
+};
+
+const HostScreen = ({ gameId, gameData, onEndGame }) => {
+    // Fix: Cast `data` to `any` to resolve spread and property access errors on unknown type.
+    const sortedPlayers = useMemo(() => {
+        return Object.entries(gameData.players)
+            .map(([id, data]) => ({ id, ...(data as any), totalScore: (data as any).analysis?.totalScore || 0 }))
+            .sort((a, b) => b.totalScore - a.totalScore); // Sort by score for live leaderboard
+    }, [gameData.players]);
+
+  return (
+      <div className="flex flex-col items-center">
+          <div className="text-center mb-6">
+              <h2 className="text-2xl font-bold text-slate-800 mb-2">Host Dashboard</h2>
+              <div className="flex items-center justify-center gap-2 mt-1">
+                  <p className="text-slate-500">Game Code:</p>
+                  <p className="text-lg font-bold tracking-widest text-sky-600 bg-sky-100 px-3 py-1 rounded-lg">{gameId}</p>
+              </div>
+          </div>
+          <div className="w-full max-w-4xl bg-gradient-to-br from-white to-sky-100 p-6 rounded-2xl shadow-2xl border border-white/40">
+              <div className="flex justify-between items-center border-b pb-3 mb-3">
+                  <h3 className="text-xl font-bold text-slate-800">Live Leaderboard</h3>
+                  <div className="text-center">
+                     <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Time Remaining</p>
+                      <Timer startTime={gameData.startTime} duration={gameData.duration} onTimeUp={onEndGame} />
+                  </div>
+              </div>
+              <ol className="space-y-2">
+                {sortedPlayers.map((player, index) => (
+                   <li key={player.id} className="p-3 rounded-md flex justify-between items-center bg-slate-50">
+                     <span className="font-semibold text-slate-700">{index + 1}. {player.nickname}</span>
+                     <span className="font-bold text-sky-600">{player.totalScore.toLocaleString()}</span>
+                   </li>
+                ))}
+               </ol>
+          </div>
+          <Button onClick={onEndGame} variant="danger" size="large" className="mt-8">End Game for All Players</Button>
+      </div>
+  );
+};
+
+const LobbyScreen = ({ gameId, gameData, playerId, onStartGame, onLeaveGame }) => {
+    const isHost = gameData.hostId === playerId;
+
+    const handleRemovePlayer = async (playerIdToRemove) => {
+        if (isHost) await removePlayerFromGame(gameId, playerIdToRemove);
+    };
+
+    return (
+        <div className="w-full max-w-2xl mx-auto">
+            <div className="bg-gradient-to-br from-white to-sky-100 p-8 rounded-2xl shadow-2xl border border-white/40 text-center">
+                <h2 className="text-3xl font-bold text-slate-800 mb-2">Game Lobby</h2>
+                <p className="text-slate-600 mb-6">Waiting for the host to start the game...</p>
+                <div className="flex items-center justify-center gap-2 mb-8">
+                  <p className="text-slate-500">Game Code:</p>
+                  <p className="text-2xl font-bold tracking-widest text-sky-600 bg-sky-100 px-4 py-2 rounded-lg">{gameId}</p>
+                </div>
+                
+                <h3 className="text-xl font-semibold text-slate-700 mb-4">Players Joined ({Object.keys(gameData.players).length})</h3>
+                <div className="space-y-3 max-h-60 overflow-y-auto bg-slate-50 p-4 rounded-lg border">
+                    {Object.entries(gameData.players).map(([id, player]) => (
+                        <div key={id} className={`flex items-center justify-between p-3 rounded-md ${id === playerId ? 'bg-sky-100' : 'bg-white'}`}>
+                            {/* Fix: Cast `player` to `any` to access `nickname` property. */}
+                            <p className="font-semibold text-slate-800">{(player as any).nickname || 'Joining...'}</p>
+                             {isHost && id !== playerId && ( <Button onClick={() => handleRemovePlayer(id)} variant="danger" size="small">Remove</Button> )}
+                        </div>
+                    ))}
+                </div>
+                
+                <div className="mt-8 flex flex-col sm:flex-row gap-4">
+                    <Button onClick={onLeaveGame} variant="secondary" size="large" className="w-full">Leave Game</Button>
+                    {isHost && <Button onClick={onStartGame} size="large" className="w-full">Start Game</Button>}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const PracticeSetupScreen = ({ onStart, onBack }) => {
+    const [duration, setDuration] = useState(600);
+    const [numCriteria, setNumCriteria] = useState(3);
+    const [prompt, setPrompt] = useState(null);
+
+    const generateNewPrompt = useCallback(() => {
+        setPrompt(NARRATIVE_PROMPTS[Math.floor(Math.random() * NARRATIVE_PROMPTS.length)]);
+    }, []);
+
+    useEffect(() => {
+        generateNewPrompt();
+    }, [generateNewPrompt]);
+
+    const handleStart = () => {
+        const alwaysCriteria = ALL_SCORING_CRITERIA.filter(c => c.type === 'always').map(c => c.id);
+        const randomCriteria = ALL_SCORING_CRITERIA.filter(c => c.type === 'random').sort(() => 0.5 - Math.random()).slice(0, numCriteria).map(c => c.id);
+        const criteria = [...alwaysCriteria, ...randomCriteria];
+        onStart(prompt, criteria, duration);
+    };
+
+    return (
+        <div className="w-full max-w-xl mx-auto">
+            <div className="bg-gradient-to-br from-white to-sky-100 p-8 rounded-2xl shadow-2xl border border-white/40 text-center">
+                <h2 className="text-3xl font-bold text-slate-800 mb-2">Story Mode Setup</h2>
+                <p className="text-slate-600 mb-8">Choose your prompt and settings for a writing challenge.</p>
+                
+                <div className="text-left mb-6">
+                    <label className="block text-lg font-semibold text-slate-700 mb-2">Your Writing Prompt:</label>
+                    <div className="bg-sky-50 p-4 rounded-lg border border-sky-200 min-h-[100px]">
+                        {prompt ? (
+                            <>
+                                <p className="font-semibold text-sky-700">{prompt.category}</p>
+                                <p className="text-slate-800">{prompt.text}</p>
+                            </>
+                        ) : <LoadingSpinner />}
+                    </div>
+                    <div className="text-center mt-3">
+                        <Button onClick={generateNewPrompt} variant="secondary">Generate New Prompt</Button>
+                    </div>
+                </div>
+
+                <div className="space-y-6 text-left">
+                    <div>
+                        <label htmlFor="duration" className="block text-lg font-semibold text-slate-700 mb-2">Writing Time: <span className="text-sky-600 font-bold">{duration / 60} minutes</span></label>
+                        <input id="duration" type="range" min="120" max="1800" step="60" value={duration} onChange={(e) => setDuration(Number(e.target.value))} className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-sky-600" />
+                    </div>
+                </div>
+
+                <div className="mt-10 flex flex-col sm:flex-row gap-4">
+                    <Button onClick={onBack} variant="secondary" size="large" className="w-full">Back</Button>
+                    <Button onClick={handleStart} size="large" className="w-full">Start Writing</Button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const CreateGameSetupScreen = ({ onCreate, onBack, user }) => {
+    const [duration, setDuration] = useState(600);
+    const [prompt, setPrompt] = useState(null);
+
+    const generateNewPrompt = useCallback(() => {
+        setPrompt(NARRATIVE_PROMPTS[Math.floor(Math.random() * NARRATIVE_PROMPTS.length)]);
+    }, []);
+
+    useEffect(() => {
+        generateNewPrompt();
+    }, [generateNewPrompt]);
+    
+    const handleCreate = () => {
+        if (!user) {
+            console.error("No user found, cannot create game.");
+            return;
+        }
+        const alwaysCriteria = ALL_SCORING_CRITERIA.filter(c => c.type === 'always').map(c => c.id);
+        const randomCriteria = ALL_SCORING_CRITERIA.filter(c => c.type === 'random').sort(() => 0.5 - Math.random()).slice(0, 3).map(c => c.id);
+        const criteria = [...alwaysCriteria, ...randomCriteria];
+        onCreate(prompt, criteria, duration);
+    };
+
+    return (
+        <div className="w-full max-w-xl mx-auto">
+            <div className="bg-gradient-to-br from-white to-sky-100 p-8 rounded-2xl shadow-2xl border border-white/40 text-center">
+                <h2 className="text-3xl font-bold text-slate-800 mb-2">Create Multiplayer Game</h2>
+                <p className="text-slate-600 mb-8">Choose a prompt and duration for your students.</p>
+                
+                <div className="text-left mb-6">
+                    <label className="block text-lg font-semibold text-slate-700 mb-2">Writing Prompt:</label>
+                    <div className="bg-sky-50 p-4 rounded-lg border border-sky-200 min-h-[100px]">
+                        {prompt ? (
+                            <>
+                                <p className="font-semibold text-sky-700">{prompt.category}</p>
+                                <p className="text-slate-800">{prompt.text}</p>
+                            </>
+                        ) : <LoadingSpinner />}
+                    </div>
+                    <div className="text-center mt-3">
+                        <Button onClick={generateNewPrompt} variant="secondary">Generate New Prompt</Button>
+                    </div>
+                </div>
+
+                <div className="space-y-6 text-left">
+                    <div>
+                        <label htmlFor="duration-multi" className="block text-lg font-semibold text-slate-700 mb-2">Writing Time: <span className="text-sky-600 font-bold">{duration / 60} minutes</span></label>
+                        <input id="duration-multi" type="range" min="120" max="1800" step="60" value={duration} onChange={(e) => setDuration(Number(e.target.value))} className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-sky-600" />
+                    </div>
+                </div>
+
+                <div className="mt-10 flex flex-col sm:flex-row gap-4">
+                    <Button onClick={onBack} variant="secondary" size="large" className="w-full">Back</Button>
+                    <Button onClick={handleCreate} size="large" className="w-full">Create Game</Button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const JoinGameSetupScreen = ({ onJoin, onBack }) => {
+    const [gameCode, setGameCode] = useState('');
+    const [nickname, setNickname] = useState('');
+    const [error, setError] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        if (!gameCode.trim() || !nickname.trim()) return;
+        setIsLoading(true);
+        setError('');
+        try {
+            await onJoin(gameCode.toUpperCase(), nickname);
+        } catch (err) {
+            setError(err.message);
+            setIsLoading(false);
+        }
+    };
+
+    return (
+        <div className="w-full max-w-sm mx-auto">
+            <div className="bg-gradient-to-br from-white to-sky-100 p-8 rounded-2xl shadow-2xl border border-white/40 text-center">
+                <h2 className="text-3xl font-bold text-slate-800 mb-2">Join a Game</h2>
+                <p className="text-slate-600 mb-8">Enter the game code and your name to join.</p>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <input type="text" value={gameCode} onChange={(e) => setGameCode(e.target.value)} className="w-full p-3 border border-slate-300 rounded-lg shadow-inner focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-shadow duration-200 text-lg text-center uppercase tracking-widest" placeholder="GAME CODE" maxLength={6} required />
+                    <input type="text" value={nickname} onChange={(e) => setNickname(e.target.value)} className="w-full p-3 border border-slate-300 rounded-lg shadow-inner focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-shadow duration-200 text-lg text-center" placeholder="Your Name" maxLength={25} required />
+                    {error && <p className="text-red-500 text-sm">{error}</p>}
+                    <div className="pt-4 flex flex-col sm:flex-row gap-4">
+                        <Button onClick={onBack} variant="secondary" size="large" className="w-full" disabled={isLoading}>Back</Button>
+                        <Button type="submit" size="large" className="w-full" disabled={isLoading}>{isLoading ? <LoadingSpinner /> : 'Join Game'}</Button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+};
+
+const TeacherDashboard = ({ user, onSignOut, onGoHome, onCreateGame }) => {
+    const [games, setGames] = useState([]);
+    const [selectedGame, setSelectedGame] = useState(null);
+
+    useEffect(() => {
+        if (user?.uid) {
+            const unsubscribe = getGamesForTeacher(user.uid, (fetchedGames) => {
+                setGames(fetchedGames);
+                // This logic ensures the selected game stays in sync with the live data
+                // without causing the listener to resubscribe unnecessarily.
+                setSelectedGame(prevSelectedGame => {
+                    if (prevSelectedGame) {
+                        const updatedGame = fetchedGames.find(g => g.id === prevSelectedGame.id);
+                        return updatedGame || (fetchedGames.length > 0 ? fetchedGames[0] : null);
+                    }
+                    return fetchedGames.length > 0 ? fetchedGames[0] : null;
+                });
+            });
+            return () => unsubscribe();
+        }
+    }, [user?.uid]);
+
+    const handleSelectGame = (game) => setSelectedGame(game);
+    const getPlayerCount = (game) => Object.keys(game?.players || {}).length;
+
+    return (
+        <div className="w-full max-w-7xl mx-auto">
+            <div className="flex justify-between items-center mb-6">
+                 <h1 className="text-3xl font-bold text-slate-800">Teacher Dashboard</h1>
+                 <div>
+                    <Button onClick={onCreateGame} className="mr-4">Create New Game</Button>
+                    <Button onClick={onGoHome} variant="secondary" className="mr-4">Home</Button>
+                    <Button onClick={onSignOut}>Sign Out</Button>
+                </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div className="md:col-span-1 bg-gradient-to-br from-white to-sky-100 p-6 rounded-2xl shadow-2xl border border-white/40">
+                    <h2 className="text-xl font-bold mb-4">Game History</h2>
+                    <ul className="space-y-2 max-h-[60vh] overflow-y-auto">
+                        {games.length > 0 ? games.map(game => (
+                            <li key={game.id}>
+                                <button onClick={() => handleSelectGame(game)} className={`w-full text-left p-3 rounded-lg transition-colors ${selectedGame?.id === game.id ? 'bg-sky-200' : 'bg-slate-50 hover:bg-sky-100'}`}>
+                                    <p className="font-semibold text-slate-800">{game.prompt.text.substring(0, 40)}...</p>
+                                    <p className="text-sm text-slate-500">
+                                        {game.createdAt?.toDate().toLocaleDateString()} - {getPlayerCount(game)} player(s)
+                                    </p>
+                                </button>
+                            </li>
+                        )) : <p className="text-slate-500">No games played yet.</p>}
+                    </ul>
+                </div>
+                <div className="md:col-span-2 bg-gradient-to-br from-white to-sky-100 p-6 rounded-2xl shadow-2xl border border-white/40">
+                    {selectedGame ? (
+                        <div>
+                             <h2 className="text-xl font-bold mb-1">Game Details</h2>
+                             <p className="text-sm text-slate-500 mb-4">{selectedGame.createdAt?.toDate().toLocaleString()}</p>
+                             <div className="bg-sky-50 p-4 rounded-lg border border-sky-200 mb-6">
+                                <p className="font-semibold text-sky-700">Prompt:</p>
+                                <p className="text-slate-800">{selectedGame.prompt.text}</p>
+                            </div>
+                            <h3 className="text-lg font-bold mb-3">Student Submissions</h3>
+                            <div className="space-y-4 max-h-[45vh] overflow-y-auto pr-2">
+                                {Object.entries(selectedGame.players).length > 0 ? Object.entries(selectedGame.players)
+                                    // Fix: Cast player objects `a` and `b` to `any` to access `nickname`.
+                                    .sort(([, a], [, b]) => ((a as any).nickname || '').localeCompare((b as any).nickname || ''))
+                                    .map(([playerId, player]) => (
+                                    <div key={playerId} className="bg-white p-4 rounded-lg shadow">
+                                        <div className="flex justify-between items-start mb-2">
+                                            <div>
+                                                {/* Fix: Cast `player` to `any` to access properties. */}
+                                                <p className="font-bold text-slate-800">{(player as any).nickname}</p>
+                                                {/* Fix: Cast `player` to `any` to access properties. */}
+                                                <p className="text-sm font-semibold text-emerald-600">Score: {(player as any).analysis?.totalScore?.toLocaleString() || 'N/A'}</p>
+                                            </div>
+                                            {/* Fix: Cast `player` to `any` to access properties. */}
+                                            <Button onClick={() => downloadPDF((player as any).nickname, (player as any).story, selectedGame.prompt)} size="small" variant="secondary">Download PDF</Button>
+                                        </div>
+                                         <div className="prose prose-sm max-w-none text-slate-600 whitespace-pre-wrap bg-slate-50 p-3 rounded-md border">
+                                            {/* Fix: Cast `player` to `any` to access properties. */}
+                                            <h4 className="font-bold">{(player as any).story?.title || "Untitled Story"}</h4>
+                                            {/* Fix: Cast `player` to `any` to access properties. */}
+                                            {(player as any).story?.text || "No submission."}
+                                        </div>
+                                    </div>
+                                )) : <p className="text-slate-500">No students joined this game.</p>}
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="flex items-center justify-center h-full">
+                            <p className="text-slate-500 text-lg">Select a game from the history to view details.</p>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+
+const LeaderboardView = ({ scores, onBack, title }) => {
+    const safeScores = Array.isArray(scores) ? scores.filter(entry => entry && typeof entry.score === 'number' && !isNaN(entry.score)) : [];
+    
+    return (
+        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md text-center">
+                <h2 className="text-2xl font-bold text-slate-800 mb-6">{title}</h2>
+                <div className="space-y-2 max-h-80 overflow-y-auto">
+                    {safeScores.length > 0 ? (
+                        safeScores.map((entry, index) => (
+                            <div key={index} className="flex justify-between items-center bg-slate-100 p-3 rounded-lg">
+                                <span className="font-bold text-slate-600 w-8">{index + 1}.</span>
+                                <span className="font-semibold text-sky-700 text-lg flex-1 text-left">{entry.initials}</span>
+                                <span className="font-bold text-emerald-600 text-lg">{entry.score.toLocaleString()}</span>
+                            </div>
+                        ))
+                    ) : (
+                        <p className="text-slate-500 py-8">The leaderboard is empty. Be the first!</p>
+                    )}
+                </div>
+                <Button onClick={onBack} variant="secondary" size="large" className="mt-8 w-full">Close</Button>
+            </div>
+        </div>
+    );
+};
+
+const SentenceBuilderScreen = ({ playerId, onBack }) => {
+    const [gameState, setGameState] = useState('setup'); // 'setup', 'writing', 'submitted'
+    const [sentenceRoot, setSentenceRoot] = useState(null);
+    const [userSentence, setUserSentence] = useState('');
+    const [showKete, setShowKete] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const [result, setResult] = useState(null);
+    const [highScore, setHighScore] = useState(() => Number(localStorage.getItem('sentenceLabHighScore')) || 0);
+    const [showInitialsPrompt, setShowInitialsPrompt] = useState(false);
+    const [initials, setInitials] = useState('');
+    const [leaderboard, setLeaderboard] = useState([]);
+    const [showLeaderboard, setShowLeaderboard] = useState(false);
+    const [hasBeenPrompted, setHasBeenPrompted] = useState(false);
+    const [activeTab, setActiveTab] = useState(Object.keys(KETE_WORDS)[0]);
+    
+    useEffect(() => {
+      const unsubscribe = getLeaderboardStream((scores) => {
+          const sortedScores = [...scores].sort((a,b) => b.score - a.score);
+          setLeaderboard(sortedScores);
+      });
+      return () => unsubscribe();
+    }, []);
+
+    const startNewChallenge = useCallback(() => {
+        const newRoot = SENTENCE_ROOTS[Math.floor(Math.random() * SENTENCE_ROOTS.length)];
+        setSentenceRoot(newRoot);
+        setUserSentence(newRoot.root);
+        setGameState('writing');
+        setShowKete(false);
+        setResult(null);
+        setShowInitialsPrompt(false);
+        setHasBeenPrompted(false);
+    }, []);
+
+    useEffect(() => {
+        startNewChallenge();
+    }, [startNewChallenge]);
+
+    const handleNextStep = () => {
+        if (!userSentence.trim()) {
+            alert("Please rewrite the sentence first!");
+            return;
+        }
+        setShowKete(true);
+    };
+
+    const handleRegisterScore = useCallback((initials) => {
+        if (!result || !initials) return;
+
+        setShowInitialsPrompt(false); // Optimistically close the modal
+
+        updateLeaderboard({
+            score: result.totalScore,
+            initials: initials.toUpperCase(),
+            userSentence: userSentence,
+            playerId: playerId,
+        })
+        .catch((error) => {
+            // Log error silently, as the user assumes success
+            console.error("Failed to update leaderboard:", error);
+        });
+    }, [result, userSentence, playerId]);
+    
+    const handleInitialsSubmit = useCallback((e) => {
+        e.preventDefault();
+        if (initials.trim().length >= 2 && initials.trim().length <= 3) {
+            handleRegisterScore(initials.trim());
+        }
+    }, [initials, handleRegisterScore]);
+
+    const handleSentenceChange = (e) => {
+        let value = e.target.value;
+        const match = value.match(/(.*?[.?!])/);
+        if (match && value.length > match[0].length) {
+            value = match[0];
+        }
+        setUserSentence(value);
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        
+        if (userSentence.trim().toLowerCase() === sentenceRoot.root.trim().toLowerCase()) {
+            alert("You need to change the sentence to submit it!");
+            return;
+        }
+
+        setIsLoading(true);
+        const analysisResult = await getSentenceFeedback(sentenceRoot.root, userSentence);
+        
+        // Sanity check for coherence
+        if (analysisResult.coherenceScore < 0.5) {
+            analysisResult.vividnessScore = 0;
+            analysisResult.figurativeLanguageScore = 0;
+            analysisResult.complexityScore = 0;
+        }
+
+        const baseScore = 100;
+        const coherencePoints = Math.round(analysisResult.coherenceScore * 50);
+        const vividnessPoints = Math.round(analysisResult.vividnessScore * 100);
+        const figurativeLanguagePoints = Math.round(analysisResult.figurativeLanguageScore * 150);
+        const complexityPoints = Math.round(analysisResult.complexityScore * 75);
+        const totalScore = baseScore + coherencePoints + vividnessPoints + figurativeLanguagePoints + complexityPoints;
+
+        setResult({ 
+            ...analysisResult, 
+            totalScore,
+            breakdown: { baseScore, coherencePoints, vividnessPoints, figurativeLanguagePoints, complexityPoints }
+        });
+
+        if (totalScore > highScore) {
+            setHighScore(totalScore);
+            // Fix: Convert number to string for localStorage.setItem
+            localStorage.setItem('sentenceLabHighScore', totalScore.toString());
+        }
+        
+        const lowestLeaderboardScore = leaderboard.length < 10 ? 0 : (leaderboard[leaderboard.length - 1]?.score || 0);
+        if (totalScore > lowestLeaderboardScore && !hasBeenPrompted) {
+             setShowInitialsPrompt(true);
+             setHasBeenPrompted(true);
+        }
+
+        setGameState('submitted');
+        setIsLoading(false);
+    };
+
+    if (!sentenceRoot) return <div className="flex justify-center items-center h-screen"><LoadingSpinner /></div>;
+
+    if (gameState === 'submitted') {
+        return (
+            <div className="w-full max-w-3xl mx-auto text-center">
+                 {showInitialsPrompt && (
+                    <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                        <div className="bg-white p-8 rounded-xl shadow-2xl w-full max-w-sm text-center">
+                            <h2 className="text-2xl font-bold text-amber-500 mb-2">New High Score!</h2>
+                            <p className="text-slate-600 mb-6">You've made it onto the global leaderboard! Enter your initials (2-3 characters).</p>
+                             <form onSubmit={handleInitialsSubmit}>
+                                 <input type="text" value={initials} onChange={e => setInitials(e.target.value)} className="w-full p-3 border border-slate-300 rounded-lg shadow-inner text-center uppercase tracking-widest text-2xl font-bold" maxLength="3" required />
+                                 <Button type="submit" size="large" className="mt-6 w-full">Submit to Leaderboard</Button>
+                             </form>
+                        </div>
+                    </div>
+                )}
+                {showLeaderboard && <LeaderboardView scores={leaderboard} onBack={() => setShowLeaderboard(false)} title="Global Leaderboard" />}
+
+                <h2 className="text-3xl font-bold text-emerald-600 mb-4">Challenge Complete!</h2>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 text-left">
+                     <div className="bg-white p-6 rounded-lg shadow-md">
+                        <p className="text-sm font-semibold text-slate-500 mb-1">Original Sentence</p>
+                        <p className="text-lg text-slate-700">{sentenceRoot.root}</p>
+                    </div>
+                     <div className="bg-sky-50 p-6 rounded-lg shadow-md border border-sky-200">
+                        <p className="text-sm font-semibold text-sky-600 mb-1">Your Upgraded Sentence</p>
+                        <p className="text-lg font-bold text-sky-800">{userSentence}</p>
+                    </div>
+                </div>
+
+                <div className="bg-white p-6 rounded-lg shadow-md mb-6">
+                    <p className="text-sm font-semibold text-slate-500 mb-2">AI Feedback:</p>
+                    <p className="text-lg italic text-slate-800">"{result.feedback}"</p>
+                </div>
+                
+                 <div className="bg-white p-6 rounded-lg shadow-md mb-8 text-left">
+                    <h3 className="text-xl font-bold text-slate-800 mb-4 text-center">Score Breakdown</h3>
+                    <ul className="space-y-2">
+                        <li className="flex justify-between items-center text-base p-2 bg-slate-50 rounded-md">
+                            <span>Base Score</span>
+                            <span className="font-semibold text-emerald-600">+{result.breakdown.baseScore.toLocaleString()}</span>
+                        </li>
+                        <li className="flex justify-between items-center text-base p-2 bg-slate-50 rounded-md">
+                            <span>Coherence <span className="text-slate-500 text-sm font-normal">(does it make sense?)</span></span>
+                            <span className="font-semibold text-emerald-600">+{result.breakdown.coherencePoints.toLocaleString()}</span>
+                        </li>
+                        <li className="flex justify-between items-center text-base p-2 bg-slate-50 rounded-md">
+                            <span>Vivid Language <span className="text-slate-500 text-sm font-normal">(strong verbs, describing words)</span></span>
+                            <span className="font-semibold text-emerald-600">+{result.breakdown.vividnessPoints.toLocaleString()}</span>
+                        </li>
+                        <li className="flex justify-between items-center text-base p-2 bg-slate-50 rounded-md">
+                            <span>Figurative Language <span className="text-slate-500 text-sm font-normal">(similes, metaphors)</span></span>
+                            <span className="font-semibold text-emerald-600">+{result.breakdown.figurativeLanguagePoints.toLocaleString()}</span>
+                        </li>
+                        <li className="flex justify-between items-center text-base p-2 bg-slate-50 rounded-md">
+                            <span>Sentence Structure <span className="text-slate-500 text-sm font-normal">(joining words, varied openers)</span></span>
+                            <span className="font-semibold text-emerald-600">+{result.breakdown.complexityPoints.toLocaleString()}</span>
+                        </li>
+                        <li className="flex justify-between items-center text-lg font-bold p-2 bg-sky-100 rounded-md mt-2">
+                            <span className="text-sky-800">Total Score</span>
+                            <span className="text-sky-800">{result.totalScore.toLocaleString()}</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <div className="bg-white p-6 rounded-lg shadow-md text-center"><p className="text-slate-500">Your Score</p><p className="text-5xl font-bold text-emerald-600">{result.totalScore.toLocaleString()}</p></div>
+                    <div className="bg-white p-6 rounded-lg shadow-md text-center"><p className="text-slate-500">Personal Best</p><p className="text-3xl font-bold text-amber-500">{highScore.toLocaleString()}</p></div>
+                </div>
+                
+                <div className="flex items-center justify-center gap-4">
+                    <Button onClick={onBack} variant="secondary" size="large">Back to Home</Button>
+                    <Button onClick={() => setShowLeaderboard(true)} variant="secondary" size="large">Leaderboard</Button>
+                    <Button onClick={startNewChallenge} size="large">New Sentence</Button>
+                </div>
+            </div>
+        );
+    }
+    
+    // Fix: Add prop types for KeteWord component.
+    const KeteWord = ({ word }: { word: string }) => (
+      <span className="bg-sky-100 text-sky-800 px-3 py-1 rounded-full text-sm font-semibold">
+          {word}
+      </span>
+    );
+
+    return (
+        <div className="w-full max-w-3xl mx-auto">
+            <h1 className="text-3xl font-bold text-center text-slate-800 mb-2">Sentence Lab</h1>
+            <p className="text-center text-slate-600 mb-8">Upgrade the simple sentence to make it more powerful and interesting!</p>
+            
+            <div className="bg-white p-8 rounded-xl shadow-2xl border border-white/50">
+                <div className="text-center mb-6">
+                    <p className="text-slate-500 mb-1">Your challenge:</p>
+                    <p className="text-2xl font-bold text-sky-600 bg-sky-50 p-4 rounded-lg inline-block">{sentenceRoot.root}</p>
+                </div>
+
+                <form onSubmit={handleSubmit}>
+                    <label htmlFor="sentence-input" className="block text-lg font-semibold text-slate-700 mb-2">Your new sentence:</label>
+                    <textarea id="sentence-input" value={userSentence} onChange={handleSentenceChange} className="w-full min-h-[100px] p-3 border border-slate-300 rounded-lg shadow-inner focus:ring-2 focus:ring-sky-500" placeholder="Rewrite the sentence here..." required></textarea>
+                
+                    {showKete && (
+                        <div className="mt-6 bg-slate-50 p-4 rounded-lg border">
+                           <h3 className="text-lg font-semibold text-slate-700 mb-4">Inspiration Kete</h3>
+                             <div className="flex border-b mb-4">
+                                {Object.keys(KETE_WORDS).map(tabName => (
+                                    <button type="button" key={tabName} onClick={() => setActiveTab(tabName)} className={`px-4 py-2 text-sm font-semibold transition-colors ${activeTab === tabName ? 'border-b-2 border-sky-500 text-sky-600' : 'text-slate-500 hover:text-sky-500'}`}>
+                                        {tabName}
+                                    </button>
+                                ))}
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                                {KETE_WORDS[activeTab].map(word => <KeteWord key={word} word={word} />)}
+                            </div>
+                        </div>
+                    )}
+                
+                    <div className="mt-8 flex items-center justify-between">
+                        <Button type="button" onClick={onBack} variant="secondary" size="large">Back to Home</Button>
+                        <div className="flex items-center gap-4">
+                            {!showKete && <Button type="button" onClick={handleNextStep} size="large">Next Step</Button>}
+                            {showKete && <Button type="submit" size="large" disabled={isLoading}>{isLoading ? <LoadingSpinner/> : "Submit for Analysis"}</Button>}
+                        </div>
+                    </div>
+                </form>
+                 <div className="text-center mt-4">
+                    <Button onClick={() => setShowLeaderboard(true)} variant="secondary">View Leaderboard</Button>
+                </div>
+                 {showLeaderboard && <LeaderboardView scores={leaderboard} onBack={() => setShowLeaderboard(false)} title="Global Leaderboard" />}
+            </div>
+        </div>
+    );
+};
+
+const HomeScreen = ({ onSelect }) => {
+    const OptionCard = ({ icon, title, description, onClick, accentColor }) => (
+        <button 
+            onClick={onClick} 
+            className={`relative w-full bg-white/60 backdrop-blur-sm border border-white/30 rounded-2xl p-6 text-left shadow-lg hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-300 ease-in-out focus:outline-none focus-visible:ring-4 ${accentColor.ring} group overflow-hidden`}
+        >
+            <div className={`absolute -top-8 -right-8 w-24 h-24 rounded-full transition-transform duration-500 ease-out group-hover:scale-150 ${accentColor.bg} opacity-20`}></div>
+            <div className="relative z-10">
+                <div className={`p-4 rounded-xl inline-block mb-4 ${accentColor.bg} bg-opacity-20`}>
+                    {icon}
+                </div>
+                <h3 className="text-xl font-bold text-slate-800">{title}</h3>
+                <p className="text-slate-600 text-sm mt-1">{description}</p>
+            </div>
+        </button>
+    );
+
+    const accentColors = {
+        solo: { bg: 'bg-sky-500', ring: 'focus-visible:ring-sky-400' },
+        sentence: { bg: 'bg-emerald-500', ring: 'focus-visible:ring-emerald-400' },
+        teacher: { bg: 'bg-violet-500', ring: 'focus-visible:ring-violet-400' },
+        join: { bg: 'bg-amber-500', ring: 'focus-visible:ring-amber-400' },
+    };
+
+    const iconStyles = "w-10 h-10";
+    const icons = {
+        solo: <svg xmlns="http://www.w3.org/2000/svg" className={`${iconStyles} text-sky-700`} fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+        </svg>,
+        sentence: <svg xmlns="http://www.w3.org/2000/svg" className={`${iconStyles} text-emerald-700`} fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
+        </svg>,
+        teacher: <svg xmlns="http://www.w3.org/2000/svg" className={`${iconStyles} text-violet-700`} fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>,
+        join: <svg xmlns="http://www.w3.org/2000/svg" className={`${iconStyles} text-amber-700`} fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6A2.25 2.25 0 005.25 5.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+        </svg>,
+    };
+
+    return (
+        <div className="w-full max-w-4xl mx-auto px-4 py-8">
+            <header className="text-center mb-12">
+                 <div className="flex items-center justify-center gap-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-12 h-12 text-sky-700">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+                    </svg>
+                    <h1 className="text-5xl font-bold text-slate-800">InkXP</h1>
+                </div>
+                <p className="text-slate-600 mt-2 text-lg">Level up your writing experience.</p>
+            </header>
+            <main>
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                     <OptionCard 
+                        icon={icons.teacher} 
+                        title="Teacher Dashboard"
+                        description="Create, manage, and review games for your students."
+                        onClick={() => onSelect('teacherLogin')}
+                        accentColor={accentColors.teacher}
+                    />
+                    <OptionCard 
+                        icon={icons.join} 
+                        title="Join Game" 
+                        description="Enter a code to join a game hosted by your teacher." 
+                        onClick={() => onSelect(GameState.JoinGameSetup)}
+                        accentColor={accentColors.join}
+                    />
+                </div>
+
+                <div className="my-8 flex items-center gap-4">
+                    <hr className="flex-grow border-slate-300" />
+                    <h2 className="text-xl font-bold text-slate-700 tracking-wide flex-shrink-0">Writer's Workshop</h2>
+                    <hr className="flex-grow border-slate-300" />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <OptionCard 
+                        icon={icons.solo} 
+                        title="Story Mode" 
+                        description="Write a story based on a random prompt and get a score." 
+                        onClick={() => onSelect(GameState.SoloSetup)}
+                        accentColor={accentColors.solo}
+                    />
+                    <OptionCard 
+                        icon={icons.sentence} 
+                        title="Sentence Lab" 
+                        description="Upgrade a simple sentence to make it more powerful." 
+                        onClick={() => onSelect(GameState.SentenceBuilder)}
+                        accentColor={accentColors.sentence}
+                    />
+                </div>
+            </main>
+        </div>
+    );
+};
+
+
+function App() {
+    const [gameState, setGameState] = useState(GameState.Home);
+    const [gameId, setGameId] = useState(null);
+    const [gameData, setGameData] = useState(null);
+    const [playerId, setPlayerId] = useState(() => `guest_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`);
+    const [user, setUser] = useState(null);
+    const [authLoading, setAuthLoading] = useState(true);
+    const [soloHighScore, setSoloHighScore] = useState(() => Number(localStorage.getItem('soloHighScore')) || 0);
+    const [finalCheckedWords, setFinalCheckedWords] = useState([]);
+
+    useEffect(() => {
+        const unsubscribe = onAuthChange(firebaseUser => {
+            if (firebaseUser) {
+                const isTeacher = firebaseUser.email && !firebaseUser.email.endsWith('@inkxp-student.com');
+                const simpleUser = {
+                    uid: firebaseUser.uid,
+                    displayName: firebaseUser.displayName,
+                    email: firebaseUser.email,
+                    isTeacher: isTeacher
+                };
+                setUser(simpleUser);
+                setPlayerId(firebaseUser.uid);
+            } else {
+                setUser(null);
+                 setPlayerId(`guest_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`);
+            }
+            setAuthLoading(false);
+        });
+        return () => unsubscribe();
+    }, []);
+
+    useEffect(() => {
+        let unsubscribe;
+        if ((gameState === GameState.Lobby || gameState === GameState.InGame || gameState === GameState.Results) && gameId && !gameId.startsWith('solo')) {
+            unsubscribe = getGameStream(gameId, (data) => {
+                if (!data) {
+                    setGameState(GameState.Home);
+                    setGameId(null);
+                    setGameData(null);
+                    return;
+                }
+                setGameData(data);
+                if (data.status === 'in-progress' && gameState !== GameState.InGame) {
+                    setGameState(GameState.InGame);
+                }
+                if (data.status === 'finished' && gameState !== GameState.Results) {
+                     // Check if the current player's data is available before switching to results
+                    if (data.players && data.players[playerId] && data.players[playerId].analysis) {
+                        setGameState(GameState.Results);
+                    } else if (data.hostId === playerId) { // Host can always see results
+                        setGameState(GameState.Results);
+                    }
+                }
+            });
+        }
+        return () => {
+            if (unsubscribe) unsubscribe();
+        };
+    }, [gameState, gameId, playerId]);
+
+    const goHome = useCallback(() => {
+        setGameState(GameState.Home);
+        setGameId(null);
+        setGameData(null);
+        setFinalCheckedWords([]);
+    }, []);
+
+    const handleCreateGame = useCallback(async (prompt, criteria, duration) => {
+        if (!user) {
+            console.error("User not logged in, cannot create game.");
+            return;
+        }
+        const newGameId = await createGame(user.uid, prompt, criteria, duration, user.uid);
+        await joinGame(newGameId, playerId, { nickname: user.displayName || 'Host', isGuest: false });
+        setGameId(newGameId);
+        setGameState(GameState.Lobby);
+    }, [user, playerId]);
+
+    const handleJoinGame = useCallback(async (code, nickname) => {
+        await joinGame(code, playerId, { nickname, isGuest: !user });
+        setGameId(code);
+        setGameState(GameState.Lobby);
+    }, [playerId, user]);
+
+    const handleTeacherLogin = async () => {
+        try {
+            await signInWithGoogle();
+            setGameState(GameState.TeacherDashboard);
+        } catch (error) {
+            console.error("Teacher sign-in error:", error);
+        }
+    };
+    
+    const handleSignOut = async () => {
+        try {
+            await signOutUser();
+            goHome();
+        } catch (error) {
+            console.error("Sign out error:", error);
+        }
+    };
+
+    const handleSelectHome = (selection) => {
+        if (selection === 'teacherLogin') {
+            if (user && user.isTeacher) {
+                setGameState(GameState.TeacherDashboard);
+            } else {
+                handleTeacherLogin();
+            }
+        } else {
+            setGameState(selection);
+        }
+    };
+    
+    const handleStartSolo = (prompt, criteria, duration) => {
+        const soloGameData = {
+            id: `solo_${Date.now()}`,
+            hostId: playerId,
+            prompt,
+            criteria,
+            duration,
+            startTime: new Date(),
+            status: 'in-progress',
+            players: { [playerId]: { nickname: 'You', story: { title: '', text: '' }, analysis: null } }
+        };
+        setGameData(soloGameData);
+        setGameState(GameState.InGame);
+    };
+
+    const handleSoloTimeUp = (story, analysis, words) => {
+        if (analysis.totalScore > soloHighScore) {
+            setSoloHighScore(analysis.totalScore);
+            localStorage.setItem('soloHighScore', analysis.totalScore.toString());
+        }
+        setFinalCheckedWords(words || []);
+        setGameData(prev => ({ ...prev, status: 'finished', players: { ...prev.players, [playerId]: { ...prev.players[playerId], story, analysis } } }));
+        setGameState(GameState.Results);
+    };
+    
+    const handleMultiplayerTimeUp = (story, analysis) => {
+        // Submission is handled in GameScreen's handleTimeUp.
+        // We now rely solely on the onSnapshot listener to receive the
+        // updated gameData and navigate to the results screen. This prevents a race condition
+        // where a local optimistic update is overwritten by a stale Firestore update.
+    };
+
+    const renderContent = () => {
+        if (authLoading) return <div className="flex justify-center items-center h-screen"><LoadingSpinner /></div>;
+        
+        switch (gameState) {
+            case GameState.Home:
+                return <HomeScreen onSelect={handleSelectHome} />;
+            case GameState.SentenceBuilder:
+                 return <SentenceBuilderScreen onBack={goHome} playerId={playerId} />;
+            case GameState.SoloSetup:
+                return <PracticeSetupScreen onStart={handleStartSolo} onBack={goHome} />;
+            case GameState.CreateGameSetup:
+                return <CreateGameSetupScreen onCreate={handleCreateGame} onBack={() => setGameState(GameState.TeacherDashboard)} user={user} />;
+            case GameState.JoinGameSetup:
+                return <JoinGameSetupScreen onJoin={handleJoinGame} onBack={goHome} />;
+            case GameState.Lobby:
+                if (!gameData) {
+                    return (
+                        <div className="flex flex-col items-center justify-center text-center">
+                            <LoadingSpinner />
+                            <p className="mt-4 text-slate-600">Entering Lobby...</p>
+                        </div>
+                    );
+                }
+                return <LobbyScreen gameId={gameId} gameData={gameData} playerId={playerId} onStartGame={() => startGame(gameId)} onLeaveGame={goHome} />;
+            case GameState.InGame:
+                const isHostView = gameData?.hostId === playerId && !gameData.id?.startsWith('solo');
+                if (isHostView) {
+                    return <HostScreen gameId={gameId} gameData={gameData} onEndGame={() => finishGame(gameId)} />;
+                }
+                return <GameScreen gameData={gameData} playerId={playerId} onTimeUp={gameData.id?.startsWith('solo') ? handleSoloTimeUp : handleMultiplayerTimeUp} onGoHome={goHome} />;
+            case GameState.Results:
+                 const isSoloGame = gameData?.id?.startsWith('solo');
+                 const isHost = gameData?.hostId === playerId;
+                 const handlePlayAgain = isSoloGame ? () => setGameState(GameState.SoloSetup) : goHome;
+                 return <ResultsScreen 
+                    gameData={gameData} 
+                    playerId={playerId} 
+                    isHost={isHost}
+                    onPlayAgain={handlePlayAgain}
+                    onGoHome={goHome} 
+                    onGoToDashboard={() => setGameState(GameState.TeacherDashboard)}
+                    onRetryPrompt={isSoloGame ? () => handleStartSolo(gameData.prompt, gameData.criteria, gameData.duration) : undefined} 
+                    soloHighScore={soloHighScore}
+                    finalCheckedWords={finalCheckedWords}
+                 />;
+            case GameState.TeacherDashboard:
+                return <TeacherDashboard user={user} onSignOut={handleSignOut} onGoHome={goHome} onCreateGame={() => setGameState(GameState.CreateGameSetup)} />;
+            default:
+                return <HomeScreen onSelect={setGameState} />;
+        }
+    };
+
+    return (
+        <div className="min-h-screen w-full flex items-center justify-center p-4 sm:p-6 lg:p-8">
+            {renderContent()}
+        </div>
+    );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);

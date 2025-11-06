@@ -69,6 +69,43 @@ Respond ONLY with a valid JSON object in the specified format. Do not add any ex
     return JSON.parse(jsonText);
 };
 
+const checkSpelling = async (payload) => {
+    const { userInput } = payload;
+    if (!userInput) throw new Error("userInput is required");
+
+    const prompt = `A 10-year-old is trying to spell a word. They typed '${userInput}'. What word were they likely trying to spell? Give me the correct spelling and a very simple, one-sentence definition that a child can understand. If there are a couple of viable options, list them, but prioritize the most likely one first.
+
+Respond ONLY with a valid JSON object.`;
+
+    const response = await ai.models.generateContent({
+        model: "gemini-2.5-pro",
+        contents: prompt,
+        config: {
+            responseMimeType: "application/json",
+            responseSchema: {
+                type: Type.OBJECT,
+                properties: {
+                    suggestions: {
+                        type: Type.ARRAY,
+                        items: {
+                            type: Type.OBJECT,
+                            properties: {
+                                word: { type: Type.STRING },
+                                definition: { type: Type.STRING }
+                            },
+                            required: ["word", "definition"]
+                        }
+                    }
+                },
+                required: ['suggestions']
+            }
+        }
+    });
+
+    const jsonText = response.text.trim();
+    return JSON.parse(jsonText);
+};
+
 const checkSimilarity = async (payload) => {
     const { newSentence, previousSentences } = payload;
     if (!newSentence || !previousSentences || previousSentences.length === 0) {
@@ -199,6 +236,9 @@ exports.handler = async (event) => {
         switch (task) {
             case 'getSentenceFeedback':
                 result = await getFeedback(payload);
+                break;
+            case 'checkSpelling':
+                result = await checkSpelling(payload);
                 break;
             case 'updateLeaderboard':
                 result = await updateLeaderboardTask(payload);
